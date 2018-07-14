@@ -86,7 +86,6 @@
   (defctype manager :pointer
     "A manager of CUDD")
 
-  
   (define-foreign-type node-type ()
     ()
     (:actual-type :pointer)
@@ -99,6 +98,7 @@
 
   (defmethod expand-to-foreign (value (type node-type))
     value)
+
   (defmethod expand-from-foreign (value (type node-type))
     (let ((gvalue (gensym "value")))
       `(let ((,gvalue ,value))
@@ -132,7 +132,6 @@
 %typemap (cin)  DdNode * "node"
 %typemap (cout) DdNode * "node"
 
-
 /* Now parse and wrap the API header */
 %insert ("swiglisp") %{
 
@@ -153,6 +152,34 @@
     %include "cudd.h"
     %insert ("swiglisp")
     %{ ) ;; end of eval-when to avoid top-level export
+
+(cffi:defcstruct #.(swig-lispify "DdChildren" 'classname)
+        (#.(swig-lispify "T" 'slotname) :pointer)
+        (#.(swig-lispify "E" 'slotname) :pointer))
+
+(cl:export '#.(swig-lispify "DdChildren" 'classname))
+(cl:export '#.(swig-lispify "T" 'slotname))
+(cl:export '#.(swig-lispify "E" 'slotname))
+
+(cffi:defcstruct #.(swig-lispify "DdNode" 'classname)
+        (#.(swig-lispify "index" 'slotname) :unsigned-short)
+        (#.(swig-lispify "ref" 'slotname) :unsigned-short)
+        (#.(swig-lispify "next" 'slotname) node)
+        (#.(swig-lispify "type" 'slotname) :pointer))
+
+(cl:export '#.(swig-lispify "DdNode" 'classname))
+(cl:export '#.(swig-lispify "index" 'slotname))
+(cl:export '#.(swig-lispify "ref" 'slotname))
+(cl:export '#.(swig-lispify "next" 'slotname))
+(cl:export '#.(swig-lispify "type" 'slotname))
+
+(cffi:defcunion #.(swig-lispify "DdNode_type" 'classname)
+        (#.(swig-lispify "value" 'slotname) :double)
+        (#.(swig-lispify "kids" 'slotname) #.(swig-lispify "DdChildren" 'classname)))
+
+(cl:export '#.(swig-lispify "DdNode_type" 'classname))
+(cl:export '#.(swig-lispify "value" 'slotname))
+(cl:export '#.(swig-lispify "kids" 'slotname))
 
 (defun cudd-bdd-not (manager node)
   (declare (ignore manager))
@@ -178,8 +205,6 @@
             :for i :from 0
          :do (setf (cffi:mem-aref array :pointer i) v))
       (cudd-bdd-compute-cube manager array (cffi:null-pointer) n))))
-
-
 
 (cffi:defcfun "fopen" :pointer (path :string) (mode :string))
 (cffi:defcfun "fclose" :pointer (file :pointer))
@@ -302,10 +327,51 @@ instead of having a complement pointer to 1."
     (setf (ldb (byte 1 0) addr) 0)
     (make-pointer addr)))
 
+(defparameter sizeof-void-p
+  (foreign-type-size '(:pointer :void)))
+
+(defparameter sizeof-int
+  (foreign-type-size ':int))
+
 (defparameter +cudd-max-index+
   (if (and (= sizeof-void-p 8) (= sizeof-int 4))
       ;; ((unsigned int) ~0) >> 1
       (- (expt 2 31) 1)
       ;; ((unsigned short) ~0)
       (- (expt 2 16) 1)))
+
+(defun cudd-node-is-constant (manager node)
+  (declare (ignore manager))
+  (cudd-is-constant node))
+
+(defun cudd-node-get-value (manager node)
+  "Return the value of a leaf node.
+
+Warning: Undefined behaviour if DD is not a leaf node"
+  (declare (ignore manager))
+  (cudd-v node))
+
+(defun cudd-node-get-then (manager node)
+    "Return the then-child of an inner node.
+
+Warning: Undefined behaviour if DD is a leaf node"
+    (declare (ignore manager))
+    (let ((result (cudd-t node)))
+      (cudd-ref result)
+      result))
+
+(defun cudd-node-get-else (manager node)
+    "Return the else-child of an inner node.
+
+Warning: Undefined behaviour if DD is a leaf node"
+    (declare (ignore manager))
+    (let ((result (cudd-e node)))
+      (cudd-ref result)
+      result))
+
+(defun cudd-node-get-ref-count (manager node)
+    "Return the reference count of the node."
+    (declare (ignore manager))
+    0) ; no public API
+
 %}
