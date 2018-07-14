@@ -1,4 +1,6 @@
-(in-package cudd)
+;;;; -*- mode: lisp; -*-
+
+(in-package :cudd)
 
 ;;;_. Functions for add-apply
 (defparameter +plus+ (cffi:foreign-symbol-pointer "Cudd_addPlus")

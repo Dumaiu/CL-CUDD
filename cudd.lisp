@@ -1,5 +1,8 @@
-;; -*- mode: lisp; mode: Allout; -*-
-(in-package cudd)
+;;;; -*- mode: lisp; -*-
+;;;; See LICENSE for licensing information.
+;;;; cudd.lisp
+
+(in-package :cudd)
 
 (defvar *manager* nil "The current manager.
 
@@ -480,7 +483,7 @@ instead of having a complement pointer to 1."))
 ;;; into an array and then call the actual implementation
 (defmethod node-permute :around (node (permutation sequence))
   (with-foreign-object (array :pointer (length permutation))
-    (loop :for node :being :each :element :of permutation
+    (loop :for node :across permutation
           :for i    :from  0
           :do (setf (mem-aref array :pointer i) (node-pointer node)))
     (node-permute node array)))

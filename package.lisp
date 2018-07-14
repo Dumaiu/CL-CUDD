@@ -1,3 +1,5 @@
+;;;; -*- mode: lisp; -*-
+;;;; See LICENSE for licensing information.
 ;;;; package.lisp
 
 (cl:defpackage :swig-macros
