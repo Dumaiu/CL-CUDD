@@ -1,5 +1,5 @@
-Common Lisp binding to CUDD 
-===========================
+Common Lisp binding to CUDD 3
+=============================
 
 What is CUDD?
 -------------
