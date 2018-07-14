@@ -1,7 +1,10 @@
-/* swig interface wrapper file for cffi binding generation -*- lisp -*- */
-/* swig -cffi interface for CUDD */
+/* -*- Mode: Lisp -*- */
+/* SWIG interface wrapper file for cffi binding generation */
+/* The following command is used:
+   swig -cffi -I/usr/local/include -generate-typedef -swig-lisp cudd-cffi.i */
 /* (c) 2009 Utz-Uwe Haus */
 /* (c) 2011 Christian von Essen */
+/* (c) 2018 Chun Tian */
 
 %module "cuddapi"
 
@@ -136,7 +139,7 @@
 (cffi:define-foreign-library libcudd
   (t (:default "libcudd")))
 
-(let ((libdir "/opt/local/lib/cudd/"))
+(let ((libdir "/usr/local/lib/"))
   (when (probe-file libdir)
     (pushnew libdir cffi:*foreign-library-directories* :test #'equal)))
 
@@ -147,7 +150,7 @@
   #+sbcl (declaim (sb-ext:muffle-conditions sb-ext:defconstant-uneql))
 
     %}
-    %include "cudd/cudd.h"
+    %include "cudd.h"
     %insert ("swiglisp")
     %{ ) ;; end of eval-when to avoid top-level export
 
@@ -305,51 +308,4 @@ instead of having a complement pointer to 1."
       (- (expt 2 31) 1)
       ;; ((unsigned short) ~0)
       (- (expt 2 16) 1)))
-
-(defun cudd-node-is-constant (manager node)
-  (declare (ignore manager))
-  (let ((regular (cudd-regular node)))
-    (= (cudd-node-read-index regular) +cudd-max-index+)))
-
-(defun cudd-node-get-value (manager node)
-  "Return the value of a leaf node.
-
-Warning: Undefined behaviour if DD is not a leaf node"
-  (declare (ignore manager))
-  (cffi:foreign-slot-value
-   (cffi:foreign-slot-pointer (cudd-regular node) 'dd-node 'type)
-      'dd-node-type 'value))
-
-(defun cudd-node-get-then (manager node)
-    "Return the then-child of an inner node.
-
-Warning: Undefined behaviour if DD is a leaf node"
-    (declare (ignore manager))
-    (let ((result
-           (cffi:foreign-slot-value
-            (cffi:foreign-slot-value
-             (cffi:foreign-slot-pointer (cudd-regular node) 'dd-node 'type)
-             'dd-node-type 'kids)
-            'dd-children 'T)))
-      (cudd-ref result)
-      result))
-
-(defun cudd-node-get-else (manager node)
-    "Return the else-child of an inner node.
-
-Warning: Undefined behaviour if DD is a leaf node"
-    (declare (ignore manager))
-    (let ((result
-           (cffi:foreign-slot-value
-            (cffi:foreign-slot-value
-             (cffi:foreign-slot-pointer (cudd-regular node) 'dd-node 'type)
-             'dd-node-type 'kids)
-            'dd-children 'E)))
-      (cudd-ref result)
-      result))
-
-(defun cudd-node-get-ref-count (manager node)
-    "Return the reference count of the node."
-    (declare (ignore manager))
-    (cffi:foreign-slot-value (cudd-regular node) 'dd-node 'ref))
 %}
