@@ -153,34 +153,6 @@
     %insert ("swiglisp")
     %{ ) ;; end of eval-when to avoid top-level export
 
-(cffi:defcstruct #.(swig-lispify "DdChildren" 'classname)
-        (#.(swig-lispify "T" 'slotname) :pointer)
-        (#.(swig-lispify "E" 'slotname) :pointer))
-
-(cl:export '#.(swig-lispify "DdChildren" 'classname))
-(cl:export '#.(swig-lispify "T" 'slotname))
-(cl:export '#.(swig-lispify "E" 'slotname))
-
-(cffi:defcstruct #.(swig-lispify "DdNode" 'classname)
-        (#.(swig-lispify "index" 'slotname) :unsigned-short)
-        (#.(swig-lispify "ref" 'slotname) :unsigned-short)
-        (#.(swig-lispify "next" 'slotname) node)
-        (#.(swig-lispify "type" 'slotname) :pointer))
-
-(cl:export '#.(swig-lispify "DdNode" 'classname))
-(cl:export '#.(swig-lispify "index" 'slotname))
-(cl:export '#.(swig-lispify "ref" 'slotname))
-(cl:export '#.(swig-lispify "next" 'slotname))
-(cl:export '#.(swig-lispify "type" 'slotname))
-
-(cffi:defcunion #.(swig-lispify "DdNode_type" 'classname)
-        (#.(swig-lispify "value" 'slotname) :double)
-        (#.(swig-lispify "kids" 'slotname) #.(swig-lispify "DdChildren" 'classname)))
-
-(cl:export '#.(swig-lispify "DdNode_type" 'classname))
-(cl:export '#.(swig-lispify "value" 'slotname))
-(cl:export '#.(swig-lispify "kids" 'slotname))
-
 (defun cudd-bdd-not (manager node)
   (declare (ignore manager))
   ;; TODO What happens on big-endian machines?
