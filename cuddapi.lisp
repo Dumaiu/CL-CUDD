@@ -1174,14 +1174,14 @@
 
 (cl:export '#.(swig-lispify "Cudd_SetMaxLive" 'function))
 
-(cffi:defcfun ("Cudd_ReadMaxMemory" #.(swig-lispify "Cudd_ReadMaxMemory" 'function)) :pointer
+(cffi:defcfun ("Cudd_ReadMaxMemory" #.(swig-lispify "Cudd_ReadMaxMemory" 'function)) :unsigned-long
   (dd manager))
 
 (cl:export '#.(swig-lispify "Cudd_ReadMaxMemory" 'function))
 
-(cffi:defcfun ("Cudd_SetMaxMemory" #.(swig-lispify "Cudd_SetMaxMemory" 'function)) :pointer
+(cffi:defcfun ("Cudd_SetMaxMemory" #.(swig-lispify "Cudd_SetMaxMemory" 'function)) :void
   (dd manager)
-  (maxMemory :pointer))
+  (maxMemory :unsigned-long))
 
 (cl:export '#.(swig-lispify "Cudd_SetMaxMemory" 'function))
 
@@ -2327,7 +2327,7 @@
   (numVarsZ :unsigned-int)
   (numSlots :unsigned-int)
   (cacheSize :unsigned-int)
-  (maxMemory :pointer))
+  (maxMemory :unsigned-long))
 
 (cl:export '#.(swig-lispify "Cudd_Init" 'function))
 
