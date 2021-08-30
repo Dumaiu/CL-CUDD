@@ -12,86 +12,86 @@
 (cl:in-package :swig-macros)
 
 (cl:defun swig-lispify (name flag cl:&optional (package (find-package :cuddapi)))
-      (cl:labels ((helper (lst last rest cl:&aux (c (cl:car lst)))
-                    (cl:cond
-                      ((cl:null lst)
-                       rest)
-                      ((cl:upper-case-p c)
-                       (helper (cl:cdr lst) 'upper
-                               (cl:case last
-                                 ((lower digit) (cl:list* c #\- rest))
-                                 (cl:t (cl:cons c rest)))))
-                      ((cl:lower-case-p c)
-                       (helper (cl:cdr lst) 'lower (cl:cons (cl:char-upcase c) rest)))
-                      ((cl:digit-char-p c)
-                       (helper (cl:cdr lst) 'digit 
-                               (cl:case last
-                                 ((upper lower) (cl:list* c #\- rest))
-                                 (cl:t (cl:cons c rest)))))
-                      ((cl:char-equal c #\_)
-                       (helper (cl:cdr lst) '_ (cl:cons #\- rest)))
-                      ((cl:char-equal c #\-)
-                       (helper (cl:cdr lst) '- (cl:cons #\- rest)))
-                      (cl:t
-                       (cl:error "Invalid character: ~A" c)))))
-        (cl:let ((fix (cl:case flag
-                        ((constant enumvalue) "+")
-                        (variable "*")
-                        (cl:t ""))))
-          (cl:intern
-           (cl:concatenate
-            'cl:string
-            fix
-            (cl:nreverse (helper (cl:concatenate 'cl:list name) cl:nil cl:nil))
-            fix)
-           package))))
+  (cl:labels ((helper (lst last rest cl:&aux (c (cl:car lst)))
+				(cl:cond
+				  ((cl:null lst)
+				   rest)
+				  ((cl:upper-case-p c)
+				   (helper (cl:cdr lst) 'upper
+						   (cl:case last
+							 ((lower digit) (cl:list* c #\- rest))
+							 (cl:t (cl:cons c rest)))))
+				  ((cl:lower-case-p c)
+				   (helper (cl:cdr lst) 'lower (cl:cons (cl:char-upcase c) rest)))
+				  ((cl:digit-char-p c)
+				   (helper (cl:cdr lst) 'digit
+						   (cl:case last
+							 ((upper lower) (cl:list* c #\- rest))
+							 (cl:t (cl:cons c rest)))))
+				  ((cl:char-equal c #\_)
+				   (helper (cl:cdr lst) '_ (cl:cons #\- rest)))
+				  ((cl:char-equal c #\-)
+				   (helper (cl:cdr lst) '- (cl:cons #\- rest)))
+				  (cl:t
+				   (cl:error "Invalid character: ~A" c)))))
+	(cl:let ((fix (cl:case flag
+					((constant enumvalue) "+")
+					(variable "*")
+					(cl:t ""))))
+	  (cl:intern
+	   (cl:concatenate
+		'cl:string
+		fix
+		(cl:nreverse (helper (cl:concatenate 'cl:list name) cl:nil cl:nil))
+		fix)
+	   package))))
 
 
 
 ;;;SWIG wrapper code starts here
 
 (cl:defmacro defanonenum (cl:&body enums)
-   "Converts anonymous enums to defconstants."
+  "Converts anonymous enums to defconstants."
   `(cl:progn ,@(cl:loop for value in enums
-                        for index = 0 then (cl:1+ index)
-                        when (cl:listp value) do (cl:setf index (cl:second value)
-                                                          value (cl:first value))
-                        collect `(cl:defconstant ,value ,index))))
+				  for index = 0 then (cl:1+ index)
+				  when (cl:listp value) do (cl:setf index (cl:second value)
+													value (cl:first value))
+					collect `(cl:defconstant ,value ,index))))
 
 (cl:eval-when (:compile-toplevel :load-toplevel)
   (cl:unless (cl:fboundp 'swig-lispify)
-    (cl:defun swig-lispify (name flag cl:&optional (package cl:*package*))
-      (cl:labels ((helper (lst last rest cl:&aux (c (cl:car lst)))
-                    (cl:cond
-                      ((cl:null lst)
-                       rest)
-                      ((cl:upper-case-p c)
-                       (helper (cl:cdr lst) 'upper
-                               (cl:case last
-                                 ((lower digit) (cl:list* c #\- rest))
-                                 (cl:t (cl:cons c rest)))))
-                      ((cl:lower-case-p c)
-                       (helper (cl:cdr lst) 'lower (cl:cons (cl:char-upcase c) rest)))
-                      ((cl:digit-char-p c)
-                       (helper (cl:cdr lst) 'digit 
-                               (cl:case last
-                                 ((upper lower) (cl:list* c #\- rest))
-                                 (cl:t (cl:cons c rest)))))
-                      ((cl:char-equal c #\_)
-                       (helper (cl:cdr lst) '_ (cl:cons #\- rest)))
-                      (cl:t
-                       (cl:error "Invalid character: ~A" c)))))
-        (cl:let ((fix (cl:case flag
-                        ((constant enumvalue) "+")
-                        (variable "*")
-                        (cl:t ""))))
-          (cl:intern
-           (cl:concatenate
-            'cl:string
-            fix
-            (cl:nreverse (helper (cl:concatenate 'cl:list name) cl:nil cl:nil))
-            fix)
-           package))))))
+	(cl:defun swig-lispify (name flag cl:&optional (package cl:*package*))
+	  (cl:labels ((helper (lst last rest cl:&aux (c (cl:car lst)))
+					(cl:cond
+					  ((cl:null lst)
+					   rest)
+					  ((cl:upper-case-p c)
+					   (helper (cl:cdr lst) 'upper
+							   (cl:case last
+								 ((lower digit) (cl:list* c #\- rest))
+								 (cl:t (cl:cons c rest)))))
+					  ((cl:lower-case-p c)
+					   (helper (cl:cdr lst) 'lower (cl:cons (cl:char-upcase c) rest)))
+					  ((cl:digit-char-p c)
+					   (helper (cl:cdr lst) 'digit
+							   (cl:case last
+								 ((upper lower) (cl:list* c #\- rest))
+								 (cl:t (cl:cons c rest)))))
+					  ((cl:char-equal c #\_)
+					   (helper (cl:cdr lst) '_ (cl:cons #\- rest)))
+					  (cl:t
+					   (cl:error "Invalid character: ~A" c)))))
+		(cl:let ((fix (cl:case flag
+						((constant enumvalue) "+")
+						(variable "*")
+						(cl:t ""))))
+		  (cl:intern
+		   (cl:concatenate
+			'cl:string
+			fix
+			(cl:nreverse (helper (cl:concatenate 'cl:list name) cl:nil cl:nil))
+			fix)
+		   package))))))
 
 ;;;SWIG wrapper code ends here
 
@@ -101,55 +101,56 @@
 (cl:in-package :cuddapi)
 
 
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (cl:in-package :cuddapi)
 
   (define-condition cudd-condition (condition) ())
   (define-condition cudd-error (cudd-condition error) ())
   (define-condition cudd-null-pointer-error (cudd-error) ()
-    (:report (lambda (condition stream)
-                 (declare (ignore condition))
-                 (format stream "A CUDD function returned a null-pointer"))))
+	(:report (lambda (condition stream)
+			   (declare (ignore condition))
+			   (format stream "A CUDD function returned a null-pointer"))))
   (define-condition cudd-null-manager-error (cudd-error) ()
-    (:report (lambda (condition stream)
-                 (declare (ignore condition))
-                 (format stream "Could not construct a CUDD manager"))))
+	(:report (lambda (condition stream)
+			   (declare (ignore condition))
+			   (format stream "Could not construct a CUDD manager"))))
 
   (defctype node :pointer
-    "A DD-node returned by CUDD")
+	"A DD-node returned by CUDD")
   (defctype manager :pointer
-    "A manager of CUDD")
+	"A manager of CUDD")
 
   (define-foreign-type node-type ()
-    ()
-    (:actual-type :pointer)
-    (:simple-parser node))
+	()
+	(:actual-type :pointer)
+	(:simple-parser node))
 
   (define-foreign-type manager-type ()
-    ()
-    (:actual-type :pointer)
-    (:simple-parser manager))
+	()
+	(:actual-type :pointer)
+	(:simple-parser manager))
 
   (defmethod expand-to-foreign (value (type node-type))
-    value)
+	value)
 
   (defmethod expand-from-foreign (value (type node-type))
-    (let ((gvalue (gensym "value")))
-      `(let ((,gvalue ,value))
-         (if (null-pointer-p ,gvalue)
-             (error 'cudd-null-pointer-error)
-             (progn
-               (cudd-ref ,gvalue)
-               ,gvalue)))))
+	(let ((gvalue (gensym "value")))
+	  `(let ((,gvalue ,value))
+		 (if (null-pointer-p ,gvalue)
+			 (error 'cudd-null-pointer-error)
+			 (progn
+			   (cudd-ref ,gvalue)
+			   ,gvalue)))))
 
   (defmethod expand-to-foreign (value (type manager-type))
-    value)
+	value)
   (defmethod expand-from-foreign (value (type manager-type))
-    (let ((gvalue (gensym "value")))
-      `(let ((,gvalue ,value))
-         (if (null-pointer-p ,gvalue)
-             (error 'cudd-null-manager-error)
-             ,gvalue)))))
+	(let ((gvalue (gensym "value")))
+	  `(let ((,gvalue ,value))
+		 (if (null-pointer-p ,gvalue)
+			 (error 'cudd-null-manager-error)
+			 ,gvalue)))))
 
 
 
@@ -159,7 +160,7 @@
 
 (let ((libdir "/usr/local/lib/"))
   (when (probe-file libdir)
-    (pushnew libdir cffi:*foreign-library-directories* :test #'equal)))
+	(pushnew libdir cffi:*foreign-library-directories* :test #'equal)))
 
 (cffi:use-foreign-library libcudd)
 
@@ -167,41 +168,41 @@
   ;; Muffle compiler-notes globally
   #+sbcl (declaim (sb-ext:muffle-conditions sb-ext:defconstant-uneql))
 
-    
 
-(cl:defconstant #.(swig-lispify "CUDD_TRUE" 'constant) 1)
 
-(cl:export '#.(swig-lispify "CUDD_TRUE" 'constant))
+  (cl:defconstant #.(swig-lispify "CUDD_TRUE" 'constant) 1)
 
-(cl:defconstant #.(swig-lispify "CUDD_FALSE" 'constant) 0)
+  (cl:export '#.(swig-lispify "CUDD_TRUE" 'constant))
 
-(cl:export '#.(swig-lispify "CUDD_FALSE" 'constant))
+  (cl:defconstant #.(swig-lispify "CUDD_FALSE" 'constant) 0)
 
-(cl:defconstant #.(swig-lispify "CUDD_OUT_OF_MEM" 'constant) -1)
+  (cl:export '#.(swig-lispify "CUDD_FALSE" 'constant))
 
-(cl:export '#.(swig-lispify "CUDD_OUT_OF_MEM" 'constant))
+  (cl:defconstant #.(swig-lispify "CUDD_OUT_OF_MEM" 'constant) -1)
 
-(cl:defconstant #.(swig-lispify "CUDD_UNIQUE_SLOTS" 'constant) 256)
+  (cl:export '#.(swig-lispify "CUDD_OUT_OF_MEM" 'constant))
 
-(cl:export '#.(swig-lispify "CUDD_UNIQUE_SLOTS" 'constant))
+  (cl:defconstant #.(swig-lispify "CUDD_UNIQUE_SLOTS" 'constant) 256)
 
-(cl:defconstant #.(swig-lispify "CUDD_CACHE_SLOTS" 'constant) 262144)
+  (cl:export '#.(swig-lispify "CUDD_UNIQUE_SLOTS" 'constant))
 
-(cl:export '#.(swig-lispify "CUDD_CACHE_SLOTS" 'constant))
+  (cl:defconstant #.(swig-lispify "CUDD_CACHE_SLOTS" 'constant) 262144)
 
-(cl:defconstant #.(swig-lispify "CUDD_RESIDUE_DEFAULT" 'constant) 0)
+  (cl:export '#.(swig-lispify "CUDD_CACHE_SLOTS" 'constant))
 
-(cl:export '#.(swig-lispify "CUDD_RESIDUE_DEFAULT" 'constant))
+  (cl:defconstant #.(swig-lispify "CUDD_RESIDUE_DEFAULT" 'constant) 0)
 
-(cl:defconstant #.(swig-lispify "CUDD_RESIDUE_MSB" 'constant) 1)
+  (cl:export '#.(swig-lispify "CUDD_RESIDUE_DEFAULT" 'constant))
 
-(cl:export '#.(swig-lispify "CUDD_RESIDUE_MSB" 'constant))
+  (cl:defconstant #.(swig-lispify "CUDD_RESIDUE_MSB" 'constant) 1)
 
-(cl:defconstant #.(swig-lispify "CUDD_RESIDUE_TC" 'constant) 2)
+  (cl:export '#.(swig-lispify "CUDD_RESIDUE_MSB" 'constant))
 
-(cl:export '#.(swig-lispify "CUDD_RESIDUE_TC" 'constant))
+  (cl:defconstant #.(swig-lispify "CUDD_RESIDUE_TC" 'constant) 2)
 
-(cffi:defcenum #.(swig-lispify "Cudd_ReorderingType" 'enumname)
+  (cl:export '#.(swig-lispify "CUDD_RESIDUE_TC" 'constant))
+
+  (cffi:defcenum #.(swig-lispify "Cudd_ReorderingType" 'enumname)
 	#.(swig-lispify "CUDD_REORDER_SAME" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_REORDER_NONE" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_REORDER_RANDOM" 'enumvalue :keyword)
@@ -225,9 +226,9 @@
 	#.(swig-lispify "CUDD_REORDER_LAZY_SIFT" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_REORDER_EXACT" 'enumvalue :keyword))
 
-(cl:export '#.(swig-lispify "Cudd_ReorderingType" 'enumname))
+  (cl:export '#.(swig-lispify "Cudd_ReorderingType" 'enumname))
 
-(cffi:defcenum #.(swig-lispify "Cudd_AggregationType" 'enumname)
+  (cffi:defcenum #.(swig-lispify "Cudd_AggregationType" 'enumname)
 	#.(swig-lispify "CUDD_NO_CHECK" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_GROUP_CHECK" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_GROUP_CHECK2" 'enumvalue :keyword)
@@ -239,17 +240,17 @@
 	#.(swig-lispify "CUDD_GROUP_CHECK8" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_GROUP_CHECK9" 'enumvalue :keyword))
 
-(cl:export '#.(swig-lispify "Cudd_AggregationType" 'enumname))
+  (cl:export '#.(swig-lispify "Cudd_AggregationType" 'enumname))
 
-(cffi:defcenum #.(swig-lispify "Cudd_HookType" 'enumname)
+  (cffi:defcenum #.(swig-lispify "Cudd_HookType" 'enumname)
 	#.(swig-lispify "CUDD_PRE_GC_HOOK" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_POST_GC_HOOK" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_PRE_REORDERING_HOOK" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_POST_REORDERING_HOOK" 'enumvalue :keyword))
 
-(cl:export '#.(swig-lispify "Cudd_HookType" 'enumname))
+  (cl:export '#.(swig-lispify "Cudd_HookType" 'enumname))
 
-(cffi:defcenum #.(swig-lispify "Cudd_ErrorType" 'enumname)
+  (cffi:defcenum #.(swig-lispify "Cudd_ErrorType" 'enumname)
 	#.(swig-lispify "CUDD_NO_ERROR" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_MEMORY_OUT" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_TOO_MANY_NODES" 'enumvalue :keyword)
@@ -259,3197 +260,3197 @@
 	#.(swig-lispify "CUDD_INVALID_ARG" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_INTERNAL_ERROR" 'enumvalue :keyword))
 
-(cl:export '#.(swig-lispify "Cudd_ErrorType" 'enumname))
+  (cl:export '#.(swig-lispify "Cudd_ErrorType" 'enumname))
 
-(cffi:defcenum #.(swig-lispify "Cudd_LazyGroupType" 'enumname)
+  (cffi:defcenum #.(swig-lispify "Cudd_LazyGroupType" 'enumname)
 	#.(swig-lispify "CUDD_LAZY_NONE" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_LAZY_SOFT_GROUP" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_LAZY_HARD_GROUP" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_LAZY_UNGROUP" 'enumvalue :keyword))
 
-(cl:export '#.(swig-lispify "Cudd_LazyGroupType" 'enumname))
+  (cl:export '#.(swig-lispify "Cudd_LazyGroupType" 'enumname))
 
-(cffi:defcenum #.(swig-lispify "Cudd_VariableType" 'enumname)
+  (cffi:defcenum #.(swig-lispify "Cudd_VariableType" 'enumname)
 	#.(swig-lispify "CUDD_VAR_PRIMARY_INPUT" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_VAR_PRESENT_STATE" 'enumvalue :keyword)
 	#.(swig-lispify "CUDD_VAR_NEXT_STATE" 'enumvalue :keyword))
 
-(cl:export '#.(swig-lispify "Cudd_VariableType" 'enumname))
+  (cl:export '#.(swig-lispify "Cudd_VariableType" 'enumname))
 
-(cffi:defctype #.(swig-lispify "CUDD_VALUE_TYPE" 'typename) :double)
+  (cffi:defctype #.(swig-lispify "CUDD_VALUE_TYPE" 'typename) :double)
 
-(cl:export '#.(swig-lispify "CUDD_VALUE_TYPE" 'typename))
+  (cl:export '#.(swig-lispify "CUDD_VALUE_TYPE" 'typename))
 
-(cffi:defctype #.(swig-lispify "DdNode" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DdNode" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DdNode" 'typename))
+  (cl:export '#.(swig-lispify "DdNode" 'typename))
 
-(cffi:defctype #.(swig-lispify "DdNodePtr" 'typename) node)
+  (cffi:defctype #.(swig-lispify "DdNodePtr" 'typename) node)
 
-(cl:export '#.(swig-lispify "DdNodePtr" 'typename))
+  (cl:export '#.(swig-lispify "DdNodePtr" 'typename))
 
-(cffi:defctype #.(swig-lispify "DdManager" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DdManager" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DdManager" 'typename))
+  (cl:export '#.(swig-lispify "DdManager" 'typename))
 
-(cffi:defctype #.(swig-lispify "DdGen" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DdGen" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DdGen" 'typename))
+  (cl:export '#.(swig-lispify "DdGen" 'typename))
 
-(cffi:defctype #.(swig-lispify "DdApaDigit" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DdApaDigit" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DdApaDigit" 'typename))
+  (cl:export '#.(swig-lispify "DdApaDigit" 'typename))
 
-(cffi:defctype #.(swig-lispify "DdApaNumber" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DdApaNumber" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DdApaNumber" 'typename))
+  (cl:export '#.(swig-lispify "DdApaNumber" 'typename))
 
-(cffi:defctype #.(swig-lispify "DdConstApaNumber" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DdConstApaNumber" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DdConstApaNumber" 'typename))
+  (cl:export '#.(swig-lispify "DdConstApaNumber" 'typename))
 
-(cffi:defctype #.(swig-lispify "DdTlcInfo" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DdTlcInfo" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DdTlcInfo" 'typename))
+  (cl:export '#.(swig-lispify "DdTlcInfo" 'typename))
 
-(cffi:defctype #.(swig-lispify "DD_HFP" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DD_HFP" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DD_HFP" 'typename))
+  (cl:export '#.(swig-lispify "DD_HFP" 'typename))
 
-(cffi:defctype #.(swig-lispify "DD_PRFP" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DD_PRFP" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DD_PRFP" 'typename))
+  (cl:export '#.(swig-lispify "DD_PRFP" 'typename))
 
-(cffi:defctype #.(swig-lispify "DD_AOP" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DD_AOP" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DD_AOP" 'typename))
+  (cl:export '#.(swig-lispify "DD_AOP" 'typename))
 
-(cffi:defctype #.(swig-lispify "DD_MAOP" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DD_MAOP" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DD_MAOP" 'typename))
+  (cl:export '#.(swig-lispify "DD_MAOP" 'typename))
 
-(cffi:defctype #.(swig-lispify "DD_CTFP" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DD_CTFP" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DD_CTFP" 'typename))
+  (cl:export '#.(swig-lispify "DD_CTFP" 'typename))
 
-(cffi:defctype #.(swig-lispify "DD_CTFP1" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DD_CTFP1" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DD_CTFP1" 'typename))
+  (cl:export '#.(swig-lispify "DD_CTFP1" 'typename))
 
-(cffi:defctype #.(swig-lispify "DD_OOMFP" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DD_OOMFP" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DD_OOMFP" 'typename))
+  (cl:export '#.(swig-lispify "DD_OOMFP" 'typename))
 
-(cffi:defctype #.(swig-lispify "DD_QSFP" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DD_QSFP" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DD_QSFP" 'typename))
+  (cl:export '#.(swig-lispify "DD_QSFP" 'typename))
 
-(cffi:defctype #.(swig-lispify "DD_THFP" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DD_THFP" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DD_THFP" 'typename))
+  (cl:export '#.(swig-lispify "DD_THFP" 'typename))
 
-(cffi:defctype #.(swig-lispify "DD_TOHFP" 'typename) :pointer)
+  (cffi:defctype #.(swig-lispify "DD_TOHFP" 'typename) :pointer)
 
-(cl:export '#.(swig-lispify "DD_TOHFP" 'typename))
+  (cl:export '#.(swig-lispify "DD_TOHFP" 'typename))
 
-(cffi:defcfun ("Cudd_addNewVar" #.(swig-lispify "Cudd_addNewVar" 'function)) node
-  (dd manager))
+  (cffi:defcfun ("Cudd_addNewVar" #.(swig-lispify "Cudd_addNewVar" 'function)) node
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_addNewVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addNewVar" 'function))
 
-(cffi:defcfun ("Cudd_addNewVarAtLevel" #.(swig-lispify "Cudd_addNewVarAtLevel" 'function)) node
-  (dd manager)
-  (level :int))
+  (cffi:defcfun ("Cudd_addNewVarAtLevel" #.(swig-lispify "Cudd_addNewVarAtLevel" 'function)) node
+	(dd manager)
+	(level :int))
 
-(cl:export '#.(swig-lispify "Cudd_addNewVarAtLevel" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addNewVarAtLevel" 'function))
 
-(cffi:defcfun ("Cudd_bddNewVar" #.(swig-lispify "Cudd_bddNewVar" 'function)) node
-  (dd manager))
+  (cffi:defcfun ("Cudd_bddNewVar" #.(swig-lispify "Cudd_bddNewVar" 'function)) node
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_bddNewVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddNewVar" 'function))
 
-(cffi:defcfun ("Cudd_bddNewVarAtLevel" #.(swig-lispify "Cudd_bddNewVarAtLevel" 'function)) node
-  (dd manager)
-  (level :int))
+  (cffi:defcfun ("Cudd_bddNewVarAtLevel" #.(swig-lispify "Cudd_bddNewVarAtLevel" 'function)) node
+	(dd manager)
+	(level :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddNewVarAtLevel" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddNewVarAtLevel" 'function))
 
-(cffi:defcfun ("Cudd_bddIsVar" #.(swig-lispify "Cudd_bddIsVar" 'function)) :int
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_bddIsVar" #.(swig-lispify "Cudd_bddIsVar" 'function)) :int
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_bddIsVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIsVar" 'function))
 
-(cffi:defcfun ("Cudd_addIthVar" #.(swig-lispify "Cudd_addIthVar" 'function)) node
-  (dd manager)
-  (i :int))
+  (cffi:defcfun ("Cudd_addIthVar" #.(swig-lispify "Cudd_addIthVar" 'function)) node
+	(dd manager)
+	(i :int))
 
-(cl:export '#.(swig-lispify "Cudd_addIthVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addIthVar" 'function))
 
-(cffi:defcfun ("Cudd_bddIthVar" #.(swig-lispify "Cudd_bddIthVar" 'function)) node
-  (dd manager)
-  (i :int))
+  (cffi:defcfun ("Cudd_bddIthVar" #.(swig-lispify "Cudd_bddIthVar" 'function)) node
+	(dd manager)
+	(i :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddIthVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIthVar" 'function))
 
-(cffi:defcfun ("Cudd_zddIthVar" #.(swig-lispify "Cudd_zddIthVar" 'function)) node
-  (dd manager)
-  (i :int))
+  (cffi:defcfun ("Cudd_zddIthVar" #.(swig-lispify "Cudd_zddIthVar" 'function)) node
+	(dd manager)
+	(i :int))
 
-(cl:export '#.(swig-lispify "Cudd_zddIthVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddIthVar" 'function))
 
-(cffi:defcfun ("Cudd_zddVarsFromBddVars" #.(swig-lispify "Cudd_zddVarsFromBddVars" 'function)) :int
-  (dd manager)
-  (multiplicity :int))
+  (cffi:defcfun ("Cudd_zddVarsFromBddVars" #.(swig-lispify "Cudd_zddVarsFromBddVars" 'function)) :int
+	(dd manager)
+	(multiplicity :int))
 
-(cl:export '#.(swig-lispify "Cudd_zddVarsFromBddVars" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddVarsFromBddVars" 'function))
 
-(cffi:defcfun ("Cudd_ReadMaxIndex" #.(swig-lispify "Cudd_ReadMaxIndex" 'function)) :unsigned-int)
+  (cffi:defcfun ("Cudd_ReadMaxIndex" #.(swig-lispify "Cudd_ReadMaxIndex" 'function)) :unsigned-int)
 
-(cl:export '#.(swig-lispify "Cudd_ReadMaxIndex" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadMaxIndex" 'function))
 
-(cffi:defcfun ("Cudd_addConst" #.(swig-lispify "Cudd_addConst" 'function)) node
-  (dd manager)
-  (c :double))
+  (cffi:defcfun ("Cudd_addConst" #.(swig-lispify "Cudd_addConst" 'function)) node
+	(dd manager)
+	(c :double))
 
-(cl:export '#.(swig-lispify "Cudd_addConst" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addConst" 'function))
 
-(cffi:defcfun ("Cudd_IsConstant" #.(swig-lispify "Cudd_IsConstant" 'function)) :int
-  (node node))
+  (cffi:defcfun ("Cudd_IsConstant" #.(swig-lispify "Cudd_IsConstant" 'function)) :int
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_IsConstant" 'function))
+  (cl:export '#.(swig-lispify "Cudd_IsConstant" 'function))
 
-(cffi:defcfun ("Cudd_IsNonConstant" #.(swig-lispify "Cudd_IsNonConstant" 'function)) :int
-  (f node))
+  (cffi:defcfun ("Cudd_IsNonConstant" #.(swig-lispify "Cudd_IsNonConstant" 'function)) :int
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_IsNonConstant" 'function))
+  (cl:export '#.(swig-lispify "Cudd_IsNonConstant" 'function))
 
-(cffi:defcfun ("Cudd_T" #.(swig-lispify "Cudd_T" 'function)) node
-  (node node))
+  (cffi:defcfun ("Cudd_T" #.(swig-lispify "Cudd_T" 'function)) node
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_T" 'function))
+  (cl:export '#.(swig-lispify "Cudd_T" 'function))
 
-(cffi:defcfun ("Cudd_E" #.(swig-lispify "Cudd_E" 'function)) node
-  (node node))
+  (cffi:defcfun ("Cudd_E" #.(swig-lispify "Cudd_E" 'function)) node
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_E" 'function))
+  (cl:export '#.(swig-lispify "Cudd_E" 'function))
 
-(cffi:defcfun ("Cudd_V" #.(swig-lispify "Cudd_V" 'function)) :double
-  (node node))
+  (cffi:defcfun ("Cudd_V" #.(swig-lispify "Cudd_V" 'function)) :double
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_V" 'function))
+  (cl:export '#.(swig-lispify "Cudd_V" 'function))
 
-(cffi:defcfun ("Cudd_ReadStartTime" #.(swig-lispify "Cudd_ReadStartTime" 'function)) :unsigned-long
-  (unique manager))
+  (cffi:defcfun ("Cudd_ReadStartTime" #.(swig-lispify "Cudd_ReadStartTime" 'function)) :unsigned-long
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadStartTime" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadStartTime" 'function))
 
-(cffi:defcfun ("Cudd_ReadElapsedTime" #.(swig-lispify "Cudd_ReadElapsedTime" 'function)) :unsigned-long
-  (unique manager))
+  (cffi:defcfun ("Cudd_ReadElapsedTime" #.(swig-lispify "Cudd_ReadElapsedTime" 'function)) :unsigned-long
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadElapsedTime" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadElapsedTime" 'function))
 
-(cffi:defcfun ("Cudd_SetStartTime" #.(swig-lispify "Cudd_SetStartTime" 'function)) :void
-  (unique manager)
-  (st :unsigned-long))
+  (cffi:defcfun ("Cudd_SetStartTime" #.(swig-lispify "Cudd_SetStartTime" 'function)) :void
+	(unique manager)
+	(st :unsigned-long))
 
-(cl:export '#.(swig-lispify "Cudd_SetStartTime" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetStartTime" 'function))
 
-(cffi:defcfun ("Cudd_ResetStartTime" #.(swig-lispify "Cudd_ResetStartTime" 'function)) :void
-  (unique manager))
+  (cffi:defcfun ("Cudd_ResetStartTime" #.(swig-lispify "Cudd_ResetStartTime" 'function)) :void
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_ResetStartTime" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ResetStartTime" 'function))
 
-(cffi:defcfun ("Cudd_ReadTimeLimit" #.(swig-lispify "Cudd_ReadTimeLimit" 'function)) :unsigned-long
-  (unique manager))
+  (cffi:defcfun ("Cudd_ReadTimeLimit" #.(swig-lispify "Cudd_ReadTimeLimit" 'function)) :unsigned-long
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadTimeLimit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadTimeLimit" 'function))
 
-(cffi:defcfun ("Cudd_SetTimeLimit" #.(swig-lispify "Cudd_SetTimeLimit" 'function)) :unsigned-long
-  (unique manager)
-  (tl :unsigned-long))
+  (cffi:defcfun ("Cudd_SetTimeLimit" #.(swig-lispify "Cudd_SetTimeLimit" 'function)) :unsigned-long
+	(unique manager)
+	(tl :unsigned-long))
 
-(cl:export '#.(swig-lispify "Cudd_SetTimeLimit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetTimeLimit" 'function))
 
-(cffi:defcfun ("Cudd_UpdateTimeLimit" #.(swig-lispify "Cudd_UpdateTimeLimit" 'function)) :void
-  (unique manager))
+  (cffi:defcfun ("Cudd_UpdateTimeLimit" #.(swig-lispify "Cudd_UpdateTimeLimit" 'function)) :void
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_UpdateTimeLimit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_UpdateTimeLimit" 'function))
 
-(cffi:defcfun ("Cudd_IncreaseTimeLimit" #.(swig-lispify "Cudd_IncreaseTimeLimit" 'function)) :void
-  (unique manager)
-  (increase :unsigned-long))
+  (cffi:defcfun ("Cudd_IncreaseTimeLimit" #.(swig-lispify "Cudd_IncreaseTimeLimit" 'function)) :void
+	(unique manager)
+	(increase :unsigned-long))
 
-(cl:export '#.(swig-lispify "Cudd_IncreaseTimeLimit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_IncreaseTimeLimit" 'function))
 
-(cffi:defcfun ("Cudd_UnsetTimeLimit" #.(swig-lispify "Cudd_UnsetTimeLimit" 'function)) :void
-  (unique manager))
+  (cffi:defcfun ("Cudd_UnsetTimeLimit" #.(swig-lispify "Cudd_UnsetTimeLimit" 'function)) :void
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_UnsetTimeLimit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_UnsetTimeLimit" 'function))
 
-(cffi:defcfun ("Cudd_TimeLimited" #.(swig-lispify "Cudd_TimeLimited" 'function)) :int
-  (unique manager))
+  (cffi:defcfun ("Cudd_TimeLimited" #.(swig-lispify "Cudd_TimeLimited" 'function)) :int
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_TimeLimited" 'function))
+  (cl:export '#.(swig-lispify "Cudd_TimeLimited" 'function))
 
-(cffi:defcfun ("Cudd_RegisterTerminationCallback" #.(swig-lispify "Cudd_RegisterTerminationCallback" 'function)) :void
-  (unique manager)
-  (callback :pointer)
-  (callback_arg :pointer))
+  (cffi:defcfun ("Cudd_RegisterTerminationCallback" #.(swig-lispify "Cudd_RegisterTerminationCallback" 'function)) :void
+	(unique manager)
+	(callback :pointer)
+	(callback_arg :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_RegisterTerminationCallback" 'function))
+  (cl:export '#.(swig-lispify "Cudd_RegisterTerminationCallback" 'function))
 
-(cffi:defcfun ("Cudd_UnregisterTerminationCallback" #.(swig-lispify "Cudd_UnregisterTerminationCallback" 'function)) :void
-  (unique manager))
+  (cffi:defcfun ("Cudd_UnregisterTerminationCallback" #.(swig-lispify "Cudd_UnregisterTerminationCallback" 'function)) :void
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_UnregisterTerminationCallback" 'function))
+  (cl:export '#.(swig-lispify "Cudd_UnregisterTerminationCallback" 'function))
 
-(cffi:defcfun ("Cudd_RegisterOutOfMemoryCallback" #.(swig-lispify "Cudd_RegisterOutOfMemoryCallback" 'function)) :pointer
-  (unique manager)
-  (callback :pointer))
+  (cffi:defcfun ("Cudd_RegisterOutOfMemoryCallback" #.(swig-lispify "Cudd_RegisterOutOfMemoryCallback" 'function)) :pointer
+	(unique manager)
+	(callback :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_RegisterOutOfMemoryCallback" 'function))
+  (cl:export '#.(swig-lispify "Cudd_RegisterOutOfMemoryCallback" 'function))
 
-(cffi:defcfun ("Cudd_UnregisterOutOfMemoryCallback" #.(swig-lispify "Cudd_UnregisterOutOfMemoryCallback" 'function)) :void
-  (unique manager))
+  (cffi:defcfun ("Cudd_UnregisterOutOfMemoryCallback" #.(swig-lispify "Cudd_UnregisterOutOfMemoryCallback" 'function)) :void
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_UnregisterOutOfMemoryCallback" 'function))
+  (cl:export '#.(swig-lispify "Cudd_UnregisterOutOfMemoryCallback" 'function))
 
-(cffi:defcfun ("Cudd_RegisterTimeoutHandler" #.(swig-lispify "Cudd_RegisterTimeoutHandler" 'function)) :void
-  (unique manager)
-  (handler :pointer)
-  (arg :pointer))
+  (cffi:defcfun ("Cudd_RegisterTimeoutHandler" #.(swig-lispify "Cudd_RegisterTimeoutHandler" 'function)) :void
+	(unique manager)
+	(handler :pointer)
+	(arg :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_RegisterTimeoutHandler" 'function))
+  (cl:export '#.(swig-lispify "Cudd_RegisterTimeoutHandler" 'function))
 
-(cffi:defcfun ("Cudd_ReadTimeoutHandler" #.(swig-lispify "Cudd_ReadTimeoutHandler" 'function)) :pointer
-  (unique manager)
-  (argp :pointer))
+  (cffi:defcfun ("Cudd_ReadTimeoutHandler" #.(swig-lispify "Cudd_ReadTimeoutHandler" 'function)) :pointer
+	(unique manager)
+	(argp :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ReadTimeoutHandler" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadTimeoutHandler" 'function))
 
-(cffi:defcfun ("Cudd_AutodynEnable" #.(swig-lispify "Cudd_AutodynEnable" 'function)) :void
-  (unique manager)
-  (method #.(swig-lispify "Cudd_ReorderingType" 'enumname)))
+  (cffi:defcfun ("Cudd_AutodynEnable" #.(swig-lispify "Cudd_AutodynEnable" 'function)) :void
+	(unique manager)
+	(method #.(swig-lispify "Cudd_ReorderingType" 'enumname)))
 
-(cl:export '#.(swig-lispify "Cudd_AutodynEnable" 'function))
+  (cl:export '#.(swig-lispify "Cudd_AutodynEnable" 'function))
 
-(cffi:defcfun ("Cudd_AutodynDisable" #.(swig-lispify "Cudd_AutodynDisable" 'function)) :void
-  (unique manager))
+  (cffi:defcfun ("Cudd_AutodynDisable" #.(swig-lispify "Cudd_AutodynDisable" 'function)) :void
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_AutodynDisable" 'function))
+  (cl:export '#.(swig-lispify "Cudd_AutodynDisable" 'function))
 
-(cffi:defcfun ("Cudd_ReorderingStatus" #.(swig-lispify "Cudd_ReorderingStatus" 'function)) :int
-  (unique manager)
-  (method :pointer))
+  (cffi:defcfun ("Cudd_ReorderingStatus" #.(swig-lispify "Cudd_ReorderingStatus" 'function)) :int
+	(unique manager)
+	(method :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ReorderingStatus" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReorderingStatus" 'function))
 
-(cffi:defcfun ("Cudd_AutodynEnableZdd" #.(swig-lispify "Cudd_AutodynEnableZdd" 'function)) :void
-  (unique manager)
-  (method #.(swig-lispify "Cudd_ReorderingType" 'enumname)))
+  (cffi:defcfun ("Cudd_AutodynEnableZdd" #.(swig-lispify "Cudd_AutodynEnableZdd" 'function)) :void
+	(unique manager)
+	(method #.(swig-lispify "Cudd_ReorderingType" 'enumname)))
 
-(cl:export '#.(swig-lispify "Cudd_AutodynEnableZdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_AutodynEnableZdd" 'function))
 
-(cffi:defcfun ("Cudd_AutodynDisableZdd" #.(swig-lispify "Cudd_AutodynDisableZdd" 'function)) :void
-  (unique manager))
+  (cffi:defcfun ("Cudd_AutodynDisableZdd" #.(swig-lispify "Cudd_AutodynDisableZdd" 'function)) :void
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_AutodynDisableZdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_AutodynDisableZdd" 'function))
 
-(cffi:defcfun ("Cudd_ReorderingStatusZdd" #.(swig-lispify "Cudd_ReorderingStatusZdd" 'function)) :int
-  (unique manager)
-  (method :pointer))
+  (cffi:defcfun ("Cudd_ReorderingStatusZdd" #.(swig-lispify "Cudd_ReorderingStatusZdd" 'function)) :int
+	(unique manager)
+	(method :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ReorderingStatusZdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReorderingStatusZdd" 'function))
 
-(cffi:defcfun ("Cudd_zddRealignmentEnabled" #.(swig-lispify "Cudd_zddRealignmentEnabled" 'function)) :int
-  (unique manager))
+  (cffi:defcfun ("Cudd_zddRealignmentEnabled" #.(swig-lispify "Cudd_zddRealignmentEnabled" 'function)) :int
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_zddRealignmentEnabled" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddRealignmentEnabled" 'function))
 
-(cffi:defcfun ("Cudd_zddRealignEnable" #.(swig-lispify "Cudd_zddRealignEnable" 'function)) :void
-  (unique manager))
+  (cffi:defcfun ("Cudd_zddRealignEnable" #.(swig-lispify "Cudd_zddRealignEnable" 'function)) :void
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_zddRealignEnable" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddRealignEnable" 'function))
 
-(cffi:defcfun ("Cudd_zddRealignDisable" #.(swig-lispify "Cudd_zddRealignDisable" 'function)) :void
-  (unique manager))
+  (cffi:defcfun ("Cudd_zddRealignDisable" #.(swig-lispify "Cudd_zddRealignDisable" 'function)) :void
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_zddRealignDisable" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddRealignDisable" 'function))
 
-(cffi:defcfun ("Cudd_bddRealignmentEnabled" #.(swig-lispify "Cudd_bddRealignmentEnabled" 'function)) :int
-  (unique manager))
+  (cffi:defcfun ("Cudd_bddRealignmentEnabled" #.(swig-lispify "Cudd_bddRealignmentEnabled" 'function)) :int
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_bddRealignmentEnabled" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddRealignmentEnabled" 'function))
 
-(cffi:defcfun ("Cudd_bddRealignEnable" #.(swig-lispify "Cudd_bddRealignEnable" 'function)) :void
-  (unique manager))
+  (cffi:defcfun ("Cudd_bddRealignEnable" #.(swig-lispify "Cudd_bddRealignEnable" 'function)) :void
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_bddRealignEnable" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddRealignEnable" 'function))
 
-(cffi:defcfun ("Cudd_bddRealignDisable" #.(swig-lispify "Cudd_bddRealignDisable" 'function)) :void
-  (unique manager))
+  (cffi:defcfun ("Cudd_bddRealignDisable" #.(swig-lispify "Cudd_bddRealignDisable" 'function)) :void
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_bddRealignDisable" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddRealignDisable" 'function))
 
-(cffi:defcfun ("Cudd_ReadOne" #.(swig-lispify "Cudd_ReadOne" 'function)) node
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadOne" #.(swig-lispify "Cudd_ReadOne" 'function)) node
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadOne" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadOne" 'function))
 
-(cffi:defcfun ("Cudd_ReadZddOne" #.(swig-lispify "Cudd_ReadZddOne" 'function)) node
-  (dd manager)
-  (i :int))
+  (cffi:defcfun ("Cudd_ReadZddOne" #.(swig-lispify "Cudd_ReadZddOne" 'function)) node
+	(dd manager)
+	(i :int))
 
-(cl:export '#.(swig-lispify "Cudd_ReadZddOne" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadZddOne" 'function))
 
-(cffi:defcfun ("Cudd_ReadZero" #.(swig-lispify "Cudd_ReadZero" 'function)) node
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadZero" #.(swig-lispify "Cudd_ReadZero" 'function)) node
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadZero" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadZero" 'function))
 
-(cffi:defcfun ("Cudd_ReadLogicZero" #.(swig-lispify "Cudd_ReadLogicZero" 'function)) node
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadLogicZero" #.(swig-lispify "Cudd_ReadLogicZero" 'function)) node
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadLogicZero" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadLogicZero" 'function))
 
-(cffi:defcfun ("Cudd_ReadPlusInfinity" #.(swig-lispify "Cudd_ReadPlusInfinity" 'function)) node
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadPlusInfinity" #.(swig-lispify "Cudd_ReadPlusInfinity" 'function)) node
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadPlusInfinity" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadPlusInfinity" 'function))
 
-(cffi:defcfun ("Cudd_ReadMinusInfinity" #.(swig-lispify "Cudd_ReadMinusInfinity" 'function)) node
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadMinusInfinity" #.(swig-lispify "Cudd_ReadMinusInfinity" 'function)) node
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadMinusInfinity" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadMinusInfinity" 'function))
 
-(cffi:defcfun ("Cudd_ReadBackground" #.(swig-lispify "Cudd_ReadBackground" 'function)) node
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadBackground" #.(swig-lispify "Cudd_ReadBackground" 'function)) node
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadBackground" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadBackground" 'function))
 
-(cffi:defcfun ("Cudd_SetBackground" #.(swig-lispify "Cudd_SetBackground" 'function)) :void
-  (dd manager)
-  (bck node))
+  (cffi:defcfun ("Cudd_SetBackground" #.(swig-lispify "Cudd_SetBackground" 'function)) :void
+	(dd manager)
+	(bck node))
 
-(cl:export '#.(swig-lispify "Cudd_SetBackground" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetBackground" 'function))
 
-(cffi:defcfun ("Cudd_ReadCacheSlots" #.(swig-lispify "Cudd_ReadCacheSlots" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadCacheSlots" #.(swig-lispify "Cudd_ReadCacheSlots" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadCacheSlots" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadCacheSlots" 'function))
 
-(cffi:defcfun ("Cudd_ReadCacheUsedSlots" #.(swig-lispify "Cudd_ReadCacheUsedSlots" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadCacheUsedSlots" #.(swig-lispify "Cudd_ReadCacheUsedSlots" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadCacheUsedSlots" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadCacheUsedSlots" 'function))
 
-(cffi:defcfun ("Cudd_ReadCacheLookUps" #.(swig-lispify "Cudd_ReadCacheLookUps" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadCacheLookUps" #.(swig-lispify "Cudd_ReadCacheLookUps" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadCacheLookUps" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadCacheLookUps" 'function))
 
-(cffi:defcfun ("Cudd_ReadCacheHits" #.(swig-lispify "Cudd_ReadCacheHits" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadCacheHits" #.(swig-lispify "Cudd_ReadCacheHits" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadCacheHits" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadCacheHits" 'function))
 
-(cffi:defcfun ("Cudd_ReadRecursiveCalls" #.(swig-lispify "Cudd_ReadRecursiveCalls" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadRecursiveCalls" #.(swig-lispify "Cudd_ReadRecursiveCalls" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadRecursiveCalls" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadRecursiveCalls" 'function))
 
-(cffi:defcfun ("Cudd_ReadMinHit" #.(swig-lispify "Cudd_ReadMinHit" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadMinHit" #.(swig-lispify "Cudd_ReadMinHit" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadMinHit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadMinHit" 'function))
 
-(cffi:defcfun ("Cudd_SetMinHit" #.(swig-lispify "Cudd_SetMinHit" 'function)) :void
-  (dd manager)
-  (hr :unsigned-int))
+  (cffi:defcfun ("Cudd_SetMinHit" #.(swig-lispify "Cudd_SetMinHit" 'function)) :void
+	(dd manager)
+	(hr :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_SetMinHit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetMinHit" 'function))
 
-(cffi:defcfun ("Cudd_ReadLooseUpTo" #.(swig-lispify "Cudd_ReadLooseUpTo" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadLooseUpTo" #.(swig-lispify "Cudd_ReadLooseUpTo" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadLooseUpTo" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadLooseUpTo" 'function))
 
-(cffi:defcfun ("Cudd_SetLooseUpTo" #.(swig-lispify "Cudd_SetLooseUpTo" 'function)) :void
-  (dd manager)
-  (lut :unsigned-int))
+  (cffi:defcfun ("Cudd_SetLooseUpTo" #.(swig-lispify "Cudd_SetLooseUpTo" 'function)) :void
+	(dd manager)
+	(lut :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_SetLooseUpTo" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetLooseUpTo" 'function))
 
-(cffi:defcfun ("Cudd_ReadMaxCache" #.(swig-lispify "Cudd_ReadMaxCache" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadMaxCache" #.(swig-lispify "Cudd_ReadMaxCache" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadMaxCache" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadMaxCache" 'function))
 
-(cffi:defcfun ("Cudd_ReadMaxCacheHard" #.(swig-lispify "Cudd_ReadMaxCacheHard" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadMaxCacheHard" #.(swig-lispify "Cudd_ReadMaxCacheHard" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadMaxCacheHard" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadMaxCacheHard" 'function))
 
-(cffi:defcfun ("Cudd_SetMaxCacheHard" #.(swig-lispify "Cudd_SetMaxCacheHard" 'function)) :void
-  (dd manager)
-  (mc :unsigned-int))
+  (cffi:defcfun ("Cudd_SetMaxCacheHard" #.(swig-lispify "Cudd_SetMaxCacheHard" 'function)) :void
+	(dd manager)
+	(mc :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_SetMaxCacheHard" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetMaxCacheHard" 'function))
 
-(cffi:defcfun ("Cudd_ReadSize" #.(swig-lispify "Cudd_ReadSize" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadSize" #.(swig-lispify "Cudd_ReadSize" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadSize" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadSize" 'function))
 
-(cffi:defcfun ("Cudd_ReadZddSize" #.(swig-lispify "Cudd_ReadZddSize" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadZddSize" #.(swig-lispify "Cudd_ReadZddSize" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadZddSize" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadZddSize" 'function))
 
-(cffi:defcfun ("Cudd_ReadSlots" #.(swig-lispify "Cudd_ReadSlots" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadSlots" #.(swig-lispify "Cudd_ReadSlots" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadSlots" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadSlots" 'function))
 
-(cffi:defcfun ("Cudd_ReadUsedSlots" #.(swig-lispify "Cudd_ReadUsedSlots" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadUsedSlots" #.(swig-lispify "Cudd_ReadUsedSlots" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadUsedSlots" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadUsedSlots" 'function))
 
-(cffi:defcfun ("Cudd_ExpectedUsedSlots" #.(swig-lispify "Cudd_ExpectedUsedSlots" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ExpectedUsedSlots" #.(swig-lispify "Cudd_ExpectedUsedSlots" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ExpectedUsedSlots" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ExpectedUsedSlots" 'function))
 
-(cffi:defcfun ("Cudd_ReadKeys" #.(swig-lispify "Cudd_ReadKeys" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadKeys" #.(swig-lispify "Cudd_ReadKeys" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadKeys" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadKeys" 'function))
 
-(cffi:defcfun ("Cudd_ReadDead" #.(swig-lispify "Cudd_ReadDead" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadDead" #.(swig-lispify "Cudd_ReadDead" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadDead" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadDead" 'function))
 
-(cffi:defcfun ("Cudd_ReadMinDead" #.(swig-lispify "Cudd_ReadMinDead" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadMinDead" #.(swig-lispify "Cudd_ReadMinDead" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadMinDead" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadMinDead" 'function))
 
-(cffi:defcfun ("Cudd_ReadReorderings" #.(swig-lispify "Cudd_ReadReorderings" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadReorderings" #.(swig-lispify "Cudd_ReadReorderings" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadReorderings" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadReorderings" 'function))
 
-(cffi:defcfun ("Cudd_ReadMaxReorderings" #.(swig-lispify "Cudd_ReadMaxReorderings" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadMaxReorderings" #.(swig-lispify "Cudd_ReadMaxReorderings" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadMaxReorderings" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadMaxReorderings" 'function))
 
-(cffi:defcfun ("Cudd_SetMaxReorderings" #.(swig-lispify "Cudd_SetMaxReorderings" 'function)) :void
-  (dd manager)
-  (mr :unsigned-int))
+  (cffi:defcfun ("Cudd_SetMaxReorderings" #.(swig-lispify "Cudd_SetMaxReorderings" 'function)) :void
+	(dd manager)
+	(mr :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_SetMaxReorderings" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetMaxReorderings" 'function))
 
-(cffi:defcfun ("Cudd_ReadReorderingTime" #.(swig-lispify "Cudd_ReadReorderingTime" 'function)) :long
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadReorderingTime" #.(swig-lispify "Cudd_ReadReorderingTime" 'function)) :long
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadReorderingTime" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadReorderingTime" 'function))
 
-(cffi:defcfun ("Cudd_ReadGarbageCollections" #.(swig-lispify "Cudd_ReadGarbageCollections" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadGarbageCollections" #.(swig-lispify "Cudd_ReadGarbageCollections" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadGarbageCollections" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadGarbageCollections" 'function))
 
-(cffi:defcfun ("Cudd_ReadGarbageCollectionTime" #.(swig-lispify "Cudd_ReadGarbageCollectionTime" 'function)) :long
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadGarbageCollectionTime" #.(swig-lispify "Cudd_ReadGarbageCollectionTime" 'function)) :long
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadGarbageCollectionTime" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadGarbageCollectionTime" 'function))
 
-(cffi:defcfun ("Cudd_ReadNodesFreed" #.(swig-lispify "Cudd_ReadNodesFreed" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadNodesFreed" #.(swig-lispify "Cudd_ReadNodesFreed" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadNodesFreed" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadNodesFreed" 'function))
 
-(cffi:defcfun ("Cudd_ReadNodesDropped" #.(swig-lispify "Cudd_ReadNodesDropped" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadNodesDropped" #.(swig-lispify "Cudd_ReadNodesDropped" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadNodesDropped" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadNodesDropped" 'function))
 
-(cffi:defcfun ("Cudd_ReadUniqueLookUps" #.(swig-lispify "Cudd_ReadUniqueLookUps" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadUniqueLookUps" #.(swig-lispify "Cudd_ReadUniqueLookUps" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadUniqueLookUps" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadUniqueLookUps" 'function))
 
-(cffi:defcfun ("Cudd_ReadUniqueLinks" #.(swig-lispify "Cudd_ReadUniqueLinks" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadUniqueLinks" #.(swig-lispify "Cudd_ReadUniqueLinks" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadUniqueLinks" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadUniqueLinks" 'function))
 
-(cffi:defcfun ("Cudd_ReadSiftMaxVar" #.(swig-lispify "Cudd_ReadSiftMaxVar" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadSiftMaxVar" #.(swig-lispify "Cudd_ReadSiftMaxVar" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadSiftMaxVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadSiftMaxVar" 'function))
 
-(cffi:defcfun ("Cudd_SetSiftMaxVar" #.(swig-lispify "Cudd_SetSiftMaxVar" 'function)) :void
-  (dd manager)
-  (smv :int))
+  (cffi:defcfun ("Cudd_SetSiftMaxVar" #.(swig-lispify "Cudd_SetSiftMaxVar" 'function)) :void
+	(dd manager)
+	(smv :int))
 
-(cl:export '#.(swig-lispify "Cudd_SetSiftMaxVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetSiftMaxVar" 'function))
 
-(cffi:defcfun ("Cudd_ReadSiftMaxSwap" #.(swig-lispify "Cudd_ReadSiftMaxSwap" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadSiftMaxSwap" #.(swig-lispify "Cudd_ReadSiftMaxSwap" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadSiftMaxSwap" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadSiftMaxSwap" 'function))
 
-(cffi:defcfun ("Cudd_SetSiftMaxSwap" #.(swig-lispify "Cudd_SetSiftMaxSwap" 'function)) :void
-  (dd manager)
-  (sms :int))
+  (cffi:defcfun ("Cudd_SetSiftMaxSwap" #.(swig-lispify "Cudd_SetSiftMaxSwap" 'function)) :void
+	(dd manager)
+	(sms :int))
 
-(cl:export '#.(swig-lispify "Cudd_SetSiftMaxSwap" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetSiftMaxSwap" 'function))
 
-(cffi:defcfun ("Cudd_ReadMaxGrowth" #.(swig-lispify "Cudd_ReadMaxGrowth" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadMaxGrowth" #.(swig-lispify "Cudd_ReadMaxGrowth" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadMaxGrowth" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadMaxGrowth" 'function))
 
-(cffi:defcfun ("Cudd_SetMaxGrowth" #.(swig-lispify "Cudd_SetMaxGrowth" 'function)) :void
-  (dd manager)
-  (mg :double))
+  (cffi:defcfun ("Cudd_SetMaxGrowth" #.(swig-lispify "Cudd_SetMaxGrowth" 'function)) :void
+	(dd manager)
+	(mg :double))
 
-(cl:export '#.(swig-lispify "Cudd_SetMaxGrowth" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetMaxGrowth" 'function))
 
-(cffi:defcfun ("Cudd_ReadMaxGrowthAlternate" #.(swig-lispify "Cudd_ReadMaxGrowthAlternate" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadMaxGrowthAlternate" #.(swig-lispify "Cudd_ReadMaxGrowthAlternate" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadMaxGrowthAlternate" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadMaxGrowthAlternate" 'function))
 
-(cffi:defcfun ("Cudd_SetMaxGrowthAlternate" #.(swig-lispify "Cudd_SetMaxGrowthAlternate" 'function)) :void
-  (dd manager)
-  (mg :double))
+  (cffi:defcfun ("Cudd_SetMaxGrowthAlternate" #.(swig-lispify "Cudd_SetMaxGrowthAlternate" 'function)) :void
+	(dd manager)
+	(mg :double))
 
-(cl:export '#.(swig-lispify "Cudd_SetMaxGrowthAlternate" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetMaxGrowthAlternate" 'function))
 
-(cffi:defcfun ("Cudd_ReadReorderingCycle" #.(swig-lispify "Cudd_ReadReorderingCycle" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadReorderingCycle" #.(swig-lispify "Cudd_ReadReorderingCycle" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadReorderingCycle" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadReorderingCycle" 'function))
 
-(cffi:defcfun ("Cudd_SetReorderingCycle" #.(swig-lispify "Cudd_SetReorderingCycle" 'function)) :void
-  (dd manager)
-  (cycle :int))
+  (cffi:defcfun ("Cudd_SetReorderingCycle" #.(swig-lispify "Cudd_SetReorderingCycle" 'function)) :void
+	(dd manager)
+	(cycle :int))
 
-(cl:export '#.(swig-lispify "Cudd_SetReorderingCycle" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetReorderingCycle" 'function))
 
-(cffi:defcfun ("Cudd_NodeReadIndex" #.(swig-lispify "Cudd_NodeReadIndex" 'function)) :unsigned-int
-  (node node))
+  (cffi:defcfun ("Cudd_NodeReadIndex" #.(swig-lispify "Cudd_NodeReadIndex" 'function)) :unsigned-int
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_NodeReadIndex" 'function))
+  (cl:export '#.(swig-lispify "Cudd_NodeReadIndex" 'function))
 
-(cffi:defcfun ("Cudd_ReadPerm" #.(swig-lispify "Cudd_ReadPerm" 'function)) :int
-  (dd manager)
-  (i :int))
+  (cffi:defcfun ("Cudd_ReadPerm" #.(swig-lispify "Cudd_ReadPerm" 'function)) :int
+	(dd manager)
+	(i :int))
 
-(cl:export '#.(swig-lispify "Cudd_ReadPerm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadPerm" 'function))
 
-(cffi:defcfun ("Cudd_ReadPermZdd" #.(swig-lispify "Cudd_ReadPermZdd" 'function)) :int
-  (dd manager)
-  (i :int))
+  (cffi:defcfun ("Cudd_ReadPermZdd" #.(swig-lispify "Cudd_ReadPermZdd" 'function)) :int
+	(dd manager)
+	(i :int))
 
-(cl:export '#.(swig-lispify "Cudd_ReadPermZdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadPermZdd" 'function))
 
-(cffi:defcfun ("Cudd_ReadInvPerm" #.(swig-lispify "Cudd_ReadInvPerm" 'function)) :int
-  (dd manager)
-  (i :int))
+  (cffi:defcfun ("Cudd_ReadInvPerm" #.(swig-lispify "Cudd_ReadInvPerm" 'function)) :int
+	(dd manager)
+	(i :int))
 
-(cl:export '#.(swig-lispify "Cudd_ReadInvPerm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadInvPerm" 'function))
 
-(cffi:defcfun ("Cudd_ReadInvPermZdd" #.(swig-lispify "Cudd_ReadInvPermZdd" 'function)) :int
-  (dd manager)
-  (i :int))
+  (cffi:defcfun ("Cudd_ReadInvPermZdd" #.(swig-lispify "Cudd_ReadInvPermZdd" 'function)) :int
+	(dd manager)
+	(i :int))
 
-(cl:export '#.(swig-lispify "Cudd_ReadInvPermZdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadInvPermZdd" 'function))
 
-(cffi:defcfun ("Cudd_ReadVars" #.(swig-lispify "Cudd_ReadVars" 'function)) node
-  (dd manager)
-  (i :int))
+  (cffi:defcfun ("Cudd_ReadVars" #.(swig-lispify "Cudd_ReadVars" 'function)) node
+	(dd manager)
+	(i :int))
 
-(cl:export '#.(swig-lispify "Cudd_ReadVars" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadVars" 'function))
 
-(cffi:defcfun ("Cudd_ReadEpsilon" #.(swig-lispify "Cudd_ReadEpsilon" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadEpsilon" #.(swig-lispify "Cudd_ReadEpsilon" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadEpsilon" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadEpsilon" 'function))
 
-(cffi:defcfun ("Cudd_SetEpsilon" #.(swig-lispify "Cudd_SetEpsilon" 'function)) :void
-  (dd manager)
-  (ep :double))
+  (cffi:defcfun ("Cudd_SetEpsilon" #.(swig-lispify "Cudd_SetEpsilon" 'function)) :void
+	(dd manager)
+	(ep :double))
 
-(cl:export '#.(swig-lispify "Cudd_SetEpsilon" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetEpsilon" 'function))
 
-(cffi:defcfun ("Cudd_ReadGroupcheck" #.(swig-lispify "Cudd_ReadGroupcheck" 'function)) #.(swig-lispify "Cudd_AggregationType" 'enumname)
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadGroupcheck" #.(swig-lispify "Cudd_ReadGroupcheck" 'function)) #.(swig-lispify "Cudd_AggregationType" 'enumname)
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadGroupcheck" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadGroupcheck" 'function))
 
-(cffi:defcfun ("Cudd_SetGroupcheck" #.(swig-lispify "Cudd_SetGroupcheck" 'function)) :void
-  (dd manager)
-  (gc #.(swig-lispify "Cudd_AggregationType" 'enumname)))
+  (cffi:defcfun ("Cudd_SetGroupcheck" #.(swig-lispify "Cudd_SetGroupcheck" 'function)) :void
+	(dd manager)
+	(gc #.(swig-lispify "Cudd_AggregationType" 'enumname)))
 
-(cl:export '#.(swig-lispify "Cudd_SetGroupcheck" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetGroupcheck" 'function))
 
-(cffi:defcfun ("Cudd_GarbageCollectionEnabled" #.(swig-lispify "Cudd_GarbageCollectionEnabled" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_GarbageCollectionEnabled" #.(swig-lispify "Cudd_GarbageCollectionEnabled" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_GarbageCollectionEnabled" 'function))
+  (cl:export '#.(swig-lispify "Cudd_GarbageCollectionEnabled" 'function))
 
-(cffi:defcfun ("Cudd_EnableGarbageCollection" #.(swig-lispify "Cudd_EnableGarbageCollection" 'function)) :void
-  (dd manager))
+  (cffi:defcfun ("Cudd_EnableGarbageCollection" #.(swig-lispify "Cudd_EnableGarbageCollection" 'function)) :void
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_EnableGarbageCollection" 'function))
+  (cl:export '#.(swig-lispify "Cudd_EnableGarbageCollection" 'function))
 
-(cffi:defcfun ("Cudd_DisableGarbageCollection" #.(swig-lispify "Cudd_DisableGarbageCollection" 'function)) :void
-  (dd manager))
+  (cffi:defcfun ("Cudd_DisableGarbageCollection" #.(swig-lispify "Cudd_DisableGarbageCollection" 'function)) :void
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_DisableGarbageCollection" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DisableGarbageCollection" 'function))
 
-(cffi:defcfun ("Cudd_DeadAreCounted" #.(swig-lispify "Cudd_DeadAreCounted" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_DeadAreCounted" #.(swig-lispify "Cudd_DeadAreCounted" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_DeadAreCounted" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DeadAreCounted" 'function))
 
-(cffi:defcfun ("Cudd_TurnOnCountDead" #.(swig-lispify "Cudd_TurnOnCountDead" 'function)) :void
-  (dd manager))
+  (cffi:defcfun ("Cudd_TurnOnCountDead" #.(swig-lispify "Cudd_TurnOnCountDead" 'function)) :void
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_TurnOnCountDead" 'function))
+  (cl:export '#.(swig-lispify "Cudd_TurnOnCountDead" 'function))
 
-(cffi:defcfun ("Cudd_TurnOffCountDead" #.(swig-lispify "Cudd_TurnOffCountDead" 'function)) :void
-  (dd manager))
+  (cffi:defcfun ("Cudd_TurnOffCountDead" #.(swig-lispify "Cudd_TurnOffCountDead" 'function)) :void
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_TurnOffCountDead" 'function))
+  (cl:export '#.(swig-lispify "Cudd_TurnOffCountDead" 'function))
 
-(cffi:defcfun ("Cudd_ReadRecomb" #.(swig-lispify "Cudd_ReadRecomb" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadRecomb" #.(swig-lispify "Cudd_ReadRecomb" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadRecomb" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadRecomb" 'function))
 
-(cffi:defcfun ("Cudd_SetRecomb" #.(swig-lispify "Cudd_SetRecomb" 'function)) :void
-  (dd manager)
-  (recomb :int))
+  (cffi:defcfun ("Cudd_SetRecomb" #.(swig-lispify "Cudd_SetRecomb" 'function)) :void
+	(dd manager)
+	(recomb :int))
 
-(cl:export '#.(swig-lispify "Cudd_SetRecomb" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetRecomb" 'function))
 
-(cffi:defcfun ("Cudd_ReadSymmviolation" #.(swig-lispify "Cudd_ReadSymmviolation" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadSymmviolation" #.(swig-lispify "Cudd_ReadSymmviolation" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadSymmviolation" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadSymmviolation" 'function))
 
-(cffi:defcfun ("Cudd_SetSymmviolation" #.(swig-lispify "Cudd_SetSymmviolation" 'function)) :void
-  (dd manager)
-  (symmviolation :int))
+  (cffi:defcfun ("Cudd_SetSymmviolation" #.(swig-lispify "Cudd_SetSymmviolation" 'function)) :void
+	(dd manager)
+	(symmviolation :int))
 
-(cl:export '#.(swig-lispify "Cudd_SetSymmviolation" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetSymmviolation" 'function))
 
-(cffi:defcfun ("Cudd_ReadArcviolation" #.(swig-lispify "Cudd_ReadArcviolation" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadArcviolation" #.(swig-lispify "Cudd_ReadArcviolation" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadArcviolation" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadArcviolation" 'function))
 
-(cffi:defcfun ("Cudd_SetArcviolation" #.(swig-lispify "Cudd_SetArcviolation" 'function)) :void
-  (dd manager)
-  (arcviolation :int))
+  (cffi:defcfun ("Cudd_SetArcviolation" #.(swig-lispify "Cudd_SetArcviolation" 'function)) :void
+	(dd manager)
+	(arcviolation :int))
 
-(cl:export '#.(swig-lispify "Cudd_SetArcviolation" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetArcviolation" 'function))
 
-(cffi:defcfun ("Cudd_ReadPopulationSize" #.(swig-lispify "Cudd_ReadPopulationSize" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadPopulationSize" #.(swig-lispify "Cudd_ReadPopulationSize" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadPopulationSize" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadPopulationSize" 'function))
 
-(cffi:defcfun ("Cudd_SetPopulationSize" #.(swig-lispify "Cudd_SetPopulationSize" 'function)) :void
-  (dd manager)
-  (populationSize :int))
+  (cffi:defcfun ("Cudd_SetPopulationSize" #.(swig-lispify "Cudd_SetPopulationSize" 'function)) :void
+	(dd manager)
+	(populationSize :int))
 
-(cl:export '#.(swig-lispify "Cudd_SetPopulationSize" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetPopulationSize" 'function))
 
-(cffi:defcfun ("Cudd_ReadNumberXovers" #.(swig-lispify "Cudd_ReadNumberXovers" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadNumberXovers" #.(swig-lispify "Cudd_ReadNumberXovers" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadNumberXovers" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadNumberXovers" 'function))
 
-(cffi:defcfun ("Cudd_SetNumberXovers" #.(swig-lispify "Cudd_SetNumberXovers" 'function)) :void
-  (dd manager)
-  (numberXovers :int))
+  (cffi:defcfun ("Cudd_SetNumberXovers" #.(swig-lispify "Cudd_SetNumberXovers" 'function)) :void
+	(dd manager)
+	(numberXovers :int))
 
-(cl:export '#.(swig-lispify "Cudd_SetNumberXovers" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetNumberXovers" 'function))
 
-(cffi:defcfun ("Cudd_ReadOrderRandomization" #.(swig-lispify "Cudd_ReadOrderRandomization" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadOrderRandomization" #.(swig-lispify "Cudd_ReadOrderRandomization" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadOrderRandomization" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadOrderRandomization" 'function))
 
-(cffi:defcfun ("Cudd_SetOrderRandomization" #.(swig-lispify "Cudd_SetOrderRandomization" 'function)) :void
-  (dd manager)
-  (factor :unsigned-int))
+  (cffi:defcfun ("Cudd_SetOrderRandomization" #.(swig-lispify "Cudd_SetOrderRandomization" 'function)) :void
+	(dd manager)
+	(factor :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_SetOrderRandomization" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetOrderRandomization" 'function))
 
-(cffi:defcfun ("Cudd_ReadMemoryInUse" #.(swig-lispify "Cudd_ReadMemoryInUse" 'function)) :pointer
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadMemoryInUse" #.(swig-lispify "Cudd_ReadMemoryInUse" 'function)) :pointer
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadMemoryInUse" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadMemoryInUse" 'function))
 
-(cffi:defcfun ("Cudd_PrintInfo" #.(swig-lispify "Cudd_PrintInfo" 'function)) :int
-  (dd manager)
-  (fp :pointer))
+  (cffi:defcfun ("Cudd_PrintInfo" #.(swig-lispify "Cudd_PrintInfo" 'function)) :int
+	(dd manager)
+	(fp :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_PrintInfo" 'function))
+  (cl:export '#.(swig-lispify "Cudd_PrintInfo" 'function))
 
-(cffi:defcfun ("Cudd_ReadPeakNodeCount" #.(swig-lispify "Cudd_ReadPeakNodeCount" 'function)) :long
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadPeakNodeCount" #.(swig-lispify "Cudd_ReadPeakNodeCount" 'function)) :long
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadPeakNodeCount" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadPeakNodeCount" 'function))
 
-(cffi:defcfun ("Cudd_ReadPeakLiveNodeCount" #.(swig-lispify "Cudd_ReadPeakLiveNodeCount" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadPeakLiveNodeCount" #.(swig-lispify "Cudd_ReadPeakLiveNodeCount" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadPeakLiveNodeCount" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadPeakLiveNodeCount" 'function))
 
-(cffi:defcfun ("Cudd_ReadNodeCount" #.(swig-lispify "Cudd_ReadNodeCount" 'function)) :long
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadNodeCount" #.(swig-lispify "Cudd_ReadNodeCount" 'function)) :long
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadNodeCount" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadNodeCount" 'function))
 
-(cffi:defcfun ("Cudd_zddReadNodeCount" #.(swig-lispify "Cudd_zddReadNodeCount" 'function)) :long
-  (dd manager))
+  (cffi:defcfun ("Cudd_zddReadNodeCount" #.(swig-lispify "Cudd_zddReadNodeCount" 'function)) :long
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_zddReadNodeCount" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddReadNodeCount" 'function))
 
-(cffi:defcfun ("Cudd_AddHook" #.(swig-lispify "Cudd_AddHook" 'function)) :int
-  (dd manager)
-  (f :pointer)
-  (where #.(swig-lispify "Cudd_HookType" 'enumname)))
+  (cffi:defcfun ("Cudd_AddHook" #.(swig-lispify "Cudd_AddHook" 'function)) :int
+	(dd manager)
+	(f :pointer)
+	(where #.(swig-lispify "Cudd_HookType" 'enumname)))
 
-(cl:export '#.(swig-lispify "Cudd_AddHook" 'function))
+  (cl:export '#.(swig-lispify "Cudd_AddHook" 'function))
 
-(cffi:defcfun ("Cudd_RemoveHook" #.(swig-lispify "Cudd_RemoveHook" 'function)) :int
-  (dd manager)
-  (f :pointer)
-  (where #.(swig-lispify "Cudd_HookType" 'enumname)))
+  (cffi:defcfun ("Cudd_RemoveHook" #.(swig-lispify "Cudd_RemoveHook" 'function)) :int
+	(dd manager)
+	(f :pointer)
+	(where #.(swig-lispify "Cudd_HookType" 'enumname)))
 
-(cl:export '#.(swig-lispify "Cudd_RemoveHook" 'function))
+  (cl:export '#.(swig-lispify "Cudd_RemoveHook" 'function))
 
-(cffi:defcfun ("Cudd_IsInHook" #.(swig-lispify "Cudd_IsInHook" 'function)) :int
-  (dd manager)
-  (f :pointer)
-  (where #.(swig-lispify "Cudd_HookType" 'enumname)))
+  (cffi:defcfun ("Cudd_IsInHook" #.(swig-lispify "Cudd_IsInHook" 'function)) :int
+	(dd manager)
+	(f :pointer)
+	(where #.(swig-lispify "Cudd_HookType" 'enumname)))
 
-(cl:export '#.(swig-lispify "Cudd_IsInHook" 'function))
+  (cl:export '#.(swig-lispify "Cudd_IsInHook" 'function))
 
-(cffi:defcfun ("Cudd_StdPreReordHook" #.(swig-lispify "Cudd_StdPreReordHook" 'function)) :int
-  (dd manager)
-  (str :string)
-  (data :pointer))
+  (cffi:defcfun ("Cudd_StdPreReordHook" #.(swig-lispify "Cudd_StdPreReordHook" 'function)) :int
+	(dd manager)
+	(str :string)
+	(data :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_StdPreReordHook" 'function))
+  (cl:export '#.(swig-lispify "Cudd_StdPreReordHook" 'function))
 
-(cffi:defcfun ("Cudd_StdPostReordHook" #.(swig-lispify "Cudd_StdPostReordHook" 'function)) :int
-  (dd manager)
-  (str :string)
-  (data :pointer))
+  (cffi:defcfun ("Cudd_StdPostReordHook" #.(swig-lispify "Cudd_StdPostReordHook" 'function)) :int
+	(dd manager)
+	(str :string)
+	(data :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_StdPostReordHook" 'function))
+  (cl:export '#.(swig-lispify "Cudd_StdPostReordHook" 'function))
 
-(cffi:defcfun ("Cudd_EnableReorderingReporting" #.(swig-lispify "Cudd_EnableReorderingReporting" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_EnableReorderingReporting" #.(swig-lispify "Cudd_EnableReorderingReporting" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_EnableReorderingReporting" 'function))
+  (cl:export '#.(swig-lispify "Cudd_EnableReorderingReporting" 'function))
 
-(cffi:defcfun ("Cudd_DisableReorderingReporting" #.(swig-lispify "Cudd_DisableReorderingReporting" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_DisableReorderingReporting" #.(swig-lispify "Cudd_DisableReorderingReporting" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_DisableReorderingReporting" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DisableReorderingReporting" 'function))
 
-(cffi:defcfun ("Cudd_ReorderingReporting" #.(swig-lispify "Cudd_ReorderingReporting" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReorderingReporting" #.(swig-lispify "Cudd_ReorderingReporting" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReorderingReporting" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReorderingReporting" 'function))
 
-(cffi:defcfun ("Cudd_PrintGroupedOrder" #.(swig-lispify "Cudd_PrintGroupedOrder" 'function)) :int
-  (dd manager)
-  (str :string)
-  (data :pointer))
+  (cffi:defcfun ("Cudd_PrintGroupedOrder" #.(swig-lispify "Cudd_PrintGroupedOrder" 'function)) :int
+	(dd manager)
+	(str :string)
+	(data :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_PrintGroupedOrder" 'function))
+  (cl:export '#.(swig-lispify "Cudd_PrintGroupedOrder" 'function))
 
-(cffi:defcfun ("Cudd_EnableOrderingMonitoring" #.(swig-lispify "Cudd_EnableOrderingMonitoring" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_EnableOrderingMonitoring" #.(swig-lispify "Cudd_EnableOrderingMonitoring" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_EnableOrderingMonitoring" 'function))
+  (cl:export '#.(swig-lispify "Cudd_EnableOrderingMonitoring" 'function))
 
-(cffi:defcfun ("Cudd_DisableOrderingMonitoring" #.(swig-lispify "Cudd_DisableOrderingMonitoring" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_DisableOrderingMonitoring" #.(swig-lispify "Cudd_DisableOrderingMonitoring" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_DisableOrderingMonitoring" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DisableOrderingMonitoring" 'function))
 
-(cffi:defcfun ("Cudd_OrderingMonitoring" #.(swig-lispify "Cudd_OrderingMonitoring" 'function)) :int
-  (dd manager))
+  (cffi:defcfun ("Cudd_OrderingMonitoring" #.(swig-lispify "Cudd_OrderingMonitoring" 'function)) :int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_OrderingMonitoring" 'function))
+  (cl:export '#.(swig-lispify "Cudd_OrderingMonitoring" 'function))
 
-(cffi:defcfun ("Cudd_SetApplicationHook" #.(swig-lispify "Cudd_SetApplicationHook" 'function)) :void
-  (dd manager)
-  (value :pointer))
+  (cffi:defcfun ("Cudd_SetApplicationHook" #.(swig-lispify "Cudd_SetApplicationHook" 'function)) :void
+	(dd manager)
+	(value :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_SetApplicationHook" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetApplicationHook" 'function))
 
-(cffi:defcfun ("Cudd_ReadApplicationHook" #.(swig-lispify "Cudd_ReadApplicationHook" 'function)) :pointer
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadApplicationHook" #.(swig-lispify "Cudd_ReadApplicationHook" 'function)) :pointer
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadApplicationHook" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadApplicationHook" 'function))
 
-(cffi:defcfun ("Cudd_ReadErrorCode" #.(swig-lispify "Cudd_ReadErrorCode" 'function)) #.(swig-lispify "Cudd_ErrorType" 'enumname)
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadErrorCode" #.(swig-lispify "Cudd_ReadErrorCode" 'function)) #.(swig-lispify "Cudd_ErrorType" 'enumname)
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadErrorCode" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadErrorCode" 'function))
 
-(cffi:defcfun ("Cudd_ClearErrorCode" #.(swig-lispify "Cudd_ClearErrorCode" 'function)) :void
-  (dd manager))
+  (cffi:defcfun ("Cudd_ClearErrorCode" #.(swig-lispify "Cudd_ClearErrorCode" 'function)) :void
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ClearErrorCode" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ClearErrorCode" 'function))
 
-(cffi:defcfun ("Cudd_InstallOutOfMemoryHandler" #.(swig-lispify "Cudd_InstallOutOfMemoryHandler" 'function)) :pointer
-  (newHandler :pointer))
+  (cffi:defcfun ("Cudd_InstallOutOfMemoryHandler" #.(swig-lispify "Cudd_InstallOutOfMemoryHandler" 'function)) :pointer
+	(newHandler :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_InstallOutOfMemoryHandler" 'function))
+  (cl:export '#.(swig-lispify "Cudd_InstallOutOfMemoryHandler" 'function))
 
-(cffi:defcfun ("Cudd_ReadStdout" #.(swig-lispify "Cudd_ReadStdout" 'function)) :pointer
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadStdout" #.(swig-lispify "Cudd_ReadStdout" 'function)) :pointer
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadStdout" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadStdout" 'function))
 
-(cffi:defcfun ("Cudd_SetStdout" #.(swig-lispify "Cudd_SetStdout" 'function)) :void
-  (dd manager)
-  (fp :pointer))
+  (cffi:defcfun ("Cudd_SetStdout" #.(swig-lispify "Cudd_SetStdout" 'function)) :void
+	(dd manager)
+	(fp :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_SetStdout" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetStdout" 'function))
 
-(cffi:defcfun ("Cudd_ReadStderr" #.(swig-lispify "Cudd_ReadStderr" 'function)) :pointer
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadStderr" #.(swig-lispify "Cudd_ReadStderr" 'function)) :pointer
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadStderr" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadStderr" 'function))
 
-(cffi:defcfun ("Cudd_SetStderr" #.(swig-lispify "Cudd_SetStderr" 'function)) :void
-  (dd manager)
-  (fp :pointer))
+  (cffi:defcfun ("Cudd_SetStderr" #.(swig-lispify "Cudd_SetStderr" 'function)) :void
+	(dd manager)
+	(fp :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_SetStderr" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetStderr" 'function))
 
-(cffi:defcfun ("Cudd_ReadNextReordering" #.(swig-lispify "Cudd_ReadNextReordering" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadNextReordering" #.(swig-lispify "Cudd_ReadNextReordering" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadNextReordering" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadNextReordering" 'function))
 
-(cffi:defcfun ("Cudd_SetNextReordering" #.(swig-lispify "Cudd_SetNextReordering" 'function)) :void
-  (dd manager)
-  (next :unsigned-int))
+  (cffi:defcfun ("Cudd_SetNextReordering" #.(swig-lispify "Cudd_SetNextReordering" 'function)) :void
+	(dd manager)
+	(next :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_SetNextReordering" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetNextReordering" 'function))
 
-(cffi:defcfun ("Cudd_ReadSwapSteps" #.(swig-lispify "Cudd_ReadSwapSteps" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadSwapSteps" #.(swig-lispify "Cudd_ReadSwapSteps" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadSwapSteps" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadSwapSteps" 'function))
 
-(cffi:defcfun ("Cudd_ReadMaxLive" #.(swig-lispify "Cudd_ReadMaxLive" 'function)) :unsigned-int
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadMaxLive" #.(swig-lispify "Cudd_ReadMaxLive" 'function)) :unsigned-int
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadMaxLive" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadMaxLive" 'function))
 
-(cffi:defcfun ("Cudd_SetMaxLive" #.(swig-lispify "Cudd_SetMaxLive" 'function)) :void
-  (dd manager)
-  (maxLive :unsigned-int))
+  (cffi:defcfun ("Cudd_SetMaxLive" #.(swig-lispify "Cudd_SetMaxLive" 'function)) :void
+	(dd manager)
+	(maxLive :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_SetMaxLive" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetMaxLive" 'function))
 
-(cffi:defcfun ("Cudd_ReadMaxMemory" #.(swig-lispify "Cudd_ReadMaxMemory" 'function)) :unsigned-long
-  (dd manager))
+  (cffi:defcfun ("Cudd_ReadMaxMemory" #.(swig-lispify "Cudd_ReadMaxMemory" 'function)) :unsigned-long
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_ReadMaxMemory" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadMaxMemory" 'function))
 
-(cffi:defcfun ("Cudd_SetMaxMemory" #.(swig-lispify "Cudd_SetMaxMemory" 'function)) :void
-  (dd manager)
-  (maxMemory :unsigned-long))
+  (cffi:defcfun ("Cudd_SetMaxMemory" #.(swig-lispify "Cudd_SetMaxMemory" 'function)) :void
+	(dd manager)
+	(maxMemory :unsigned-long))
 
-(cl:export '#.(swig-lispify "Cudd_SetMaxMemory" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetMaxMemory" 'function))
 
-(cffi:defcfun ("Cudd_bddBindVar" #.(swig-lispify "Cudd_bddBindVar" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddBindVar" #.(swig-lispify "Cudd_bddBindVar" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddBindVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddBindVar" 'function))
 
-(cffi:defcfun ("Cudd_bddUnbindVar" #.(swig-lispify "Cudd_bddUnbindVar" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddUnbindVar" #.(swig-lispify "Cudd_bddUnbindVar" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddUnbindVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddUnbindVar" 'function))
 
-(cffi:defcfun ("Cudd_bddVarIsBound" #.(swig-lispify "Cudd_bddVarIsBound" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddVarIsBound" #.(swig-lispify "Cudd_bddVarIsBound" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddVarIsBound" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddVarIsBound" 'function))
 
-(cffi:defcfun ("Cudd_addExistAbstract" #.(swig-lispify "Cudd_addExistAbstract" 'function)) node
-  (manager manager)
-  (f node)
-  (cube node))
+  (cffi:defcfun ("Cudd_addExistAbstract" #.(swig-lispify "Cudd_addExistAbstract" 'function)) node
+	(manager manager)
+	(f node)
+	(cube node))
 
-(cl:export '#.(swig-lispify "Cudd_addExistAbstract" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addExistAbstract" 'function))
 
-(cffi:defcfun ("Cudd_addUnivAbstract" #.(swig-lispify "Cudd_addUnivAbstract" 'function)) node
-  (manager manager)
-  (f node)
-  (cube node))
+  (cffi:defcfun ("Cudd_addUnivAbstract" #.(swig-lispify "Cudd_addUnivAbstract" 'function)) node
+	(manager manager)
+	(f node)
+	(cube node))
 
-(cl:export '#.(swig-lispify "Cudd_addUnivAbstract" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addUnivAbstract" 'function))
 
-(cffi:defcfun ("Cudd_addOrAbstract" #.(swig-lispify "Cudd_addOrAbstract" 'function)) node
-  (manager manager)
-  (f node)
-  (cube node))
+  (cffi:defcfun ("Cudd_addOrAbstract" #.(swig-lispify "Cudd_addOrAbstract" 'function)) node
+	(manager manager)
+	(f node)
+	(cube node))
 
-(cl:export '#.(swig-lispify "Cudd_addOrAbstract" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addOrAbstract" 'function))
 
-(cffi:defcfun ("Cudd_addApply" #.(swig-lispify "Cudd_addApply" 'function)) node
-  (dd manager)
-  (op :pointer)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_addApply" #.(swig-lispify "Cudd_addApply" 'function)) node
+	(dd manager)
+	(op :pointer)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_addApply" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addApply" 'function))
 
-(cffi:defcfun ("Cudd_addPlus" #.(swig-lispify "Cudd_addPlus" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addPlus" #.(swig-lispify "Cudd_addPlus" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addPlus" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addPlus" 'function))
 
-(cffi:defcfun ("Cudd_addTimes" #.(swig-lispify "Cudd_addTimes" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addTimes" #.(swig-lispify "Cudd_addTimes" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addTimes" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addTimes" 'function))
 
-(cffi:defcfun ("Cudd_addThreshold" #.(swig-lispify "Cudd_addThreshold" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addThreshold" #.(swig-lispify "Cudd_addThreshold" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addThreshold" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addThreshold" 'function))
 
-(cffi:defcfun ("Cudd_addSetNZ" #.(swig-lispify "Cudd_addSetNZ" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addSetNZ" #.(swig-lispify "Cudd_addSetNZ" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addSetNZ" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addSetNZ" 'function))
 
-(cffi:defcfun ("Cudd_addDivide" #.(swig-lispify "Cudd_addDivide" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addDivide" #.(swig-lispify "Cudd_addDivide" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addDivide" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addDivide" 'function))
 
-(cffi:defcfun ("Cudd_addMinus" #.(swig-lispify "Cudd_addMinus" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addMinus" #.(swig-lispify "Cudd_addMinus" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addMinus" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addMinus" 'function))
 
-(cffi:defcfun ("Cudd_addMinimum" #.(swig-lispify "Cudd_addMinimum" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addMinimum" #.(swig-lispify "Cudd_addMinimum" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addMinimum" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addMinimum" 'function))
 
-(cffi:defcfun ("Cudd_addMaximum" #.(swig-lispify "Cudd_addMaximum" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addMaximum" #.(swig-lispify "Cudd_addMaximum" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addMaximum" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addMaximum" 'function))
 
-(cffi:defcfun ("Cudd_addOneZeroMaximum" #.(swig-lispify "Cudd_addOneZeroMaximum" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addOneZeroMaximum" #.(swig-lispify "Cudd_addOneZeroMaximum" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addOneZeroMaximum" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addOneZeroMaximum" 'function))
 
-(cffi:defcfun ("Cudd_addDiff" #.(swig-lispify "Cudd_addDiff" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addDiff" #.(swig-lispify "Cudd_addDiff" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addDiff" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addDiff" 'function))
 
-(cffi:defcfun ("Cudd_addAgreement" #.(swig-lispify "Cudd_addAgreement" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addAgreement" #.(swig-lispify "Cudd_addAgreement" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addAgreement" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addAgreement" 'function))
 
-(cffi:defcfun ("Cudd_addOr" #.(swig-lispify "Cudd_addOr" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addOr" #.(swig-lispify "Cudd_addOr" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addOr" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addOr" 'function))
 
-(cffi:defcfun ("Cudd_addNand" #.(swig-lispify "Cudd_addNand" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addNand" #.(swig-lispify "Cudd_addNand" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addNand" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addNand" 'function))
 
-(cffi:defcfun ("Cudd_addNor" #.(swig-lispify "Cudd_addNor" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addNor" #.(swig-lispify "Cudd_addNor" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addNor" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addNor" 'function))
 
-(cffi:defcfun ("Cudd_addXor" #.(swig-lispify "Cudd_addXor" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addXor" #.(swig-lispify "Cudd_addXor" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addXor" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addXor" 'function))
 
-(cffi:defcfun ("Cudd_addXnor" #.(swig-lispify "Cudd_addXnor" 'function)) node
-  (dd manager)
-  (f :pointer)
-  (g :pointer))
+  (cffi:defcfun ("Cudd_addXnor" #.(swig-lispify "Cudd_addXnor" 'function)) node
+	(dd manager)
+	(f :pointer)
+	(g :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addXnor" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addXnor" 'function))
 
-(cffi:defcfun ("Cudd_addMonadicApply" #.(swig-lispify "Cudd_addMonadicApply" 'function)) node
-  (dd manager)
-  (op :pointer)
-  (f node))
+  (cffi:defcfun ("Cudd_addMonadicApply" #.(swig-lispify "Cudd_addMonadicApply" 'function)) node
+	(dd manager)
+	(op :pointer)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_addMonadicApply" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addMonadicApply" 'function))
 
-(cffi:defcfun ("Cudd_addLog" #.(swig-lispify "Cudd_addLog" 'function)) node
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_addLog" #.(swig-lispify "Cudd_addLog" 'function)) node
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_addLog" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addLog" 'function))
 
-(cffi:defcfun ("Cudd_addFindMax" #.(swig-lispify "Cudd_addFindMax" 'function)) node
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_addFindMax" #.(swig-lispify "Cudd_addFindMax" 'function)) node
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_addFindMax" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addFindMax" 'function))
 
-(cffi:defcfun ("Cudd_addFindMin" #.(swig-lispify "Cudd_addFindMin" 'function)) node
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_addFindMin" #.(swig-lispify "Cudd_addFindMin" 'function)) node
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_addFindMin" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addFindMin" 'function))
 
-(cffi:defcfun ("Cudd_addIthBit" #.(swig-lispify "Cudd_addIthBit" 'function)) node
-  (dd manager)
-  (f node)
-  (bit :int))
+  (cffi:defcfun ("Cudd_addIthBit" #.(swig-lispify "Cudd_addIthBit" 'function)) node
+	(dd manager)
+	(f node)
+	(bit :int))
 
-(cl:export '#.(swig-lispify "Cudd_addIthBit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addIthBit" 'function))
 
-(cffi:defcfun ("Cudd_addScalarInverse" #.(swig-lispify "Cudd_addScalarInverse" 'function)) node
-  (dd manager)
-  (f node)
-  (epsilon node))
+  (cffi:defcfun ("Cudd_addScalarInverse" #.(swig-lispify "Cudd_addScalarInverse" 'function)) node
+	(dd manager)
+	(f node)
+	(epsilon node))
 
-(cl:export '#.(swig-lispify "Cudd_addScalarInverse" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addScalarInverse" 'function))
 
-(cffi:defcfun ("Cudd_addIte" #.(swig-lispify "Cudd_addIte" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (h node))
+  (cffi:defcfun ("Cudd_addIte" #.(swig-lispify "Cudd_addIte" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(h node))
 
-(cl:export '#.(swig-lispify "Cudd_addIte" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addIte" 'function))
 
-(cffi:defcfun ("Cudd_addIteConstant" #.(swig-lispify "Cudd_addIteConstant" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (h node))
+  (cffi:defcfun ("Cudd_addIteConstant" #.(swig-lispify "Cudd_addIteConstant" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(h node))
 
-(cl:export '#.(swig-lispify "Cudd_addIteConstant" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addIteConstant" 'function))
 
-(cffi:defcfun ("Cudd_addEvalConst" #.(swig-lispify "Cudd_addEvalConst" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_addEvalConst" #.(swig-lispify "Cudd_addEvalConst" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_addEvalConst" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addEvalConst" 'function))
 
-(cffi:defcfun ("Cudd_addLeq" #.(swig-lispify "Cudd_addLeq" 'function)) :int
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_addLeq" #.(swig-lispify "Cudd_addLeq" 'function)) :int
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_addLeq" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addLeq" 'function))
 
-(cffi:defcfun ("Cudd_addCmpl" #.(swig-lispify "Cudd_addCmpl" 'function)) node
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_addCmpl" #.(swig-lispify "Cudd_addCmpl" 'function)) node
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_addCmpl" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addCmpl" 'function))
 
-(cffi:defcfun ("Cudd_addNegate" #.(swig-lispify "Cudd_addNegate" 'function)) node
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_addNegate" #.(swig-lispify "Cudd_addNegate" 'function)) node
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_addNegate" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addNegate" 'function))
 
-(cffi:defcfun ("Cudd_addRoundOff" #.(swig-lispify "Cudd_addRoundOff" 'function)) node
-  (dd manager)
-  (f node)
-  (N :int))
+  (cffi:defcfun ("Cudd_addRoundOff" #.(swig-lispify "Cudd_addRoundOff" 'function)) node
+	(dd manager)
+	(f node)
+	(N :int))
 
-(cl:export '#.(swig-lispify "Cudd_addRoundOff" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addRoundOff" 'function))
 
-(cffi:defcfun ("Cudd_addWalsh" #.(swig-lispify "Cudd_addWalsh" 'function)) node
-  (dd manager)
-  (x :pointer)
-  (y :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_addWalsh" #.(swig-lispify "Cudd_addWalsh" 'function)) node
+	(dd manager)
+	(x :pointer)
+	(y :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_addWalsh" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addWalsh" 'function))
 
-(cffi:defcfun ("Cudd_addResidue" #.(swig-lispify "Cudd_addResidue" 'function)) node
-  (dd manager)
-  (n :int)
-  (m :int)
-  (options :int)
-  (top :int))
+  (cffi:defcfun ("Cudd_addResidue" #.(swig-lispify "Cudd_addResidue" 'function)) node
+	(dd manager)
+	(n :int)
+	(m :int)
+	(options :int)
+	(top :int))
 
-(cl:export '#.(swig-lispify "Cudd_addResidue" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addResidue" 'function))
 
-(cffi:defcfun ("Cudd_bddAndAbstract" #.(swig-lispify "Cudd_bddAndAbstract" 'function)) node
-  (manager manager)
-  (f node)
-  (g node)
-  (cube node))
+  (cffi:defcfun ("Cudd_bddAndAbstract" #.(swig-lispify "Cudd_bddAndAbstract" 'function)) node
+	(manager manager)
+	(f node)
+	(g node)
+	(cube node))
 
-(cl:export '#.(swig-lispify "Cudd_bddAndAbstract" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddAndAbstract" 'function))
 
-(cffi:defcfun ("Cudd_bddAndAbstractLimit" #.(swig-lispify "Cudd_bddAndAbstractLimit" 'function)) node
-  (manager manager)
-  (f node)
-  (g node)
-  (cube node)
-  (limit :unsigned-int))
+  (cffi:defcfun ("Cudd_bddAndAbstractLimit" #.(swig-lispify "Cudd_bddAndAbstractLimit" 'function)) node
+	(manager manager)
+	(f node)
+	(g node)
+	(cube node)
+	(limit :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_bddAndAbstractLimit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddAndAbstractLimit" 'function))
 
-(cffi:defcfun ("Cudd_ApaNumberOfDigits" #.(swig-lispify "Cudd_ApaNumberOfDigits" 'function)) :int
-  (binaryDigits :int))
+  (cffi:defcfun ("Cudd_ApaNumberOfDigits" #.(swig-lispify "Cudd_ApaNumberOfDigits" 'function)) :int
+	(binaryDigits :int))
 
-(cl:export '#.(swig-lispify "Cudd_ApaNumberOfDigits" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaNumberOfDigits" 'function))
 
-(cffi:defcfun ("Cudd_NewApaNumber" #.(swig-lispify "Cudd_NewApaNumber" 'function)) :pointer
-  (digits :int))
+  (cffi:defcfun ("Cudd_NewApaNumber" #.(swig-lispify "Cudd_NewApaNumber" 'function)) :pointer
+	(digits :int))
 
-(cl:export '#.(swig-lispify "Cudd_NewApaNumber" 'function))
+  (cl:export '#.(swig-lispify "Cudd_NewApaNumber" 'function))
 
-(cffi:defcfun ("Cudd_FreeApaNumber" #.(swig-lispify "Cudd_FreeApaNumber" 'function)) :void
-  (number :pointer))
+  (cffi:defcfun ("Cudd_FreeApaNumber" #.(swig-lispify "Cudd_FreeApaNumber" 'function)) :void
+	(number :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_FreeApaNumber" 'function))
+  (cl:export '#.(swig-lispify "Cudd_FreeApaNumber" 'function))
 
-(cffi:defcfun ("Cudd_ApaCopy" #.(swig-lispify "Cudd_ApaCopy" 'function)) :void
-  (digits :int)
-  (source :pointer)
-  (dest :pointer))
+  (cffi:defcfun ("Cudd_ApaCopy" #.(swig-lispify "Cudd_ApaCopy" 'function)) :void
+	(digits :int)
+	(source :pointer)
+	(dest :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ApaCopy" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaCopy" 'function))
 
-(cffi:defcfun ("Cudd_ApaAdd" #.(swig-lispify "Cudd_ApaAdd" 'function)) :pointer
-  (digits :int)
-  (a :pointer)
-  (b :pointer)
-  (sum :pointer))
+  (cffi:defcfun ("Cudd_ApaAdd" #.(swig-lispify "Cudd_ApaAdd" 'function)) :pointer
+	(digits :int)
+	(a :pointer)
+	(b :pointer)
+	(sum :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ApaAdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaAdd" 'function))
 
-(cffi:defcfun ("Cudd_ApaSubtract" #.(swig-lispify "Cudd_ApaSubtract" 'function)) :pointer
-  (digits :int)
-  (a :pointer)
-  (b :pointer)
-  (diff :pointer))
+  (cffi:defcfun ("Cudd_ApaSubtract" #.(swig-lispify "Cudd_ApaSubtract" 'function)) :pointer
+	(digits :int)
+	(a :pointer)
+	(b :pointer)
+	(diff :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ApaSubtract" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaSubtract" 'function))
 
-(cffi:defcfun ("Cudd_ApaShortDivision" #.(swig-lispify "Cudd_ApaShortDivision" 'function)) :pointer
-  (digits :int)
-  (dividend :pointer)
-  (divisor :pointer)
-  (quotient :pointer))
+  (cffi:defcfun ("Cudd_ApaShortDivision" #.(swig-lispify "Cudd_ApaShortDivision" 'function)) :pointer
+	(digits :int)
+	(dividend :pointer)
+	(divisor :pointer)
+	(quotient :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ApaShortDivision" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaShortDivision" 'function))
 
-(cffi:defcfun ("Cudd_ApaIntDivision" #.(swig-lispify "Cudd_ApaIntDivision" 'function)) :unsigned-int
-  (digits :int)
-  (dividend :pointer)
-  (divisor :unsigned-int)
-  (quotient :pointer))
+  (cffi:defcfun ("Cudd_ApaIntDivision" #.(swig-lispify "Cudd_ApaIntDivision" 'function)) :unsigned-int
+	(digits :int)
+	(dividend :pointer)
+	(divisor :unsigned-int)
+	(quotient :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ApaIntDivision" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaIntDivision" 'function))
 
-(cffi:defcfun ("Cudd_ApaShiftRight" #.(swig-lispify "Cudd_ApaShiftRight" 'function)) :void
-  (digits :int)
-  (in :pointer)
-  (a :pointer)
-  (b :pointer))
+  (cffi:defcfun ("Cudd_ApaShiftRight" #.(swig-lispify "Cudd_ApaShiftRight" 'function)) :void
+	(digits :int)
+	(in :pointer)
+	(a :pointer)
+	(b :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ApaShiftRight" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaShiftRight" 'function))
 
-(cffi:defcfun ("Cudd_ApaSetToLiteral" #.(swig-lispify "Cudd_ApaSetToLiteral" 'function)) :void
-  (digits :int)
-  (number :pointer)
-  (literal :pointer))
+  (cffi:defcfun ("Cudd_ApaSetToLiteral" #.(swig-lispify "Cudd_ApaSetToLiteral" 'function)) :void
+	(digits :int)
+	(number :pointer)
+	(literal :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ApaSetToLiteral" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaSetToLiteral" 'function))
 
-(cffi:defcfun ("Cudd_ApaPowerOfTwo" #.(swig-lispify "Cudd_ApaPowerOfTwo" 'function)) :void
-  (digits :int)
-  (number :pointer)
-  (power :int))
+  (cffi:defcfun ("Cudd_ApaPowerOfTwo" #.(swig-lispify "Cudd_ApaPowerOfTwo" 'function)) :void
+	(digits :int)
+	(number :pointer)
+	(power :int))
 
-(cl:export '#.(swig-lispify "Cudd_ApaPowerOfTwo" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaPowerOfTwo" 'function))
 
-(cffi:defcfun ("Cudd_ApaCompare" #.(swig-lispify "Cudd_ApaCompare" 'function)) :int
-  (digitsFirst :int)
-  (first :pointer)
-  (digitsSecond :int)
-  (second :pointer))
+  (cffi:defcfun ("Cudd_ApaCompare" #.(swig-lispify "Cudd_ApaCompare" 'function)) :int
+	(digitsFirst :int)
+	(first :pointer)
+	(digitsSecond :int)
+	(second :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ApaCompare" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaCompare" 'function))
 
-(cffi:defcfun ("Cudd_ApaCompareRatios" #.(swig-lispify "Cudd_ApaCompareRatios" 'function)) :int
-  (digitsFirst :int)
-  (firstNum :pointer)
-  (firstDen :unsigned-int)
-  (digitsSecond :int)
-  (secondNum :pointer)
-  (secondDen :unsigned-int))
+  (cffi:defcfun ("Cudd_ApaCompareRatios" #.(swig-lispify "Cudd_ApaCompareRatios" 'function)) :int
+	(digitsFirst :int)
+	(firstNum :pointer)
+	(firstDen :unsigned-int)
+	(digitsSecond :int)
+	(secondNum :pointer)
+	(secondDen :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_ApaCompareRatios" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaCompareRatios" 'function))
 
-(cffi:defcfun ("Cudd_ApaPrintHex" #.(swig-lispify "Cudd_ApaPrintHex" 'function)) :int
-  (fp :pointer)
-  (digits :int)
-  (number :pointer))
+  (cffi:defcfun ("Cudd_ApaPrintHex" #.(swig-lispify "Cudd_ApaPrintHex" 'function)) :int
+	(fp :pointer)
+	(digits :int)
+	(number :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ApaPrintHex" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaPrintHex" 'function))
 
-(cffi:defcfun ("Cudd_ApaPrintDecimal" #.(swig-lispify "Cudd_ApaPrintDecimal" 'function)) :int
-  (fp :pointer)
-  (digits :int)
-  (number :pointer))
+  (cffi:defcfun ("Cudd_ApaPrintDecimal" #.(swig-lispify "Cudd_ApaPrintDecimal" 'function)) :int
+	(fp :pointer)
+	(digits :int)
+	(number :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ApaPrintDecimal" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaPrintDecimal" 'function))
 
-(cffi:defcfun ("Cudd_ApaStringDecimal" #.(swig-lispify "Cudd_ApaStringDecimal" 'function)) :string
-  (digits :int)
-  (number :pointer))
+  (cffi:defcfun ("Cudd_ApaStringDecimal" #.(swig-lispify "Cudd_ApaStringDecimal" 'function)) :string
+	(digits :int)
+	(number :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ApaStringDecimal" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaStringDecimal" 'function))
 
-(cffi:defcfun ("Cudd_ApaPrintExponential" #.(swig-lispify "Cudd_ApaPrintExponential" 'function)) :int
-  (fp :pointer)
-  (digits :int)
-  (number :pointer)
-  (precision :int))
+  (cffi:defcfun ("Cudd_ApaPrintExponential" #.(swig-lispify "Cudd_ApaPrintExponential" 'function)) :int
+	(fp :pointer)
+	(digits :int)
+	(number :pointer)
+	(precision :int))
 
-(cl:export '#.(swig-lispify "Cudd_ApaPrintExponential" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaPrintExponential" 'function))
 
-(cffi:defcfun ("Cudd_ApaCountMinterm" #.(swig-lispify "Cudd_ApaCountMinterm" 'function)) :pointer
-  (manager manager)
-  (node node)
-  (nvars :int)
-  (digits :pointer))
+  (cffi:defcfun ("Cudd_ApaCountMinterm" #.(swig-lispify "Cudd_ApaCountMinterm" 'function)) :pointer
+	(manager manager)
+	(node node)
+	(nvars :int)
+	(digits :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ApaCountMinterm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaCountMinterm" 'function))
 
-(cffi:defcfun ("Cudd_ApaPrintMinterm" #.(swig-lispify "Cudd_ApaPrintMinterm" 'function)) :int
-  (fp :pointer)
-  (dd manager)
-  (node node)
-  (nvars :int))
+  (cffi:defcfun ("Cudd_ApaPrintMinterm" #.(swig-lispify "Cudd_ApaPrintMinterm" 'function)) :int
+	(fp :pointer)
+	(dd manager)
+	(node node)
+	(nvars :int))
 
-(cl:export '#.(swig-lispify "Cudd_ApaPrintMinterm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaPrintMinterm" 'function))
 
-(cffi:defcfun ("Cudd_ApaPrintMintermExp" #.(swig-lispify "Cudd_ApaPrintMintermExp" 'function)) :int
-  (fp :pointer)
-  (dd manager)
-  (node node)
-  (nvars :int)
-  (precision :int))
+  (cffi:defcfun ("Cudd_ApaPrintMintermExp" #.(swig-lispify "Cudd_ApaPrintMintermExp" 'function)) :int
+	(fp :pointer)
+	(dd manager)
+	(node node)
+	(nvars :int)
+	(precision :int))
 
-(cl:export '#.(swig-lispify "Cudd_ApaPrintMintermExp" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaPrintMintermExp" 'function))
 
-(cffi:defcfun ("Cudd_ApaPrintDensity" #.(swig-lispify "Cudd_ApaPrintDensity" 'function)) :int
-  (fp :pointer)
-  (dd manager)
-  (node node)
-  (nvars :int))
+  (cffi:defcfun ("Cudd_ApaPrintDensity" #.(swig-lispify "Cudd_ApaPrintDensity" 'function)) :int
+	(fp :pointer)
+	(dd manager)
+	(node node)
+	(nvars :int))
 
-(cl:export '#.(swig-lispify "Cudd_ApaPrintDensity" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ApaPrintDensity" 'function))
 
-(cffi:defcfun ("Cudd_UnderApprox" #.(swig-lispify "Cudd_UnderApprox" 'function)) node
-  (dd manager)
-  (f node)
-  (numVars :int)
-  (threshold :int)
-  (safe :int)
-  (quality :double))
+  (cffi:defcfun ("Cudd_UnderApprox" #.(swig-lispify "Cudd_UnderApprox" 'function)) node
+	(dd manager)
+	(f node)
+	(numVars :int)
+	(threshold :int)
+	(safe :int)
+	(quality :double))
 
-(cl:export '#.(swig-lispify "Cudd_UnderApprox" 'function))
+  (cl:export '#.(swig-lispify "Cudd_UnderApprox" 'function))
 
-(cffi:defcfun ("Cudd_OverApprox" #.(swig-lispify "Cudd_OverApprox" 'function)) node
-  (dd manager)
-  (f node)
-  (numVars :int)
-  (threshold :int)
-  (safe :int)
-  (quality :double))
+  (cffi:defcfun ("Cudd_OverApprox" #.(swig-lispify "Cudd_OverApprox" 'function)) node
+	(dd manager)
+	(f node)
+	(numVars :int)
+	(threshold :int)
+	(safe :int)
+	(quality :double))
 
-(cl:export '#.(swig-lispify "Cudd_OverApprox" 'function))
+  (cl:export '#.(swig-lispify "Cudd_OverApprox" 'function))
 
-(cffi:defcfun ("Cudd_RemapUnderApprox" #.(swig-lispify "Cudd_RemapUnderApprox" 'function)) node
-  (dd manager)
-  (f node)
-  (numVars :int)
-  (threshold :int)
-  (quality :double))
+  (cffi:defcfun ("Cudd_RemapUnderApprox" #.(swig-lispify "Cudd_RemapUnderApprox" 'function)) node
+	(dd manager)
+	(f node)
+	(numVars :int)
+	(threshold :int)
+	(quality :double))
 
-(cl:export '#.(swig-lispify "Cudd_RemapUnderApprox" 'function))
+  (cl:export '#.(swig-lispify "Cudd_RemapUnderApprox" 'function))
 
-(cffi:defcfun ("Cudd_RemapOverApprox" #.(swig-lispify "Cudd_RemapOverApprox" 'function)) node
-  (dd manager)
-  (f node)
-  (numVars :int)
-  (threshold :int)
-  (quality :double))
+  (cffi:defcfun ("Cudd_RemapOverApprox" #.(swig-lispify "Cudd_RemapOverApprox" 'function)) node
+	(dd manager)
+	(f node)
+	(numVars :int)
+	(threshold :int)
+	(quality :double))
 
-(cl:export '#.(swig-lispify "Cudd_RemapOverApprox" 'function))
+  (cl:export '#.(swig-lispify "Cudd_RemapOverApprox" 'function))
 
-(cffi:defcfun ("Cudd_BiasedUnderApprox" #.(swig-lispify "Cudd_BiasedUnderApprox" 'function)) node
-  (dd manager)
-  (f node)
-  (b node)
-  (numVars :int)
-  (threshold :int)
-  (quality1 :double)
-  (quality0 :double))
+  (cffi:defcfun ("Cudd_BiasedUnderApprox" #.(swig-lispify "Cudd_BiasedUnderApprox" 'function)) node
+	(dd manager)
+	(f node)
+	(b node)
+	(numVars :int)
+	(threshold :int)
+	(quality1 :double)
+	(quality0 :double))
 
-(cl:export '#.(swig-lispify "Cudd_BiasedUnderApprox" 'function))
+  (cl:export '#.(swig-lispify "Cudd_BiasedUnderApprox" 'function))
 
-(cffi:defcfun ("Cudd_BiasedOverApprox" #.(swig-lispify "Cudd_BiasedOverApprox" 'function)) node
-  (dd manager)
-  (f node)
-  (b node)
-  (numVars :int)
-  (threshold :int)
-  (quality1 :double)
-  (quality0 :double))
+  (cffi:defcfun ("Cudd_BiasedOverApprox" #.(swig-lispify "Cudd_BiasedOverApprox" 'function)) node
+	(dd manager)
+	(f node)
+	(b node)
+	(numVars :int)
+	(threshold :int)
+	(quality1 :double)
+	(quality0 :double))
 
-(cl:export '#.(swig-lispify "Cudd_BiasedOverApprox" 'function))
+  (cl:export '#.(swig-lispify "Cudd_BiasedOverApprox" 'function))
 
-(cffi:defcfun ("Cudd_bddExistAbstract" #.(swig-lispify "Cudd_bddExistAbstract" 'function)) node
-  (manager manager)
-  (f node)
-  (cube node))
+  (cffi:defcfun ("Cudd_bddExistAbstract" #.(swig-lispify "Cudd_bddExistAbstract" 'function)) node
+	(manager manager)
+	(f node)
+	(cube node))
 
-(cl:export '#.(swig-lispify "Cudd_bddExistAbstract" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddExistAbstract" 'function))
 
-(cffi:defcfun ("Cudd_bddExistAbstractLimit" #.(swig-lispify "Cudd_bddExistAbstractLimit" 'function)) node
-  (manager manager)
-  (f node)
-  (cube node)
-  (limit :unsigned-int))
+  (cffi:defcfun ("Cudd_bddExistAbstractLimit" #.(swig-lispify "Cudd_bddExistAbstractLimit" 'function)) node
+	(manager manager)
+	(f node)
+	(cube node)
+	(limit :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_bddExistAbstractLimit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddExistAbstractLimit" 'function))
 
-(cffi:defcfun ("Cudd_bddXorExistAbstract" #.(swig-lispify "Cudd_bddXorExistAbstract" 'function)) node
-  (manager manager)
-  (f node)
-  (g node)
-  (cube node))
+  (cffi:defcfun ("Cudd_bddXorExistAbstract" #.(swig-lispify "Cudd_bddXorExistAbstract" 'function)) node
+	(manager manager)
+	(f node)
+	(g node)
+	(cube node))
 
-(cl:export '#.(swig-lispify "Cudd_bddXorExistAbstract" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddXorExistAbstract" 'function))
 
-(cffi:defcfun ("Cudd_bddUnivAbstract" #.(swig-lispify "Cudd_bddUnivAbstract" 'function)) node
-  (manager manager)
-  (f node)
-  (cube node))
+  (cffi:defcfun ("Cudd_bddUnivAbstract" #.(swig-lispify "Cudd_bddUnivAbstract" 'function)) node
+	(manager manager)
+	(f node)
+	(cube node))
 
-(cl:export '#.(swig-lispify "Cudd_bddUnivAbstract" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddUnivAbstract" 'function))
 
-(cffi:defcfun ("Cudd_bddBooleanDiff" #.(swig-lispify "Cudd_bddBooleanDiff" 'function)) node
-  (manager manager)
-  (f node)
-  (x :int))
+  (cffi:defcfun ("Cudd_bddBooleanDiff" #.(swig-lispify "Cudd_bddBooleanDiff" 'function)) node
+	(manager manager)
+	(f node)
+	(x :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddBooleanDiff" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddBooleanDiff" 'function))
 
-(cffi:defcfun ("Cudd_bddVarIsDependent" #.(swig-lispify "Cudd_bddVarIsDependent" 'function)) :int
-  (dd manager)
-  (f node)
-  (var node))
+  (cffi:defcfun ("Cudd_bddVarIsDependent" #.(swig-lispify "Cudd_bddVarIsDependent" 'function)) :int
+	(dd manager)
+	(f node)
+	(var node))
 
-(cl:export '#.(swig-lispify "Cudd_bddVarIsDependent" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddVarIsDependent" 'function))
 
-(cffi:defcfun ("Cudd_bddCorrelation" #.(swig-lispify "Cudd_bddCorrelation" 'function)) :double
-  (manager manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_bddCorrelation" #.(swig-lispify "Cudd_bddCorrelation" 'function)) :double
+	(manager manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_bddCorrelation" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddCorrelation" 'function))
 
-(cffi:defcfun ("Cudd_bddCorrelationWeights" #.(swig-lispify "Cudd_bddCorrelationWeights" 'function)) :double
-  (manager manager)
-  (f node)
-  (g node)
-  (prob :pointer))
+  (cffi:defcfun ("Cudd_bddCorrelationWeights" #.(swig-lispify "Cudd_bddCorrelationWeights" 'function)) :double
+	(manager manager)
+	(f node)
+	(g node)
+	(prob :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_bddCorrelationWeights" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddCorrelationWeights" 'function))
 
-(cffi:defcfun ("Cudd_bddIte" #.(swig-lispify "Cudd_bddIte" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (h node))
+  (cffi:defcfun ("Cudd_bddIte" #.(swig-lispify "Cudd_bddIte" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(h node))
 
-(cl:export '#.(swig-lispify "Cudd_bddIte" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIte" 'function))
 
-(cffi:defcfun ("Cudd_bddIteLimit" #.(swig-lispify "Cudd_bddIteLimit" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (h node)
-  (limit :unsigned-int))
+  (cffi:defcfun ("Cudd_bddIteLimit" #.(swig-lispify "Cudd_bddIteLimit" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(h node)
+	(limit :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_bddIteLimit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIteLimit" 'function))
 
-(cffi:defcfun ("Cudd_bddIteConstant" #.(swig-lispify "Cudd_bddIteConstant" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (h node))
+  (cffi:defcfun ("Cudd_bddIteConstant" #.(swig-lispify "Cudd_bddIteConstant" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(h node))
 
-(cl:export '#.(swig-lispify "Cudd_bddIteConstant" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIteConstant" 'function))
 
-(cffi:defcfun ("Cudd_bddIntersect" #.(swig-lispify "Cudd_bddIntersect" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_bddIntersect" #.(swig-lispify "Cudd_bddIntersect" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_bddIntersect" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIntersect" 'function))
 
-(cffi:defcfun ("Cudd_bddAnd" #.(swig-lispify "Cudd_bddAnd" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_bddAnd" #.(swig-lispify "Cudd_bddAnd" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_bddAnd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddAnd" 'function))
 
-(cffi:defcfun ("Cudd_bddAndLimit" #.(swig-lispify "Cudd_bddAndLimit" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (limit :unsigned-int))
+  (cffi:defcfun ("Cudd_bddAndLimit" #.(swig-lispify "Cudd_bddAndLimit" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(limit :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_bddAndLimit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddAndLimit" 'function))
 
-(cffi:defcfun ("Cudd_bddOr" #.(swig-lispify "Cudd_bddOr" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_bddOr" #.(swig-lispify "Cudd_bddOr" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_bddOr" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddOr" 'function))
 
-(cffi:defcfun ("Cudd_bddOrLimit" #.(swig-lispify "Cudd_bddOrLimit" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (limit :unsigned-int))
+  (cffi:defcfun ("Cudd_bddOrLimit" #.(swig-lispify "Cudd_bddOrLimit" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(limit :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_bddOrLimit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddOrLimit" 'function))
 
-(cffi:defcfun ("Cudd_bddNand" #.(swig-lispify "Cudd_bddNand" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_bddNand" #.(swig-lispify "Cudd_bddNand" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_bddNand" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddNand" 'function))
 
-(cffi:defcfun ("Cudd_bddNor" #.(swig-lispify "Cudd_bddNor" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_bddNor" #.(swig-lispify "Cudd_bddNor" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_bddNor" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddNor" 'function))
 
-(cffi:defcfun ("Cudd_bddXor" #.(swig-lispify "Cudd_bddXor" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_bddXor" #.(swig-lispify "Cudd_bddXor" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_bddXor" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddXor" 'function))
 
-(cffi:defcfun ("Cudd_bddXnor" #.(swig-lispify "Cudd_bddXnor" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_bddXnor" #.(swig-lispify "Cudd_bddXnor" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_bddXnor" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddXnor" 'function))
 
-(cffi:defcfun ("Cudd_bddXnorLimit" #.(swig-lispify "Cudd_bddXnorLimit" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (limit :unsigned-int))
+  (cffi:defcfun ("Cudd_bddXnorLimit" #.(swig-lispify "Cudd_bddXnorLimit" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(limit :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_bddXnorLimit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddXnorLimit" 'function))
 
-(cffi:defcfun ("Cudd_bddLeq" #.(swig-lispify "Cudd_bddLeq" 'function)) :int
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_bddLeq" #.(swig-lispify "Cudd_bddLeq" 'function)) :int
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_bddLeq" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddLeq" 'function))
 
-(cffi:defcfun ("Cudd_addBddThreshold" #.(swig-lispify "Cudd_addBddThreshold" 'function)) node
-  (dd manager)
-  (f node)
-  (value :double))
+  (cffi:defcfun ("Cudd_addBddThreshold" #.(swig-lispify "Cudd_addBddThreshold" 'function)) node
+	(dd manager)
+	(f node)
+	(value :double))
 
-(cl:export '#.(swig-lispify "Cudd_addBddThreshold" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addBddThreshold" 'function))
 
-(cffi:defcfun ("Cudd_addBddStrictThreshold" #.(swig-lispify "Cudd_addBddStrictThreshold" 'function)) node
-  (dd manager)
-  (f node)
-  (value :double))
+  (cffi:defcfun ("Cudd_addBddStrictThreshold" #.(swig-lispify "Cudd_addBddStrictThreshold" 'function)) node
+	(dd manager)
+	(f node)
+	(value :double))
 
-(cl:export '#.(swig-lispify "Cudd_addBddStrictThreshold" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addBddStrictThreshold" 'function))
 
-(cffi:defcfun ("Cudd_addBddInterval" #.(swig-lispify "Cudd_addBddInterval" 'function)) node
-  (dd manager)
-  (f node)
-  (lower :double)
-  (upper :double))
+  (cffi:defcfun ("Cudd_addBddInterval" #.(swig-lispify "Cudd_addBddInterval" 'function)) node
+	(dd manager)
+	(f node)
+	(lower :double)
+	(upper :double))
 
-(cl:export '#.(swig-lispify "Cudd_addBddInterval" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addBddInterval" 'function))
 
-(cffi:defcfun ("Cudd_addBddIthBit" #.(swig-lispify "Cudd_addBddIthBit" 'function)) node
-  (dd manager)
-  (f node)
-  (bit :int))
+  (cffi:defcfun ("Cudd_addBddIthBit" #.(swig-lispify "Cudd_addBddIthBit" 'function)) node
+	(dd manager)
+	(f node)
+	(bit :int))
 
-(cl:export '#.(swig-lispify "Cudd_addBddIthBit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addBddIthBit" 'function))
 
-(cffi:defcfun ("Cudd_BddToAdd" #.(swig-lispify "Cudd_BddToAdd" 'function)) node
-  (dd manager)
-  (B node))
+  (cffi:defcfun ("Cudd_BddToAdd" #.(swig-lispify "Cudd_BddToAdd" 'function)) node
+	(dd manager)
+	(B node))
 
-(cl:export '#.(swig-lispify "Cudd_BddToAdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_BddToAdd" 'function))
 
-(cffi:defcfun ("Cudd_addBddPattern" #.(swig-lispify "Cudd_addBddPattern" 'function)) node
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_addBddPattern" #.(swig-lispify "Cudd_addBddPattern" 'function)) node
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_addBddPattern" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addBddPattern" 'function))
 
-(cffi:defcfun ("Cudd_bddTransfer" #.(swig-lispify "Cudd_bddTransfer" 'function)) node
-  (ddSource manager)
-  (ddDestination manager)
-  (f node))
+  (cffi:defcfun ("Cudd_bddTransfer" #.(swig-lispify "Cudd_bddTransfer" 'function)) node
+	(ddSource manager)
+	(ddDestination manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_bddTransfer" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddTransfer" 'function))
 
-(cffi:defcfun ("Cudd_DebugCheck" #.(swig-lispify "Cudd_DebugCheck" 'function)) :int
-  (table manager))
+  (cffi:defcfun ("Cudd_DebugCheck" #.(swig-lispify "Cudd_DebugCheck" 'function)) :int
+	(table manager))
 
-(cl:export '#.(swig-lispify "Cudd_DebugCheck" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DebugCheck" 'function))
 
-(cffi:defcfun ("Cudd_CheckKeys" #.(swig-lispify "Cudd_CheckKeys" 'function)) :int
-  (table manager))
+  (cffi:defcfun ("Cudd_CheckKeys" #.(swig-lispify "Cudd_CheckKeys" 'function)) :int
+	(table manager))
 
-(cl:export '#.(swig-lispify "Cudd_CheckKeys" 'function))
+  (cl:export '#.(swig-lispify "Cudd_CheckKeys" 'function))
 
-(cffi:defcfun ("Cudd_bddClippingAnd" #.(swig-lispify "Cudd_bddClippingAnd" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (maxDepth :int)
-  (direction :int))
+  (cffi:defcfun ("Cudd_bddClippingAnd" #.(swig-lispify "Cudd_bddClippingAnd" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(maxDepth :int)
+	(direction :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddClippingAnd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddClippingAnd" 'function))
 
-(cffi:defcfun ("Cudd_bddClippingAndAbstract" #.(swig-lispify "Cudd_bddClippingAndAbstract" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (cube node)
-  (maxDepth :int)
-  (direction :int))
+  (cffi:defcfun ("Cudd_bddClippingAndAbstract" #.(swig-lispify "Cudd_bddClippingAndAbstract" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(cube node)
+	(maxDepth :int)
+	(direction :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddClippingAndAbstract" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddClippingAndAbstract" 'function))
 
-(cffi:defcfun ("Cudd_Cofactor" #.(swig-lispify "Cudd_Cofactor" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_Cofactor" #.(swig-lispify "Cudd_Cofactor" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_Cofactor" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Cofactor" 'function))
 
-(cffi:defcfun ("Cudd_CheckCube" #.(swig-lispify "Cudd_CheckCube" 'function)) :int
-  (dd manager)
-  (g node))
+  (cffi:defcfun ("Cudd_CheckCube" #.(swig-lispify "Cudd_CheckCube" 'function)) :int
+	(dd manager)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_CheckCube" 'function))
+  (cl:export '#.(swig-lispify "Cudd_CheckCube" 'function))
 
-(cffi:defcfun ("Cudd_VarsAreSymmetric" #.(swig-lispify "Cudd_VarsAreSymmetric" 'function)) :int
-  (dd manager)
-  (f node)
-  (index1 :int)
-  (index2 :int))
+  (cffi:defcfun ("Cudd_VarsAreSymmetric" #.(swig-lispify "Cudd_VarsAreSymmetric" 'function)) :int
+	(dd manager)
+	(f node)
+	(index1 :int)
+	(index2 :int))
 
-(cl:export '#.(swig-lispify "Cudd_VarsAreSymmetric" 'function))
+  (cl:export '#.(swig-lispify "Cudd_VarsAreSymmetric" 'function))
 
-(cffi:defcfun ("Cudd_bddCompose" #.(swig-lispify "Cudd_bddCompose" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (v :int))
+  (cffi:defcfun ("Cudd_bddCompose" #.(swig-lispify "Cudd_bddCompose" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(v :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddCompose" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddCompose" 'function))
 
-(cffi:defcfun ("Cudd_addCompose" #.(swig-lispify "Cudd_addCompose" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (v :int))
+  (cffi:defcfun ("Cudd_addCompose" #.(swig-lispify "Cudd_addCompose" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(v :int))
 
-(cl:export '#.(swig-lispify "Cudd_addCompose" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addCompose" 'function))
 
-(cffi:defcfun ("Cudd_addPermute" #.(swig-lispify "Cudd_addPermute" 'function)) node
-  (manager manager)
-  (node node)
-  (permut :pointer))
+  (cffi:defcfun ("Cudd_addPermute" #.(swig-lispify "Cudd_addPermute" 'function)) node
+	(manager manager)
+	(node node)
+	(permut :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addPermute" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addPermute" 'function))
 
-(cffi:defcfun ("Cudd_addSwapVariables" #.(swig-lispify "Cudd_addSwapVariables" 'function)) node
-  (dd manager)
-  (f node)
-  (x :pointer)
-  (y :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_addSwapVariables" #.(swig-lispify "Cudd_addSwapVariables" 'function)) node
+	(dd manager)
+	(f node)
+	(x :pointer)
+	(y :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_addSwapVariables" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addSwapVariables" 'function))
 
-(cffi:defcfun ("Cudd_bddPermute" #.(swig-lispify "Cudd_bddPermute" 'function)) node
-  (manager manager)
-  (node node)
-  (permut :pointer))
+  (cffi:defcfun ("Cudd_bddPermute" #.(swig-lispify "Cudd_bddPermute" 'function)) node
+	(manager manager)
+	(node node)
+	(permut :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_bddPermute" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddPermute" 'function))
 
-(cffi:defcfun ("Cudd_bddVarMap" #.(swig-lispify "Cudd_bddVarMap" 'function)) node
-  (manager manager)
-  (f node))
+  (cffi:defcfun ("Cudd_bddVarMap" #.(swig-lispify "Cudd_bddVarMap" 'function)) node
+	(manager manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_bddVarMap" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddVarMap" 'function))
 
-(cffi:defcfun ("Cudd_SetVarMap" #.(swig-lispify "Cudd_SetVarMap" 'function)) :int
-  (manager manager)
-  (x :pointer)
-  (y :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_SetVarMap" #.(swig-lispify "Cudd_SetVarMap" 'function)) :int
+	(manager manager)
+	(x :pointer)
+	(y :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_SetVarMap" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SetVarMap" 'function))
 
-(cffi:defcfun ("Cudd_bddSwapVariables" #.(swig-lispify "Cudd_bddSwapVariables" 'function)) node
-  (dd manager)
-  (f node)
-  (x :pointer)
-  (y :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_bddSwapVariables" #.(swig-lispify "Cudd_bddSwapVariables" 'function)) node
+	(dd manager)
+	(f node)
+	(x :pointer)
+	(y :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddSwapVariables" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddSwapVariables" 'function))
 
-(cffi:defcfun ("Cudd_bddAdjPermuteX" #.(swig-lispify "Cudd_bddAdjPermuteX" 'function)) node
-  (dd manager)
-  (B node)
-  (x :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_bddAdjPermuteX" #.(swig-lispify "Cudd_bddAdjPermuteX" 'function)) node
+	(dd manager)
+	(B node)
+	(x :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddAdjPermuteX" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddAdjPermuteX" 'function))
 
-(cffi:defcfun ("Cudd_addVectorCompose" #.(swig-lispify "Cudd_addVectorCompose" 'function)) node
-  (dd manager)
-  (f node)
-  (vector :pointer))
+  (cffi:defcfun ("Cudd_addVectorCompose" #.(swig-lispify "Cudd_addVectorCompose" 'function)) node
+	(dd manager)
+	(f node)
+	(vector :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addVectorCompose" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addVectorCompose" 'function))
 
-(cffi:defcfun ("Cudd_addGeneralVectorCompose" #.(swig-lispify "Cudd_addGeneralVectorCompose" 'function)) node
-  (dd manager)
-  (f node)
-  (vectorOn :pointer)
-  (vectorOff :pointer))
+  (cffi:defcfun ("Cudd_addGeneralVectorCompose" #.(swig-lispify "Cudd_addGeneralVectorCompose" 'function)) node
+	(dd manager)
+	(f node)
+	(vectorOn :pointer)
+	(vectorOff :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addGeneralVectorCompose" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addGeneralVectorCompose" 'function))
 
-(cffi:defcfun ("Cudd_addNonSimCompose" #.(swig-lispify "Cudd_addNonSimCompose" 'function)) node
-  (dd manager)
-  (f node)
-  (vector :pointer))
+  (cffi:defcfun ("Cudd_addNonSimCompose" #.(swig-lispify "Cudd_addNonSimCompose" 'function)) node
+	(dd manager)
+	(f node)
+	(vector :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addNonSimCompose" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addNonSimCompose" 'function))
 
-(cffi:defcfun ("Cudd_bddVectorCompose" #.(swig-lispify "Cudd_bddVectorCompose" 'function)) node
-  (dd manager)
-  (f node)
-  (vector :pointer))
+  (cffi:defcfun ("Cudd_bddVectorCompose" #.(swig-lispify "Cudd_bddVectorCompose" 'function)) node
+	(dd manager)
+	(f node)
+	(vector :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_bddVectorCompose" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddVectorCompose" 'function))
 
-(cffi:defcfun ("Cudd_bddApproxConjDecomp" #.(swig-lispify "Cudd_bddApproxConjDecomp" 'function)) :int
-  (dd manager)
-  (f node)
-  (conjuncts :pointer))
+  (cffi:defcfun ("Cudd_bddApproxConjDecomp" #.(swig-lispify "Cudd_bddApproxConjDecomp" 'function)) :int
+	(dd manager)
+	(f node)
+	(conjuncts :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_bddApproxConjDecomp" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddApproxConjDecomp" 'function))
 
-(cffi:defcfun ("Cudd_bddApproxDisjDecomp" #.(swig-lispify "Cudd_bddApproxDisjDecomp" 'function)) :int
-  (dd manager)
-  (f node)
-  (disjuncts :pointer))
+  (cffi:defcfun ("Cudd_bddApproxDisjDecomp" #.(swig-lispify "Cudd_bddApproxDisjDecomp" 'function)) :int
+	(dd manager)
+	(f node)
+	(disjuncts :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_bddApproxDisjDecomp" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddApproxDisjDecomp" 'function))
 
-(cffi:defcfun ("Cudd_bddIterConjDecomp" #.(swig-lispify "Cudd_bddIterConjDecomp" 'function)) :int
-  (dd manager)
-  (f node)
-  (conjuncts :pointer))
+  (cffi:defcfun ("Cudd_bddIterConjDecomp" #.(swig-lispify "Cudd_bddIterConjDecomp" 'function)) :int
+	(dd manager)
+	(f node)
+	(conjuncts :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_bddIterConjDecomp" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIterConjDecomp" 'function))
 
-(cffi:defcfun ("Cudd_bddIterDisjDecomp" #.(swig-lispify "Cudd_bddIterDisjDecomp" 'function)) :int
-  (dd manager)
-  (f node)
-  (disjuncts :pointer))
+  (cffi:defcfun ("Cudd_bddIterDisjDecomp" #.(swig-lispify "Cudd_bddIterDisjDecomp" 'function)) :int
+	(dd manager)
+	(f node)
+	(disjuncts :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_bddIterDisjDecomp" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIterDisjDecomp" 'function))
 
-(cffi:defcfun ("Cudd_bddGenConjDecomp" #.(swig-lispify "Cudd_bddGenConjDecomp" 'function)) :int
-  (dd manager)
-  (f node)
-  (conjuncts :pointer))
+  (cffi:defcfun ("Cudd_bddGenConjDecomp" #.(swig-lispify "Cudd_bddGenConjDecomp" 'function)) :int
+	(dd manager)
+	(f node)
+	(conjuncts :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_bddGenConjDecomp" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddGenConjDecomp" 'function))
 
-(cffi:defcfun ("Cudd_bddGenDisjDecomp" #.(swig-lispify "Cudd_bddGenDisjDecomp" 'function)) :int
-  (dd manager)
-  (f node)
-  (disjuncts :pointer))
+  (cffi:defcfun ("Cudd_bddGenDisjDecomp" #.(swig-lispify "Cudd_bddGenDisjDecomp" 'function)) :int
+	(dd manager)
+	(f node)
+	(disjuncts :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_bddGenDisjDecomp" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddGenDisjDecomp" 'function))
 
-(cffi:defcfun ("Cudd_bddVarConjDecomp" #.(swig-lispify "Cudd_bddVarConjDecomp" 'function)) :int
-  (dd manager)
-  (f node)
-  (conjuncts :pointer))
+  (cffi:defcfun ("Cudd_bddVarConjDecomp" #.(swig-lispify "Cudd_bddVarConjDecomp" 'function)) :int
+	(dd manager)
+	(f node)
+	(conjuncts :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_bddVarConjDecomp" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddVarConjDecomp" 'function))
 
-(cffi:defcfun ("Cudd_bddVarDisjDecomp" #.(swig-lispify "Cudd_bddVarDisjDecomp" 'function)) :int
-  (dd manager)
-  (f node)
-  (disjuncts :pointer))
+  (cffi:defcfun ("Cudd_bddVarDisjDecomp" #.(swig-lispify "Cudd_bddVarDisjDecomp" 'function)) :int
+	(dd manager)
+	(f node)
+	(disjuncts :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_bddVarDisjDecomp" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddVarDisjDecomp" 'function))
 
-(cffi:defcfun ("Cudd_FindEssential" #.(swig-lispify "Cudd_FindEssential" 'function)) node
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_FindEssential" #.(swig-lispify "Cudd_FindEssential" 'function)) node
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_FindEssential" 'function))
+  (cl:export '#.(swig-lispify "Cudd_FindEssential" 'function))
 
-(cffi:defcfun ("Cudd_bddIsVarEssential" #.(swig-lispify "Cudd_bddIsVarEssential" 'function)) :int
-  (manager manager)
-  (f node)
-  (id :int)
-  (phase :int))
+  (cffi:defcfun ("Cudd_bddIsVarEssential" #.(swig-lispify "Cudd_bddIsVarEssential" 'function)) :int
+	(manager manager)
+	(f node)
+	(id :int)
+	(phase :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddIsVarEssential" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIsVarEssential" 'function))
 
-(cffi:defcfun ("Cudd_FindTwoLiteralClauses" #.(swig-lispify "Cudd_FindTwoLiteralClauses" 'function)) :pointer
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_FindTwoLiteralClauses" #.(swig-lispify "Cudd_FindTwoLiteralClauses" 'function)) :pointer
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_FindTwoLiteralClauses" 'function))
+  (cl:export '#.(swig-lispify "Cudd_FindTwoLiteralClauses" 'function))
 
-(cffi:defcfun ("Cudd_PrintTwoLiteralClauses" #.(swig-lispify "Cudd_PrintTwoLiteralClauses" 'function)) :int
-  (dd manager)
-  (f node)
-  (names :pointer)
-  (fp :pointer))
+  (cffi:defcfun ("Cudd_PrintTwoLiteralClauses" #.(swig-lispify "Cudd_PrintTwoLiteralClauses" 'function)) :int
+	(dd manager)
+	(f node)
+	(names :pointer)
+	(fp :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_PrintTwoLiteralClauses" 'function))
+  (cl:export '#.(swig-lispify "Cudd_PrintTwoLiteralClauses" 'function))
 
-(cffi:defcfun ("Cudd_ReadIthClause" #.(swig-lispify "Cudd_ReadIthClause" 'function)) :int
-  (tlc :pointer)
-  (i :int)
-  (var1 :pointer)
-  (var2 :pointer)
-  (phase1 :pointer)
-  (phase2 :pointer))
+  (cffi:defcfun ("Cudd_ReadIthClause" #.(swig-lispify "Cudd_ReadIthClause" 'function)) :int
+	(tlc :pointer)
+	(i :int)
+	(var1 :pointer)
+	(var2 :pointer)
+	(phase1 :pointer)
+	(phase2 :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ReadIthClause" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadIthClause" 'function))
 
-(cffi:defcfun ("Cudd_tlcInfoFree" #.(swig-lispify "Cudd_tlcInfoFree" 'function)) :void
-  (t_arg0 :pointer))
+  (cffi:defcfun ("Cudd_tlcInfoFree" #.(swig-lispify "Cudd_tlcInfoFree" 'function)) :void
+	(t_arg0 :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_tlcInfoFree" 'function))
+  (cl:export '#.(swig-lispify "Cudd_tlcInfoFree" 'function))
 
-(cffi:defcfun ("Cudd_DumpBlif" #.(swig-lispify "Cudd_DumpBlif" 'function)) :int
-  (dd manager)
-  (n :int)
-  (f :pointer)
-  (inames :pointer)
-  (onames :pointer)
-  (mname :string)
-  (fp :pointer)
-  (mv :int))
+  (cffi:defcfun ("Cudd_DumpBlif" #.(swig-lispify "Cudd_DumpBlif" 'function)) :int
+	(dd manager)
+	(n :int)
+	(f :pointer)
+	(inames :pointer)
+	(onames :pointer)
+	(mname :string)
+	(fp :pointer)
+	(mv :int))
 
-(cl:export '#.(swig-lispify "Cudd_DumpBlif" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DumpBlif" 'function))
 
-(cffi:defcfun ("Cudd_DumpBlifBody" #.(swig-lispify "Cudd_DumpBlifBody" 'function)) :int
-  (dd manager)
-  (n :int)
-  (f :pointer)
-  (inames :pointer)
-  (onames :pointer)
-  (fp :pointer)
-  (mv :int))
+  (cffi:defcfun ("Cudd_DumpBlifBody" #.(swig-lispify "Cudd_DumpBlifBody" 'function)) :int
+	(dd manager)
+	(n :int)
+	(f :pointer)
+	(inames :pointer)
+	(onames :pointer)
+	(fp :pointer)
+	(mv :int))
 
-(cl:export '#.(swig-lispify "Cudd_DumpBlifBody" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DumpBlifBody" 'function))
 
-(cffi:defcfun ("Cudd_DumpDot" #.(swig-lispify "Cudd_DumpDot" 'function)) :int
-  (dd manager)
-  (n :int)
-  (f :pointer)
-  (inames :pointer)
-  (onames :pointer)
-  (fp :pointer))
+  (cffi:defcfun ("Cudd_DumpDot" #.(swig-lispify "Cudd_DumpDot" 'function)) :int
+	(dd manager)
+	(n :int)
+	(f :pointer)
+	(inames :pointer)
+	(onames :pointer)
+	(fp :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_DumpDot" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DumpDot" 'function))
 
-(cffi:defcfun ("Cudd_DumpDaVinci" #.(swig-lispify "Cudd_DumpDaVinci" 'function)) :int
-  (dd manager)
-  (n :int)
-  (f :pointer)
-  (inames :pointer)
-  (onames :pointer)
-  (fp :pointer))
+  (cffi:defcfun ("Cudd_DumpDaVinci" #.(swig-lispify "Cudd_DumpDaVinci" 'function)) :int
+	(dd manager)
+	(n :int)
+	(f :pointer)
+	(inames :pointer)
+	(onames :pointer)
+	(fp :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_DumpDaVinci" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DumpDaVinci" 'function))
 
-(cffi:defcfun ("Cudd_DumpDDcal" #.(swig-lispify "Cudd_DumpDDcal" 'function)) :int
-  (dd manager)
-  (n :int)
-  (f :pointer)
-  (inames :pointer)
-  (onames :pointer)
-  (fp :pointer))
+  (cffi:defcfun ("Cudd_DumpDDcal" #.(swig-lispify "Cudd_DumpDDcal" 'function)) :int
+	(dd manager)
+	(n :int)
+	(f :pointer)
+	(inames :pointer)
+	(onames :pointer)
+	(fp :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_DumpDDcal" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DumpDDcal" 'function))
 
-(cffi:defcfun ("Cudd_DumpFactoredForm" #.(swig-lispify "Cudd_DumpFactoredForm" 'function)) :int
-  (dd manager)
-  (n :int)
-  (f :pointer)
-  (inames :pointer)
-  (onames :pointer)
-  (fp :pointer))
+  (cffi:defcfun ("Cudd_DumpFactoredForm" #.(swig-lispify "Cudd_DumpFactoredForm" 'function)) :int
+	(dd manager)
+	(n :int)
+	(f :pointer)
+	(inames :pointer)
+	(onames :pointer)
+	(fp :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_DumpFactoredForm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DumpFactoredForm" 'function))
 
-(cffi:defcfun ("Cudd_FactoredFormString" #.(swig-lispify "Cudd_FactoredFormString" 'function)) :string
-  (dd manager)
-  (f node)
-  (inames :pointer))
+  (cffi:defcfun ("Cudd_FactoredFormString" #.(swig-lispify "Cudd_FactoredFormString" 'function)) :string
+	(dd manager)
+	(f node)
+	(inames :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_FactoredFormString" 'function))
+  (cl:export '#.(swig-lispify "Cudd_FactoredFormString" 'function))
 
-(cffi:defcfun ("Cudd_bddConstrain" #.(swig-lispify "Cudd_bddConstrain" 'function)) node
-  (dd manager)
-  (f node)
-  (c node))
+  (cffi:defcfun ("Cudd_bddConstrain" #.(swig-lispify "Cudd_bddConstrain" 'function)) node
+	(dd manager)
+	(f node)
+	(c node))
 
-(cl:export '#.(swig-lispify "Cudd_bddConstrain" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddConstrain" 'function))
 
-(cffi:defcfun ("Cudd_bddRestrict" #.(swig-lispify "Cudd_bddRestrict" 'function)) node
-  (dd manager)
-  (f node)
-  (c node))
+  (cffi:defcfun ("Cudd_bddRestrict" #.(swig-lispify "Cudd_bddRestrict" 'function)) node
+	(dd manager)
+	(f node)
+	(c node))
 
-(cl:export '#.(swig-lispify "Cudd_bddRestrict" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddRestrict" 'function))
 
-(cffi:defcfun ("Cudd_bddNPAnd" #.(swig-lispify "Cudd_bddNPAnd" 'function)) node
-  (dd manager)
-  (f node)
-  (c node))
+  (cffi:defcfun ("Cudd_bddNPAnd" #.(swig-lispify "Cudd_bddNPAnd" 'function)) node
+	(dd manager)
+	(f node)
+	(c node))
 
-(cl:export '#.(swig-lispify "Cudd_bddNPAnd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddNPAnd" 'function))
 
-(cffi:defcfun ("Cudd_addConstrain" #.(swig-lispify "Cudd_addConstrain" 'function)) node
-  (dd manager)
-  (f node)
-  (c node))
+  (cffi:defcfun ("Cudd_addConstrain" #.(swig-lispify "Cudd_addConstrain" 'function)) node
+	(dd manager)
+	(f node)
+	(c node))
 
-(cl:export '#.(swig-lispify "Cudd_addConstrain" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addConstrain" 'function))
 
-(cffi:defcfun ("Cudd_bddConstrainDecomp" #.(swig-lispify "Cudd_bddConstrainDecomp" 'function)) :pointer
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_bddConstrainDecomp" #.(swig-lispify "Cudd_bddConstrainDecomp" 'function)) :pointer
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_bddConstrainDecomp" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddConstrainDecomp" 'function))
 
-(cffi:defcfun ("Cudd_addRestrict" #.(swig-lispify "Cudd_addRestrict" 'function)) node
-  (dd manager)
-  (f node)
-  (c node))
+  (cffi:defcfun ("Cudd_addRestrict" #.(swig-lispify "Cudd_addRestrict" 'function)) node
+	(dd manager)
+	(f node)
+	(c node))
 
-(cl:export '#.(swig-lispify "Cudd_addRestrict" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addRestrict" 'function))
 
-(cffi:defcfun ("Cudd_bddCharToVect" #.(swig-lispify "Cudd_bddCharToVect" 'function)) :pointer
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_bddCharToVect" #.(swig-lispify "Cudd_bddCharToVect" 'function)) :pointer
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_bddCharToVect" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddCharToVect" 'function))
 
-(cffi:defcfun ("Cudd_bddLICompaction" #.(swig-lispify "Cudd_bddLICompaction" 'function)) node
-  (dd manager)
-  (f node)
-  (c node))
+  (cffi:defcfun ("Cudd_bddLICompaction" #.(swig-lispify "Cudd_bddLICompaction" 'function)) node
+	(dd manager)
+	(f node)
+	(c node))
 
-(cl:export '#.(swig-lispify "Cudd_bddLICompaction" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddLICompaction" 'function))
 
-(cffi:defcfun ("Cudd_bddSqueeze" #.(swig-lispify "Cudd_bddSqueeze" 'function)) node
-  (dd manager)
-  (l node)
-  (u node))
+  (cffi:defcfun ("Cudd_bddSqueeze" #.(swig-lispify "Cudd_bddSqueeze" 'function)) node
+	(dd manager)
+	(l node)
+	(u node))
 
-(cl:export '#.(swig-lispify "Cudd_bddSqueeze" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddSqueeze" 'function))
 
-(cffi:defcfun ("Cudd_bddInterpolate" #.(swig-lispify "Cudd_bddInterpolate" 'function)) node
-  (dd manager)
-  (l node)
-  (u node))
+  (cffi:defcfun ("Cudd_bddInterpolate" #.(swig-lispify "Cudd_bddInterpolate" 'function)) node
+	(dd manager)
+	(l node)
+	(u node))
 
-(cl:export '#.(swig-lispify "Cudd_bddInterpolate" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddInterpolate" 'function))
 
-(cffi:defcfun ("Cudd_bddMinimize" #.(swig-lispify "Cudd_bddMinimize" 'function)) node
-  (dd manager)
-  (f node)
-  (c node))
+  (cffi:defcfun ("Cudd_bddMinimize" #.(swig-lispify "Cudd_bddMinimize" 'function)) node
+	(dd manager)
+	(f node)
+	(c node))
 
-(cl:export '#.(swig-lispify "Cudd_bddMinimize" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddMinimize" 'function))
 
-(cffi:defcfun ("Cudd_SubsetCompress" #.(swig-lispify "Cudd_SubsetCompress" 'function)) node
-  (dd manager)
-  (f node)
-  (nvars :int)
-  (threshold :int))
+  (cffi:defcfun ("Cudd_SubsetCompress" #.(swig-lispify "Cudd_SubsetCompress" 'function)) node
+	(dd manager)
+	(f node)
+	(nvars :int)
+	(threshold :int))
 
-(cl:export '#.(swig-lispify "Cudd_SubsetCompress" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SubsetCompress" 'function))
 
-(cffi:defcfun ("Cudd_SupersetCompress" #.(swig-lispify "Cudd_SupersetCompress" 'function)) node
-  (dd manager)
-  (f node)
-  (nvars :int)
-  (threshold :int))
+  (cffi:defcfun ("Cudd_SupersetCompress" #.(swig-lispify "Cudd_SupersetCompress" 'function)) node
+	(dd manager)
+	(f node)
+	(nvars :int)
+	(threshold :int))
 
-(cl:export '#.(swig-lispify "Cudd_SupersetCompress" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SupersetCompress" 'function))
 
-(cffi:defcfun ("Cudd_addHarwell" #.(swig-lispify "Cudd_addHarwell" 'function)) :int
-  (fp :pointer)
-  (dd manager)
-  (E :pointer)
-  (x :pointer)
-  (y :pointer)
-  (xn :pointer)
-  (yn_ :pointer)
-  (nx :pointer)
-  (ny :pointer)
-  (m :pointer)
-  (n :pointer)
-  (bx :int)
-  (sx :int)
-  (by :int)
-  (sy :int)
-  (pr :int))
+  (cffi:defcfun ("Cudd_addHarwell" #.(swig-lispify "Cudd_addHarwell" 'function)) :int
+	(fp :pointer)
+	(dd manager)
+	(E :pointer)
+	(x :pointer)
+	(y :pointer)
+	(xn :pointer)
+	(yn_ :pointer)
+	(nx :pointer)
+	(ny :pointer)
+	(m :pointer)
+	(n :pointer)
+	(bx :int)
+	(sx :int)
+	(by :int)
+	(sy :int)
+	(pr :int))
 
-(cl:export '#.(swig-lispify "Cudd_addHarwell" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addHarwell" 'function))
 
-(cffi:defcfun ("Cudd_Init" #.(swig-lispify "Cudd_Init" 'function)) manager
-  (numVars :unsigned-int)
-  (numVarsZ :unsigned-int)
-  (numSlots :unsigned-int)
-  (cacheSize :unsigned-int)
-  (maxMemory :unsigned-long))
+  (cffi:defcfun ("Cudd_Init" #.(swig-lispify "Cudd_Init" 'function)) manager
+	(numVars :unsigned-int)
+	(numVarsZ :unsigned-int)
+	(numSlots :unsigned-int)
+	(cacheSize :unsigned-int)
+	(maxMemory :unsigned-long))
 
-(cl:export '#.(swig-lispify "Cudd_Init" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Init" 'function))
 
-(cffi:defcfun ("Cudd_Quit" #.(swig-lispify "Cudd_Quit" 'function)) :void
-  (unique manager))
+  (cffi:defcfun ("Cudd_Quit" #.(swig-lispify "Cudd_Quit" 'function)) :void
+	(unique manager))
 
-(cl:export '#.(swig-lispify "Cudd_Quit" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Quit" 'function))
 
-(cffi:defcfun ("Cudd_PrintLinear" #.(swig-lispify "Cudd_PrintLinear" 'function)) :int
-  (table manager))
+  (cffi:defcfun ("Cudd_PrintLinear" #.(swig-lispify "Cudd_PrintLinear" 'function)) :int
+	(table manager))
 
-(cl:export '#.(swig-lispify "Cudd_PrintLinear" 'function))
+  (cl:export '#.(swig-lispify "Cudd_PrintLinear" 'function))
 
-(cffi:defcfun ("Cudd_ReadLinear" #.(swig-lispify "Cudd_ReadLinear" 'function)) :int
-  (table manager)
-  (x :int)
-  (y :int))
+  (cffi:defcfun ("Cudd_ReadLinear" #.(swig-lispify "Cudd_ReadLinear" 'function)) :int
+	(table manager)
+	(x :int)
+	(y :int))
 
-(cl:export '#.(swig-lispify "Cudd_ReadLinear" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReadLinear" 'function))
 
-(cffi:defcfun ("Cudd_bddLiteralSetIntersection" #.(swig-lispify "Cudd_bddLiteralSetIntersection" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_bddLiteralSetIntersection" #.(swig-lispify "Cudd_bddLiteralSetIntersection" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_bddLiteralSetIntersection" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddLiteralSetIntersection" 'function))
 
-(cffi:defcfun ("Cudd_addMatrixMultiply" #.(swig-lispify "Cudd_addMatrixMultiply" 'function)) node
-  (dd manager)
-  (A node)
-  (B node)
-  (z :pointer)
-  (nz :int))
+  (cffi:defcfun ("Cudd_addMatrixMultiply" #.(swig-lispify "Cudd_addMatrixMultiply" 'function)) node
+	(dd manager)
+	(A node)
+	(B node)
+	(z :pointer)
+	(nz :int))
 
-(cl:export '#.(swig-lispify "Cudd_addMatrixMultiply" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addMatrixMultiply" 'function))
 
-(cffi:defcfun ("Cudd_addTimesPlus" #.(swig-lispify "Cudd_addTimesPlus" 'function)) node
-  (dd manager)
-  (A node)
-  (B node)
-  (z :pointer)
-  (nz :int))
+  (cffi:defcfun ("Cudd_addTimesPlus" #.(swig-lispify "Cudd_addTimesPlus" 'function)) node
+	(dd manager)
+	(A node)
+	(B node)
+	(z :pointer)
+	(nz :int))
 
-(cl:export '#.(swig-lispify "Cudd_addTimesPlus" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addTimesPlus" 'function))
 
-(cffi:defcfun ("Cudd_addTriangle" #.(swig-lispify "Cudd_addTriangle" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (z :pointer)
-  (nz :int))
+  (cffi:defcfun ("Cudd_addTriangle" #.(swig-lispify "Cudd_addTriangle" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(z :pointer)
+	(nz :int))
 
-(cl:export '#.(swig-lispify "Cudd_addTriangle" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addTriangle" 'function))
 
-(cffi:defcfun ("Cudd_addOuterSum" #.(swig-lispify "Cudd_addOuterSum" 'function)) node
-  (dd manager)
-  (M node)
-  (r node)
-  (c node))
+  (cffi:defcfun ("Cudd_addOuterSum" #.(swig-lispify "Cudd_addOuterSum" 'function)) node
+	(dd manager)
+	(M node)
+	(r node)
+	(c node))
 
-(cl:export '#.(swig-lispify "Cudd_addOuterSum" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addOuterSum" 'function))
 
-(cffi:defcfun ("Cudd_PrioritySelect" #.(swig-lispify "Cudd_PrioritySelect" 'function)) node
-  (dd manager)
-  (R node)
-  (x :pointer)
-  (y :pointer)
-  (z :pointer)
-  (Pi node)
-  (n :int)
-  (PiFunc :pointer))
+  (cffi:defcfun ("Cudd_PrioritySelect" #.(swig-lispify "Cudd_PrioritySelect" 'function)) node
+	(dd manager)
+	(R node)
+	(x :pointer)
+	(y :pointer)
+	(z :pointer)
+	(Pi node)
+	(n :int)
+	(PiFunc :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_PrioritySelect" 'function))
+  (cl:export '#.(swig-lispify "Cudd_PrioritySelect" 'function))
 
-(cffi:defcfun ("Cudd_Xgty" #.(swig-lispify "Cudd_Xgty" 'function)) node
-  (dd manager)
-  (N :int)
-  (z :pointer)
-  (x :pointer)
-  (y :pointer))
+  (cffi:defcfun ("Cudd_Xgty" #.(swig-lispify "Cudd_Xgty" 'function)) node
+	(dd manager)
+	(N :int)
+	(z :pointer)
+	(x :pointer)
+	(y :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_Xgty" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Xgty" 'function))
 
-(cffi:defcfun ("Cudd_Xeqy" #.(swig-lispify "Cudd_Xeqy" 'function)) node
-  (dd manager)
-  (N :int)
-  (x :pointer)
-  (y :pointer))
+  (cffi:defcfun ("Cudd_Xeqy" #.(swig-lispify "Cudd_Xeqy" 'function)) node
+	(dd manager)
+	(N :int)
+	(x :pointer)
+	(y :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_Xeqy" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Xeqy" 'function))
 
-(cffi:defcfun ("Cudd_addXeqy" #.(swig-lispify "Cudd_addXeqy" 'function)) node
-  (dd manager)
-  (N :int)
-  (x :pointer)
-  (y :pointer))
+  (cffi:defcfun ("Cudd_addXeqy" #.(swig-lispify "Cudd_addXeqy" 'function)) node
+	(dd manager)
+	(N :int)
+	(x :pointer)
+	(y :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_addXeqy" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addXeqy" 'function))
 
-(cffi:defcfun ("Cudd_Dxygtdxz" #.(swig-lispify "Cudd_Dxygtdxz" 'function)) node
-  (dd manager)
-  (N :int)
-  (x :pointer)
-  (y :pointer)
-  (z :pointer))
+  (cffi:defcfun ("Cudd_Dxygtdxz" #.(swig-lispify "Cudd_Dxygtdxz" 'function)) node
+	(dd manager)
+	(N :int)
+	(x :pointer)
+	(y :pointer)
+	(z :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_Dxygtdxz" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Dxygtdxz" 'function))
 
-(cffi:defcfun ("Cudd_Dxygtdyz" #.(swig-lispify "Cudd_Dxygtdyz" 'function)) node
-  (dd manager)
-  (N :int)
-  (x :pointer)
-  (y :pointer)
-  (z :pointer))
+  (cffi:defcfun ("Cudd_Dxygtdyz" #.(swig-lispify "Cudd_Dxygtdyz" 'function)) node
+	(dd manager)
+	(N :int)
+	(x :pointer)
+	(y :pointer)
+	(z :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_Dxygtdyz" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Dxygtdyz" 'function))
 
-(cffi:defcfun ("Cudd_Inequality" #.(swig-lispify "Cudd_Inequality" 'function)) node
-  (dd manager)
-  (N :int)
-  (c :int)
-  (x :pointer)
-  (y :pointer))
+  (cffi:defcfun ("Cudd_Inequality" #.(swig-lispify "Cudd_Inequality" 'function)) node
+	(dd manager)
+	(N :int)
+	(c :int)
+	(x :pointer)
+	(y :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_Inequality" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Inequality" 'function))
 
-(cffi:defcfun ("Cudd_Disequality" #.(swig-lispify "Cudd_Disequality" 'function)) node
-  (dd manager)
-  (N :int)
-  (c :int)
-  (x :pointer)
-  (y :pointer))
+  (cffi:defcfun ("Cudd_Disequality" #.(swig-lispify "Cudd_Disequality" 'function)) node
+	(dd manager)
+	(N :int)
+	(c :int)
+	(x :pointer)
+	(y :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_Disequality" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Disequality" 'function))
 
-(cffi:defcfun ("Cudd_bddInterval" #.(swig-lispify "Cudd_bddInterval" 'function)) node
-  (dd manager)
-  (N :int)
-  (x :pointer)
-  (lowerB :unsigned-int)
-  (upperB :unsigned-int))
+  (cffi:defcfun ("Cudd_bddInterval" #.(swig-lispify "Cudd_bddInterval" 'function)) node
+	(dd manager)
+	(N :int)
+	(x :pointer)
+	(lowerB :unsigned-int)
+	(upperB :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_bddInterval" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddInterval" 'function))
 
-(cffi:defcfun ("Cudd_CProjection" #.(swig-lispify "Cudd_CProjection" 'function)) node
-  (dd manager)
-  (R node)
-  (Y node))
+  (cffi:defcfun ("Cudd_CProjection" #.(swig-lispify "Cudd_CProjection" 'function)) node
+	(dd manager)
+	(R node)
+	(Y node))
 
-(cl:export '#.(swig-lispify "Cudd_CProjection" 'function))
+  (cl:export '#.(swig-lispify "Cudd_CProjection" 'function))
 
-(cffi:defcfun ("Cudd_addHamming" #.(swig-lispify "Cudd_addHamming" 'function)) node
-  (dd manager)
-  (xVars :pointer)
-  (yVars :pointer)
-  (nVars :int))
+  (cffi:defcfun ("Cudd_addHamming" #.(swig-lispify "Cudd_addHamming" 'function)) node
+	(dd manager)
+	(xVars :pointer)
+	(yVars :pointer)
+	(nVars :int))
 
-(cl:export '#.(swig-lispify "Cudd_addHamming" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addHamming" 'function))
 
-(cffi:defcfun ("Cudd_MinHammingDist" #.(swig-lispify "Cudd_MinHammingDist" 'function)) :int
-  (dd manager)
-  (f node)
-  (minterm :pointer)
-  (upperBound :int))
+  (cffi:defcfun ("Cudd_MinHammingDist" #.(swig-lispify "Cudd_MinHammingDist" 'function)) :int
+	(dd manager)
+	(f node)
+	(minterm :pointer)
+	(upperBound :int))
 
-(cl:export '#.(swig-lispify "Cudd_MinHammingDist" 'function))
+  (cl:export '#.(swig-lispify "Cudd_MinHammingDist" 'function))
 
-(cffi:defcfun ("Cudd_bddClosestCube" #.(swig-lispify "Cudd_bddClosestCube" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (distance :pointer))
+  (cffi:defcfun ("Cudd_bddClosestCube" #.(swig-lispify "Cudd_bddClosestCube" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(distance :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_bddClosestCube" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddClosestCube" 'function))
 
-(cffi:defcfun ("Cudd_addRead" #.(swig-lispify "Cudd_addRead" 'function)) :int
-  (fp :pointer)
-  (dd manager)
-  (E :pointer)
-  (x :pointer)
-  (y :pointer)
-  (xn :pointer)
-  (yn_ :pointer)
-  (nx :pointer)
-  (ny :pointer)
-  (m :pointer)
-  (n :pointer)
-  (bx :int)
-  (sx :int)
-  (by :int)
-  (sy :int))
+  (cffi:defcfun ("Cudd_addRead" #.(swig-lispify "Cudd_addRead" 'function)) :int
+	(fp :pointer)
+	(dd manager)
+	(E :pointer)
+	(x :pointer)
+	(y :pointer)
+	(xn :pointer)
+	(yn_ :pointer)
+	(nx :pointer)
+	(ny :pointer)
+	(m :pointer)
+	(n :pointer)
+	(bx :int)
+	(sx :int)
+	(by :int)
+	(sy :int))
 
-(cl:export '#.(swig-lispify "Cudd_addRead" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addRead" 'function))
 
-(cffi:defcfun ("Cudd_bddRead" #.(swig-lispify "Cudd_bddRead" 'function)) :int
-  (fp :pointer)
-  (dd manager)
-  (E :pointer)
-  (x :pointer)
-  (y :pointer)
-  (nx :pointer)
-  (ny :pointer)
-  (m :pointer)
-  (n :pointer)
-  (bx :int)
-  (sx :int)
-  (by :int)
-  (sy :int))
+  (cffi:defcfun ("Cudd_bddRead" #.(swig-lispify "Cudd_bddRead" 'function)) :int
+	(fp :pointer)
+	(dd manager)
+	(E :pointer)
+	(x :pointer)
+	(y :pointer)
+	(nx :pointer)
+	(ny :pointer)
+	(m :pointer)
+	(n :pointer)
+	(bx :int)
+	(sx :int)
+	(by :int)
+	(sy :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddRead" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddRead" 'function))
 
-(cffi:defcfun ("Cudd_Ref" #.(swig-lispify "Cudd_Ref" 'function)) :void
-  (n node))
+  (cffi:defcfun ("Cudd_Ref" #.(swig-lispify "Cudd_Ref" 'function)) :void
+	(n node))
 
-(cl:export '#.(swig-lispify "Cudd_Ref" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Ref" 'function))
 
-(cffi:defcfun ("Cudd_RecursiveDeref" #.(swig-lispify "Cudd_RecursiveDeref" 'function)) :void
-  (table manager)
-  (n node))
+  (cffi:defcfun ("Cudd_RecursiveDeref" #.(swig-lispify "Cudd_RecursiveDeref" 'function)) :void
+	(table manager)
+	(n node))
 
-(cl:export '#.(swig-lispify "Cudd_RecursiveDeref" 'function))
+  (cl:export '#.(swig-lispify "Cudd_RecursiveDeref" 'function))
 
-(cffi:defcfun ("Cudd_IterDerefBdd" #.(swig-lispify "Cudd_IterDerefBdd" 'function)) :void
-  (table manager)
-  (n node))
+  (cffi:defcfun ("Cudd_IterDerefBdd" #.(swig-lispify "Cudd_IterDerefBdd" 'function)) :void
+	(table manager)
+	(n node))
 
-(cl:export '#.(swig-lispify "Cudd_IterDerefBdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_IterDerefBdd" 'function))
 
-(cffi:defcfun ("Cudd_DelayedDerefBdd" #.(swig-lispify "Cudd_DelayedDerefBdd" 'function)) :void
-  (table manager)
-  (n node))
+  (cffi:defcfun ("Cudd_DelayedDerefBdd" #.(swig-lispify "Cudd_DelayedDerefBdd" 'function)) :void
+	(table manager)
+	(n node))
 
-(cl:export '#.(swig-lispify "Cudd_DelayedDerefBdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DelayedDerefBdd" 'function))
 
-(cffi:defcfun ("Cudd_RecursiveDerefZdd" #.(swig-lispify "Cudd_RecursiveDerefZdd" 'function)) :void
-  (table manager)
-  (n node))
+  (cffi:defcfun ("Cudd_RecursiveDerefZdd" #.(swig-lispify "Cudd_RecursiveDerefZdd" 'function)) :void
+	(table manager)
+	(n node))
 
-(cl:export '#.(swig-lispify "Cudd_RecursiveDerefZdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_RecursiveDerefZdd" 'function))
 
-(cffi:defcfun ("Cudd_Deref" #.(swig-lispify "Cudd_Deref" 'function)) :void
-  (node node))
+  (cffi:defcfun ("Cudd_Deref" #.(swig-lispify "Cudd_Deref" 'function)) :void
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_Deref" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Deref" 'function))
 
-(cffi:defcfun ("Cudd_CheckZeroRef" #.(swig-lispify "Cudd_CheckZeroRef" 'function)) :int
-  (manager manager))
+  (cffi:defcfun ("Cudd_CheckZeroRef" #.(swig-lispify "Cudd_CheckZeroRef" 'function)) :int
+	(manager manager))
 
-(cl:export '#.(swig-lispify "Cudd_CheckZeroRef" 'function))
+  (cl:export '#.(swig-lispify "Cudd_CheckZeroRef" 'function))
 
-(cffi:defcfun ("Cudd_ReduceHeap" #.(swig-lispify "Cudd_ReduceHeap" 'function)) :int
-  (table manager)
-  (heuristic #.(swig-lispify "Cudd_ReorderingType" 'enumname))
-  (minsize :int))
+  (cffi:defcfun ("Cudd_ReduceHeap" #.(swig-lispify "Cudd_ReduceHeap" 'function)) :int
+	(table manager)
+	(heuristic #.(swig-lispify "Cudd_ReorderingType" 'enumname))
+	(minsize :int))
 
-(cl:export '#.(swig-lispify "Cudd_ReduceHeap" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ReduceHeap" 'function))
 
-(cffi:defcfun ("Cudd_ShuffleHeap" #.(swig-lispify "Cudd_ShuffleHeap" 'function)) :int
-  (table manager)
-  (permutation :pointer))
+  (cffi:defcfun ("Cudd_ShuffleHeap" #.(swig-lispify "Cudd_ShuffleHeap" 'function)) :int
+	(table manager)
+	(permutation :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ShuffleHeap" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ShuffleHeap" 'function))
 
-(cffi:defcfun ("Cudd_Eval" #.(swig-lispify "Cudd_Eval" 'function)) node
-  (dd manager)
-  (f node)
-  (inputs :pointer))
+  (cffi:defcfun ("Cudd_Eval" #.(swig-lispify "Cudd_Eval" 'function)) node
+	(dd manager)
+	(f node)
+	(inputs :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_Eval" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Eval" 'function))
 
-(cffi:defcfun ("Cudd_ShortestPath" #.(swig-lispify "Cudd_ShortestPath" 'function)) node
-  (manager manager)
-  (f node)
-  (weight :pointer)
-  (support :pointer)
-  (length :pointer))
+  (cffi:defcfun ("Cudd_ShortestPath" #.(swig-lispify "Cudd_ShortestPath" 'function)) node
+	(manager manager)
+	(f node)
+	(weight :pointer)
+	(support :pointer)
+	(length :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ShortestPath" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ShortestPath" 'function))
 
-(cffi:defcfun ("Cudd_LargestCube" #.(swig-lispify "Cudd_LargestCube" 'function)) node
-  (manager manager)
-  (f node)
-  (length :pointer))
+  (cffi:defcfun ("Cudd_LargestCube" #.(swig-lispify "Cudd_LargestCube" 'function)) node
+	(manager manager)
+	(f node)
+	(length :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_LargestCube" 'function))
+  (cl:export '#.(swig-lispify "Cudd_LargestCube" 'function))
 
-(cffi:defcfun ("Cudd_ShortestLength" #.(swig-lispify "Cudd_ShortestLength" 'function)) :int
-  (manager manager)
-  (f node)
-  (weight :pointer))
+  (cffi:defcfun ("Cudd_ShortestLength" #.(swig-lispify "Cudd_ShortestLength" 'function)) :int
+	(manager manager)
+	(f node)
+	(weight :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ShortestLength" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ShortestLength" 'function))
 
-(cffi:defcfun ("Cudd_Decreasing" #.(swig-lispify "Cudd_Decreasing" 'function)) node
-  (dd manager)
-  (f node)
-  (i :int))
+  (cffi:defcfun ("Cudd_Decreasing" #.(swig-lispify "Cudd_Decreasing" 'function)) node
+	(dd manager)
+	(f node)
+	(i :int))
 
-(cl:export '#.(swig-lispify "Cudd_Decreasing" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Decreasing" 'function))
 
-(cffi:defcfun ("Cudd_Increasing" #.(swig-lispify "Cudd_Increasing" 'function)) node
-  (dd manager)
-  (f node)
-  (i :int))
+  (cffi:defcfun ("Cudd_Increasing" #.(swig-lispify "Cudd_Increasing" 'function)) node
+	(dd manager)
+	(f node)
+	(i :int))
 
-(cl:export '#.(swig-lispify "Cudd_Increasing" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Increasing" 'function))
 
-(cffi:defcfun ("Cudd_EquivDC" #.(swig-lispify "Cudd_EquivDC" 'function)) :int
-  (dd manager)
-  (F node)
-  (G node)
-  (D node))
+  (cffi:defcfun ("Cudd_EquivDC" #.(swig-lispify "Cudd_EquivDC" 'function)) :int
+	(dd manager)
+	(F node)
+	(G node)
+	(D node))
 
-(cl:export '#.(swig-lispify "Cudd_EquivDC" 'function))
+  (cl:export '#.(swig-lispify "Cudd_EquivDC" 'function))
 
-(cffi:defcfun ("Cudd_bddLeqUnless" #.(swig-lispify "Cudd_bddLeqUnless" 'function)) :int
-  (dd manager)
-  (f node)
-  (g node)
-  (D node))
+  (cffi:defcfun ("Cudd_bddLeqUnless" #.(swig-lispify "Cudd_bddLeqUnless" 'function)) :int
+	(dd manager)
+	(f node)
+	(g node)
+	(D node))
 
-(cl:export '#.(swig-lispify "Cudd_bddLeqUnless" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddLeqUnless" 'function))
 
-(cffi:defcfun ("Cudd_EqualSupNorm" #.(swig-lispify "Cudd_EqualSupNorm" 'function)) :int
-  (dd manager)
-  (f node)
-  (g node)
-  (tolerance :double)
-  (pr :int))
+  (cffi:defcfun ("Cudd_EqualSupNorm" #.(swig-lispify "Cudd_EqualSupNorm" 'function)) :int
+	(dd manager)
+	(f node)
+	(g node)
+	(tolerance :double)
+	(pr :int))
 
-(cl:export '#.(swig-lispify "Cudd_EqualSupNorm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_EqualSupNorm" 'function))
 
-(cffi:defcfun ("Cudd_bddMakePrime" #.(swig-lispify "Cudd_bddMakePrime" 'function)) node
-  (dd manager)
-  (cube node)
-  (f node))
+  (cffi:defcfun ("Cudd_bddMakePrime" #.(swig-lispify "Cudd_bddMakePrime" 'function)) node
+	(dd manager)
+	(cube node)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_bddMakePrime" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddMakePrime" 'function))
 
-(cffi:defcfun ("Cudd_bddMaximallyExpand" #.(swig-lispify "Cudd_bddMaximallyExpand" 'function)) node
-  (dd manager)
-  (lb node)
-  (ub node)
-  (f node))
+  (cffi:defcfun ("Cudd_bddMaximallyExpand" #.(swig-lispify "Cudd_bddMaximallyExpand" 'function)) node
+	(dd manager)
+	(lb node)
+	(ub node)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_bddMaximallyExpand" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddMaximallyExpand" 'function))
 
-(cffi:defcfun ("Cudd_bddLargestPrimeUnate" #.(swig-lispify "Cudd_bddLargestPrimeUnate" 'function)) node
-  (dd manager)
-  (f node)
-  (phaseBdd node))
+  (cffi:defcfun ("Cudd_bddLargestPrimeUnate" #.(swig-lispify "Cudd_bddLargestPrimeUnate" 'function)) node
+	(dd manager)
+	(f node)
+	(phaseBdd node))
 
-(cl:export '#.(swig-lispify "Cudd_bddLargestPrimeUnate" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddLargestPrimeUnate" 'function))
 
-(cffi:defcfun ("Cudd_CofMinterm" #.(swig-lispify "Cudd_CofMinterm" 'function)) :pointer
-  (dd manager)
-  (node node))
+  (cffi:defcfun ("Cudd_CofMinterm" #.(swig-lispify "Cudd_CofMinterm" 'function)) :pointer
+	(dd manager)
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_CofMinterm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_CofMinterm" 'function))
 
-(cffi:defcfun ("Cudd_SolveEqn" #.(swig-lispify "Cudd_SolveEqn" 'function)) node
-  (bdd manager)
-  (F node)
-  (Y node)
-  (G :pointer)
-  (yIndex :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_SolveEqn" #.(swig-lispify "Cudd_SolveEqn" 'function)) node
+	(bdd manager)
+	(F node)
+	(Y node)
+	(G :pointer)
+	(yIndex :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_SolveEqn" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SolveEqn" 'function))
 
-(cffi:defcfun ("Cudd_VerifySol" #.(swig-lispify "Cudd_VerifySol" 'function)) node
-  (bdd manager)
-  (F node)
-  (G :pointer)
-  (yIndex :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_VerifySol" #.(swig-lispify "Cudd_VerifySol" 'function)) node
+	(bdd manager)
+	(F node)
+	(G :pointer)
+	(yIndex :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_VerifySol" 'function))
+  (cl:export '#.(swig-lispify "Cudd_VerifySol" 'function))
 
-(cffi:defcfun ("Cudd_SplitSet" #.(swig-lispify "Cudd_SplitSet" 'function)) node
-  (manager manager)
-  (S node)
-  (xVars :pointer)
-  (n :int)
-  (m :double))
+  (cffi:defcfun ("Cudd_SplitSet" #.(swig-lispify "Cudd_SplitSet" 'function)) node
+	(manager manager)
+	(S node)
+	(xVars :pointer)
+	(n :int)
+	(m :double))
 
-(cl:export '#.(swig-lispify "Cudd_SplitSet" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SplitSet" 'function))
 
-(cffi:defcfun ("Cudd_SubsetHeavyBranch" #.(swig-lispify "Cudd_SubsetHeavyBranch" 'function)) node
-  (dd manager)
-  (f node)
-  (numVars :int)
-  (threshold :int))
+  (cffi:defcfun ("Cudd_SubsetHeavyBranch" #.(swig-lispify "Cudd_SubsetHeavyBranch" 'function)) node
+	(dd manager)
+	(f node)
+	(numVars :int)
+	(threshold :int))
 
-(cl:export '#.(swig-lispify "Cudd_SubsetHeavyBranch" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SubsetHeavyBranch" 'function))
 
-(cffi:defcfun ("Cudd_SupersetHeavyBranch" #.(swig-lispify "Cudd_SupersetHeavyBranch" 'function)) node
-  (dd manager)
-  (f node)
-  (numVars :int)
-  (threshold :int))
+  (cffi:defcfun ("Cudd_SupersetHeavyBranch" #.(swig-lispify "Cudd_SupersetHeavyBranch" 'function)) node
+	(dd manager)
+	(f node)
+	(numVars :int)
+	(threshold :int))
 
-(cl:export '#.(swig-lispify "Cudd_SupersetHeavyBranch" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SupersetHeavyBranch" 'function))
 
-(cffi:defcfun ("Cudd_SubsetShortPaths" #.(swig-lispify "Cudd_SubsetShortPaths" 'function)) node
-  (dd manager)
-  (f node)
-  (numVars :int)
-  (threshold :int)
-  (hardlimit :int))
+  (cffi:defcfun ("Cudd_SubsetShortPaths" #.(swig-lispify "Cudd_SubsetShortPaths" 'function)) node
+	(dd manager)
+	(f node)
+	(numVars :int)
+	(threshold :int)
+	(hardlimit :int))
 
-(cl:export '#.(swig-lispify "Cudd_SubsetShortPaths" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SubsetShortPaths" 'function))
 
-(cffi:defcfun ("Cudd_SupersetShortPaths" #.(swig-lispify "Cudd_SupersetShortPaths" 'function)) node
-  (dd manager)
-  (f node)
-  (numVars :int)
-  (threshold :int)
-  (hardlimit :int))
+  (cffi:defcfun ("Cudd_SupersetShortPaths" #.(swig-lispify "Cudd_SupersetShortPaths" 'function)) node
+	(dd manager)
+	(f node)
+	(numVars :int)
+	(threshold :int)
+	(hardlimit :int))
 
-(cl:export '#.(swig-lispify "Cudd_SupersetShortPaths" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SupersetShortPaths" 'function))
 
-(cffi:defcfun ("Cudd_SymmProfile" #.(swig-lispify "Cudd_SymmProfile" 'function)) :void
-  (table manager)
-  (lower :int)
-  (upper :int))
+  (cffi:defcfun ("Cudd_SymmProfile" #.(swig-lispify "Cudd_SymmProfile" 'function)) :void
+	(table manager)
+	(lower :int)
+	(upper :int))
 
-(cl:export '#.(swig-lispify "Cudd_SymmProfile" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SymmProfile" 'function))
 
-(cffi:defcfun ("Cudd_Prime" #.(swig-lispify "Cudd_Prime" 'function)) :unsigned-int
-  (p :unsigned-int))
+  (cffi:defcfun ("Cudd_Prime" #.(swig-lispify "Cudd_Prime" 'function)) :unsigned-int
+	(p :unsigned-int))
 
-(cl:export '#.(swig-lispify "Cudd_Prime" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Prime" 'function))
 
-(cffi:defcfun ("Cudd_Reserve" #.(swig-lispify "Cudd_Reserve" 'function)) :int
-  (manager manager)
-  (amount :int))
+  (cffi:defcfun ("Cudd_Reserve" #.(swig-lispify "Cudd_Reserve" 'function)) :int
+	(manager manager)
+	(amount :int))
 
-(cl:export '#.(swig-lispify "Cudd_Reserve" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Reserve" 'function))
 
-(cffi:defcfun ("Cudd_PrintMinterm" #.(swig-lispify "Cudd_PrintMinterm" 'function)) :int
-  (manager manager)
-  (node node))
+  (cffi:defcfun ("Cudd_PrintMinterm" #.(swig-lispify "Cudd_PrintMinterm" 'function)) :int
+	(manager manager)
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_PrintMinterm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_PrintMinterm" 'function))
 
-(cffi:defcfun ("Cudd_bddPrintCover" #.(swig-lispify "Cudd_bddPrintCover" 'function)) :int
-  (dd manager)
-  (l node)
-  (u node))
+  (cffi:defcfun ("Cudd_bddPrintCover" #.(swig-lispify "Cudd_bddPrintCover" 'function)) :int
+	(dd manager)
+	(l node)
+	(u node))
 
-(cl:export '#.(swig-lispify "Cudd_bddPrintCover" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddPrintCover" 'function))
 
-(cffi:defcfun ("Cudd_PrintDebug" #.(swig-lispify "Cudd_PrintDebug" 'function)) :int
-  (dd manager)
-  (f node)
-  (n :int)
-  (pr :int))
+  (cffi:defcfun ("Cudd_PrintDebug" #.(swig-lispify "Cudd_PrintDebug" 'function)) :int
+	(dd manager)
+	(f node)
+	(n :int)
+	(pr :int))
 
-(cl:export '#.(swig-lispify "Cudd_PrintDebug" 'function))
+  (cl:export '#.(swig-lispify "Cudd_PrintDebug" 'function))
 
-(cffi:defcfun ("Cudd_PrintSummary" #.(swig-lispify "Cudd_PrintSummary" 'function)) :int
-  (dd manager)
-  (f node)
-  (n :int)
-  (mode :int))
+  (cffi:defcfun ("Cudd_PrintSummary" #.(swig-lispify "Cudd_PrintSummary" 'function)) :int
+	(dd manager)
+	(f node)
+	(n :int)
+	(mode :int))
 
-(cl:export '#.(swig-lispify "Cudd_PrintSummary" 'function))
+  (cl:export '#.(swig-lispify "Cudd_PrintSummary" 'function))
 
-(cffi:defcfun ("Cudd_DagSize" #.(swig-lispify "Cudd_DagSize" 'function)) :int
-  (node node))
+  (cffi:defcfun ("Cudd_DagSize" #.(swig-lispify "Cudd_DagSize" 'function)) :int
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_DagSize" 'function))
+  (cl:export '#.(swig-lispify "Cudd_DagSize" 'function))
 
-(cffi:defcfun ("Cudd_EstimateCofactor" #.(swig-lispify "Cudd_EstimateCofactor" 'function)) :int
-  (dd manager)
-  (node node)
-  (i :int)
-  (phase :int))
+  (cffi:defcfun ("Cudd_EstimateCofactor" #.(swig-lispify "Cudd_EstimateCofactor" 'function)) :int
+	(dd manager)
+	(node node)
+	(i :int)
+	(phase :int))
 
-(cl:export '#.(swig-lispify "Cudd_EstimateCofactor" 'function))
+  (cl:export '#.(swig-lispify "Cudd_EstimateCofactor" 'function))
 
-(cffi:defcfun ("Cudd_EstimateCofactorSimple" #.(swig-lispify "Cudd_EstimateCofactorSimple" 'function)) :int
-  (node node)
-  (i :int))
+  (cffi:defcfun ("Cudd_EstimateCofactorSimple" #.(swig-lispify "Cudd_EstimateCofactorSimple" 'function)) :int
+	(node node)
+	(i :int))
 
-(cl:export '#.(swig-lispify "Cudd_EstimateCofactorSimple" 'function))
+  (cl:export '#.(swig-lispify "Cudd_EstimateCofactorSimple" 'function))
 
-(cffi:defcfun ("Cudd_SharingSize" #.(swig-lispify "Cudd_SharingSize" 'function)) :int
-  (nodeArray :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_SharingSize" #.(swig-lispify "Cudd_SharingSize" 'function)) :int
+	(nodeArray :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_SharingSize" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SharingSize" 'function))
 
-(cffi:defcfun ("Cudd_CountMinterm" #.(swig-lispify "Cudd_CountMinterm" 'function)) :double
-  (manager manager)
-  (node node)
-  (nvars :int))
+  (cffi:defcfun ("Cudd_CountMinterm" #.(swig-lispify "Cudd_CountMinterm" 'function)) :double
+	(manager manager)
+	(node node)
+	(nvars :int))
 
-(cl:export '#.(swig-lispify "Cudd_CountMinterm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_CountMinterm" 'function))
 
-(cffi:defcfun ("Cudd_LdblCountMinterm" #.(swig-lispify "Cudd_LdblCountMinterm" 'function)) :pointer
-  (manager manager)
-  (node node)
-  (nvars :int))
+  (cffi:defcfun ("Cudd_LdblCountMinterm" #.(swig-lispify "Cudd_LdblCountMinterm" 'function)) :pointer
+	(manager manager)
+	(node node)
+	(nvars :int))
 
-(cl:export '#.(swig-lispify "Cudd_LdblCountMinterm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_LdblCountMinterm" 'function))
 
-(cffi:defcfun ("Cudd_EpdPrintMinterm" #.(swig-lispify "Cudd_EpdPrintMinterm" 'function)) :int
-  (dd manager)
-  (node node)
-  (nvars :int))
+  (cffi:defcfun ("Cudd_EpdPrintMinterm" #.(swig-lispify "Cudd_EpdPrintMinterm" 'function)) :int
+	(dd manager)
+	(node node)
+	(nvars :int))
 
-(cl:export '#.(swig-lispify "Cudd_EpdPrintMinterm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_EpdPrintMinterm" 'function))
 
-(cffi:defcfun ("Cudd_CountPath" #.(swig-lispify "Cudd_CountPath" 'function)) :double
-  (node node))
+  (cffi:defcfun ("Cudd_CountPath" #.(swig-lispify "Cudd_CountPath" 'function)) :double
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_CountPath" 'function))
+  (cl:export '#.(swig-lispify "Cudd_CountPath" 'function))
 
-(cffi:defcfun ("Cudd_CountPathsToNonZero" #.(swig-lispify "Cudd_CountPathsToNonZero" 'function)) :double
-  (node node))
+  (cffi:defcfun ("Cudd_CountPathsToNonZero" #.(swig-lispify "Cudd_CountPathsToNonZero" 'function)) :double
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_CountPathsToNonZero" 'function))
+  (cl:export '#.(swig-lispify "Cudd_CountPathsToNonZero" 'function))
 
-(cffi:defcfun ("Cudd_SupportIndices" #.(swig-lispify "Cudd_SupportIndices" 'function)) :int
-  (dd manager)
-  (f node)
-  (indices :pointer))
+  (cffi:defcfun ("Cudd_SupportIndices" #.(swig-lispify "Cudd_SupportIndices" 'function)) :int
+	(dd manager)
+	(f node)
+	(indices :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_SupportIndices" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SupportIndices" 'function))
 
-(cffi:defcfun ("Cudd_Support" #.(swig-lispify "Cudd_Support" 'function)) node
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_Support" #.(swig-lispify "Cudd_Support" 'function)) node
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_Support" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Support" 'function))
 
-(cffi:defcfun ("Cudd_SupportIndex" #.(swig-lispify "Cudd_SupportIndex" 'function)) :pointer
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_SupportIndex" #.(swig-lispify "Cudd_SupportIndex" 'function)) :pointer
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_SupportIndex" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SupportIndex" 'function))
 
-(cffi:defcfun ("Cudd_SupportSize" #.(swig-lispify "Cudd_SupportSize" 'function)) :int
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_SupportSize" #.(swig-lispify "Cudd_SupportSize" 'function)) :int
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_SupportSize" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SupportSize" 'function))
 
-(cffi:defcfun ("Cudd_VectorSupportIndices" #.(swig-lispify "Cudd_VectorSupportIndices" 'function)) :int
-  (dd manager)
-  (F :pointer)
-  (n :int)
-  (indices :pointer))
+  (cffi:defcfun ("Cudd_VectorSupportIndices" #.(swig-lispify "Cudd_VectorSupportIndices" 'function)) :int
+	(dd manager)
+	(F :pointer)
+	(n :int)
+	(indices :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_VectorSupportIndices" 'function))
+  (cl:export '#.(swig-lispify "Cudd_VectorSupportIndices" 'function))
 
-(cffi:defcfun ("Cudd_VectorSupport" #.(swig-lispify "Cudd_VectorSupport" 'function)) node
-  (dd manager)
-  (F :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_VectorSupport" #.(swig-lispify "Cudd_VectorSupport" 'function)) node
+	(dd manager)
+	(F :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_VectorSupport" 'function))
+  (cl:export '#.(swig-lispify "Cudd_VectorSupport" 'function))
 
-(cffi:defcfun ("Cudd_VectorSupportIndex" #.(swig-lispify "Cudd_VectorSupportIndex" 'function)) :pointer
-  (dd manager)
-  (F :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_VectorSupportIndex" #.(swig-lispify "Cudd_VectorSupportIndex" 'function)) :pointer
+	(dd manager)
+	(F :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_VectorSupportIndex" 'function))
+  (cl:export '#.(swig-lispify "Cudd_VectorSupportIndex" 'function))
 
-(cffi:defcfun ("Cudd_VectorSupportSize" #.(swig-lispify "Cudd_VectorSupportSize" 'function)) :int
-  (dd manager)
-  (F :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_VectorSupportSize" #.(swig-lispify "Cudd_VectorSupportSize" 'function)) :int
+	(dd manager)
+	(F :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_VectorSupportSize" 'function))
+  (cl:export '#.(swig-lispify "Cudd_VectorSupportSize" 'function))
 
-(cffi:defcfun ("Cudd_ClassifySupport" #.(swig-lispify "Cudd_ClassifySupport" 'function)) :int
-  (dd manager)
-  (f node)
-  (g node)
-  (common :pointer)
-  (onlyF :pointer)
-  (onlyG :pointer))
+  (cffi:defcfun ("Cudd_ClassifySupport" #.(swig-lispify "Cudd_ClassifySupport" 'function)) :int
+	(dd manager)
+	(f node)
+	(g node)
+	(common :pointer)
+	(onlyF :pointer)
+	(onlyG :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_ClassifySupport" 'function))
+  (cl:export '#.(swig-lispify "Cudd_ClassifySupport" 'function))
 
-(cffi:defcfun ("Cudd_CountLeaves" #.(swig-lispify "Cudd_CountLeaves" 'function)) :int
-  (node node))
+  (cffi:defcfun ("Cudd_CountLeaves" #.(swig-lispify "Cudd_CountLeaves" 'function)) :int
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_CountLeaves" 'function))
+  (cl:export '#.(swig-lispify "Cudd_CountLeaves" 'function))
 
-(cffi:defcfun ("Cudd_bddPickOneCube" #.(swig-lispify "Cudd_bddPickOneCube" 'function)) :int
-  (ddm manager)
-  (node node)
-  (string :string))
+  (cffi:defcfun ("Cudd_bddPickOneCube" #.(swig-lispify "Cudd_bddPickOneCube" 'function)) :int
+	(ddm manager)
+	(node node)
+	(string :string))
 
-(cl:export '#.(swig-lispify "Cudd_bddPickOneCube" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddPickOneCube" 'function))
 
-(cffi:defcfun ("Cudd_bddPickOneMinterm" #.(swig-lispify "Cudd_bddPickOneMinterm" 'function)) node
-  (dd manager)
-  (f node)
-  (vars :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_bddPickOneMinterm" #.(swig-lispify "Cudd_bddPickOneMinterm" 'function)) node
+	(dd manager)
+	(f node)
+	(vars :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddPickOneMinterm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddPickOneMinterm" 'function))
 
-(cffi:defcfun ("Cudd_bddPickArbitraryMinterms" #.(swig-lispify "Cudd_bddPickArbitraryMinterms" 'function)) :pointer
-  (dd manager)
-  (f node)
-  (vars :pointer)
-  (n :int)
-  (k :int))
+  (cffi:defcfun ("Cudd_bddPickArbitraryMinterms" #.(swig-lispify "Cudd_bddPickArbitraryMinterms" 'function)) :pointer
+	(dd manager)
+	(f node)
+	(vars :pointer)
+	(n :int)
+	(k :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddPickArbitraryMinterms" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddPickArbitraryMinterms" 'function))
 
-(cffi:defcfun ("Cudd_SubsetWithMaskVars" #.(swig-lispify "Cudd_SubsetWithMaskVars" 'function)) node
-  (dd manager)
-  (f node)
-  (vars :pointer)
-  (nvars :int)
-  (maskVars :pointer)
-  (mvars :int))
+  (cffi:defcfun ("Cudd_SubsetWithMaskVars" #.(swig-lispify "Cudd_SubsetWithMaskVars" 'function)) node
+	(dd manager)
+	(f node)
+	(vars :pointer)
+	(nvars :int)
+	(maskVars :pointer)
+	(mvars :int))
 
-(cl:export '#.(swig-lispify "Cudd_SubsetWithMaskVars" 'function))
+  (cl:export '#.(swig-lispify "Cudd_SubsetWithMaskVars" 'function))
 
-(cffi:defcfun ("Cudd_FirstCube" #.(swig-lispify "Cudd_FirstCube" 'function)) :pointer
-  (dd manager)
-  (f node)
-  (cube :pointer)
-  (value :pointer))
+  (cffi:defcfun ("Cudd_FirstCube" #.(swig-lispify "Cudd_FirstCube" 'function)) :pointer
+	(dd manager)
+	(f node)
+	(cube :pointer)
+	(value :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_FirstCube" 'function))
+  (cl:export '#.(swig-lispify "Cudd_FirstCube" 'function))
 
-(cffi:defcfun ("Cudd_NextCube" #.(swig-lispify "Cudd_NextCube" 'function)) :int
-  (gen :pointer)
-  (cube :pointer)
-  (value :pointer))
+  (cffi:defcfun ("Cudd_NextCube" #.(swig-lispify "Cudd_NextCube" 'function)) :int
+	(gen :pointer)
+	(cube :pointer)
+	(value :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_NextCube" 'function))
+  (cl:export '#.(swig-lispify "Cudd_NextCube" 'function))
 
-(cffi:defcfun ("Cudd_FirstPrime" #.(swig-lispify "Cudd_FirstPrime" 'function)) :pointer
-  (dd manager)
-  (l node)
-  (u node)
-  (cube :pointer))
+  (cffi:defcfun ("Cudd_FirstPrime" #.(swig-lispify "Cudd_FirstPrime" 'function)) :pointer
+	(dd manager)
+	(l node)
+	(u node)
+	(cube :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_FirstPrime" 'function))
+  (cl:export '#.(swig-lispify "Cudd_FirstPrime" 'function))
 
-(cffi:defcfun ("Cudd_NextPrime" #.(swig-lispify "Cudd_NextPrime" 'function)) :int
-  (gen :pointer)
-  (cube :pointer))
+  (cffi:defcfun ("Cudd_NextPrime" #.(swig-lispify "Cudd_NextPrime" 'function)) :int
+	(gen :pointer)
+	(cube :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_NextPrime" 'function))
+  (cl:export '#.(swig-lispify "Cudd_NextPrime" 'function))
 
-(cffi:defcfun ("Cudd_bddComputeCube" #.(swig-lispify "Cudd_bddComputeCube" 'function)) node
-  (dd manager)
-  (vars :pointer)
-  (phase :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_bddComputeCube" #.(swig-lispify "Cudd_bddComputeCube" 'function)) node
+	(dd manager)
+	(vars :pointer)
+	(phase :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddComputeCube" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddComputeCube" 'function))
 
-(cffi:defcfun ("Cudd_addComputeCube" #.(swig-lispify "Cudd_addComputeCube" 'function)) node
-  (dd manager)
-  (vars :pointer)
-  (phase :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_addComputeCube" #.(swig-lispify "Cudd_addComputeCube" 'function)) node
+	(dd manager)
+	(vars :pointer)
+	(phase :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_addComputeCube" 'function))
+  (cl:export '#.(swig-lispify "Cudd_addComputeCube" 'function))
 
-(cffi:defcfun ("Cudd_CubeArrayToBdd" #.(swig-lispify "Cudd_CubeArrayToBdd" 'function)) node
-  (dd manager)
-  (array :pointer))
+  (cffi:defcfun ("Cudd_CubeArrayToBdd" #.(swig-lispify "Cudd_CubeArrayToBdd" 'function)) node
+	(dd manager)
+	(array :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_CubeArrayToBdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_CubeArrayToBdd" 'function))
 
-(cffi:defcfun ("Cudd_BddToCubeArray" #.(swig-lispify "Cudd_BddToCubeArray" 'function)) :int
-  (dd manager)
-  (cube node)
-  (array :pointer))
+  (cffi:defcfun ("Cudd_BddToCubeArray" #.(swig-lispify "Cudd_BddToCubeArray" 'function)) :int
+	(dd manager)
+	(cube node)
+	(array :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_BddToCubeArray" 'function))
+  (cl:export '#.(swig-lispify "Cudd_BddToCubeArray" 'function))
 
-(cffi:defcfun ("Cudd_FirstNode" #.(swig-lispify "Cudd_FirstNode" 'function)) :pointer
-  (dd manager)
-  (f node)
-  (node :pointer))
+  (cffi:defcfun ("Cudd_FirstNode" #.(swig-lispify "Cudd_FirstNode" 'function)) :pointer
+	(dd manager)
+	(f node)
+	(node :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_FirstNode" 'function))
+  (cl:export '#.(swig-lispify "Cudd_FirstNode" 'function))
 
-(cffi:defcfun ("Cudd_NextNode" #.(swig-lispify "Cudd_NextNode" 'function)) :int
-  (gen :pointer)
-  (node :pointer))
+  (cffi:defcfun ("Cudd_NextNode" #.(swig-lispify "Cudd_NextNode" 'function)) :int
+	(gen :pointer)
+	(node :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_NextNode" 'function))
+  (cl:export '#.(swig-lispify "Cudd_NextNode" 'function))
 
-(cffi:defcfun ("Cudd_GenFree" #.(swig-lispify "Cudd_GenFree" 'function)) :int
-  (gen :pointer))
+  (cffi:defcfun ("Cudd_GenFree" #.(swig-lispify "Cudd_GenFree" 'function)) :int
+	(gen :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_GenFree" 'function))
+  (cl:export '#.(swig-lispify "Cudd_GenFree" 'function))
 
-(cffi:defcfun ("Cudd_IsGenEmpty" #.(swig-lispify "Cudd_IsGenEmpty" 'function)) :int
-  (gen :pointer))
+  (cffi:defcfun ("Cudd_IsGenEmpty" #.(swig-lispify "Cudd_IsGenEmpty" 'function)) :int
+	(gen :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_IsGenEmpty" 'function))
+  (cl:export '#.(swig-lispify "Cudd_IsGenEmpty" 'function))
 
-(cffi:defcfun ("Cudd_IndicesToCube" #.(swig-lispify "Cudd_IndicesToCube" 'function)) node
-  (dd manager)
-  (array :pointer)
-  (n :int))
+  (cffi:defcfun ("Cudd_IndicesToCube" #.(swig-lispify "Cudd_IndicesToCube" 'function)) node
+	(dd manager)
+	(array :pointer)
+	(n :int))
 
-(cl:export '#.(swig-lispify "Cudd_IndicesToCube" 'function))
+  (cl:export '#.(swig-lispify "Cudd_IndicesToCube" 'function))
 
-(cffi:defcfun ("Cudd_PrintVersion" #.(swig-lispify "Cudd_PrintVersion" 'function)) :void
-  (fp :pointer))
+  (cffi:defcfun ("Cudd_PrintVersion" #.(swig-lispify "Cudd_PrintVersion" 'function)) :void
+	(fp :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_PrintVersion" 'function))
+  (cl:export '#.(swig-lispify "Cudd_PrintVersion" 'function))
 
-(cffi:defcfun ("Cudd_AverageDistance" #.(swig-lispify "Cudd_AverageDistance" 'function)) :double
-  (dd manager))
+  (cffi:defcfun ("Cudd_AverageDistance" #.(swig-lispify "Cudd_AverageDistance" 'function)) :double
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_AverageDistance" 'function))
+  (cl:export '#.(swig-lispify "Cudd_AverageDistance" 'function))
 
-(cffi:defcfun ("Cudd_Random" #.(swig-lispify "Cudd_Random" 'function)) :pointer
-  (dd manager))
+  (cffi:defcfun ("Cudd_Random" #.(swig-lispify "Cudd_Random" 'function)) :pointer
+	(dd manager))
 
-(cl:export '#.(swig-lispify "Cudd_Random" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Random" 'function))
 
-(cffi:defcfun ("Cudd_Srandom" #.(swig-lispify "Cudd_Srandom" 'function)) :void
-  (dd manager)
-  (seed :pointer))
+  (cffi:defcfun ("Cudd_Srandom" #.(swig-lispify "Cudd_Srandom" 'function)) :void
+	(dd manager)
+	(seed :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_Srandom" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Srandom" 'function))
 
-(cffi:defcfun ("Cudd_Density" #.(swig-lispify "Cudd_Density" 'function)) :double
-  (dd manager)
-  (f node)
-  (nvars :int))
+  (cffi:defcfun ("Cudd_Density" #.(swig-lispify "Cudd_Density" 'function)) :double
+	(dd manager)
+	(f node)
+	(nvars :int))
 
-(cl:export '#.(swig-lispify "Cudd_Density" 'function))
+  (cl:export '#.(swig-lispify "Cudd_Density" 'function))
 
-(cffi:defcfun ("Cudd_OutOfMem" #.(swig-lispify "Cudd_OutOfMem" 'function)) :void
-  (size :pointer))
+  (cffi:defcfun ("Cudd_OutOfMem" #.(swig-lispify "Cudd_OutOfMem" 'function)) :void
+	(size :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_OutOfMem" 'function))
+  (cl:export '#.(swig-lispify "Cudd_OutOfMem" 'function))
 
-(cffi:defcfun ("Cudd_OutOfMemSilent" #.(swig-lispify "Cudd_OutOfMemSilent" 'function)) :void
-  (size :pointer))
+  (cffi:defcfun ("Cudd_OutOfMemSilent" #.(swig-lispify "Cudd_OutOfMemSilent" 'function)) :void
+	(size :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_OutOfMemSilent" 'function))
+  (cl:export '#.(swig-lispify "Cudd_OutOfMemSilent" 'function))
 
-(cffi:defcfun ("Cudd_zddCount" #.(swig-lispify "Cudd_zddCount" 'function)) :int
-  (zdd manager)
-  (P node))
+  (cffi:defcfun ("Cudd_zddCount" #.(swig-lispify "Cudd_zddCount" 'function)) :int
+	(zdd manager)
+	(P node))
 
-(cl:export '#.(swig-lispify "Cudd_zddCount" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddCount" 'function))
 
-(cffi:defcfun ("Cudd_zddCountDouble" #.(swig-lispify "Cudd_zddCountDouble" 'function)) :double
-  (zdd manager)
-  (P node))
+  (cffi:defcfun ("Cudd_zddCountDouble" #.(swig-lispify "Cudd_zddCountDouble" 'function)) :double
+	(zdd manager)
+	(P node))
 
-(cl:export '#.(swig-lispify "Cudd_zddCountDouble" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddCountDouble" 'function))
 
-(cffi:defcfun ("Cudd_zddProduct" #.(swig-lispify "Cudd_zddProduct" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_zddProduct" #.(swig-lispify "Cudd_zddProduct" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_zddProduct" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddProduct" 'function))
 
-(cffi:defcfun ("Cudd_zddUnateProduct" #.(swig-lispify "Cudd_zddUnateProduct" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_zddUnateProduct" #.(swig-lispify "Cudd_zddUnateProduct" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_zddUnateProduct" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddUnateProduct" 'function))
 
-(cffi:defcfun ("Cudd_zddWeakDiv" #.(swig-lispify "Cudd_zddWeakDiv" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_zddWeakDiv" #.(swig-lispify "Cudd_zddWeakDiv" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_zddWeakDiv" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddWeakDiv" 'function))
 
-(cffi:defcfun ("Cudd_zddDivide" #.(swig-lispify "Cudd_zddDivide" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_zddDivide" #.(swig-lispify "Cudd_zddDivide" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_zddDivide" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddDivide" 'function))
 
-(cffi:defcfun ("Cudd_zddWeakDivF" #.(swig-lispify "Cudd_zddWeakDivF" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_zddWeakDivF" #.(swig-lispify "Cudd_zddWeakDivF" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_zddWeakDivF" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddWeakDivF" 'function))
 
-(cffi:defcfun ("Cudd_zddDivideF" #.(swig-lispify "Cudd_zddDivideF" 'function)) node
-  (dd manager)
-  (f node)
-  (g node))
+  (cffi:defcfun ("Cudd_zddDivideF" #.(swig-lispify "Cudd_zddDivideF" 'function)) node
+	(dd manager)
+	(f node)
+	(g node))
 
-(cl:export '#.(swig-lispify "Cudd_zddDivideF" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddDivideF" 'function))
 
-(cffi:defcfun ("Cudd_zddComplement" #.(swig-lispify "Cudd_zddComplement" 'function)) node
-  (dd manager)
-  (node node))
+  (cffi:defcfun ("Cudd_zddComplement" #.(swig-lispify "Cudd_zddComplement" 'function)) node
+	(dd manager)
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_zddComplement" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddComplement" 'function))
 
-(cffi:defcfun ("Cudd_zddIsop" #.(swig-lispify "Cudd_zddIsop" 'function)) node
-  (dd manager)
-  (L node)
-  (U node)
-  (zdd_I :pointer))
+  (cffi:defcfun ("Cudd_zddIsop" #.(swig-lispify "Cudd_zddIsop" 'function)) node
+	(dd manager)
+	(L node)
+	(U node)
+	(zdd_I :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_zddIsop" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddIsop" 'function))
 
-(cffi:defcfun ("Cudd_bddIsop" #.(swig-lispify "Cudd_bddIsop" 'function)) node
-  (dd manager)
-  (L node)
-  (U node))
+  (cffi:defcfun ("Cudd_bddIsop" #.(swig-lispify "Cudd_bddIsop" 'function)) node
+	(dd manager)
+	(L node)
+	(U node))
 
-(cl:export '#.(swig-lispify "Cudd_bddIsop" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIsop" 'function))
 
-(cffi:defcfun ("Cudd_MakeBddFromZddCover" #.(swig-lispify "Cudd_MakeBddFromZddCover" 'function)) node
-  (dd manager)
-  (node node))
+  (cffi:defcfun ("Cudd_MakeBddFromZddCover" #.(swig-lispify "Cudd_MakeBddFromZddCover" 'function)) node
+	(dd manager)
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_MakeBddFromZddCover" 'function))
+  (cl:export '#.(swig-lispify "Cudd_MakeBddFromZddCover" 'function))
 
-(cffi:defcfun ("Cudd_zddDagSize" #.(swig-lispify "Cudd_zddDagSize" 'function)) :int
-  (p_node node))
+  (cffi:defcfun ("Cudd_zddDagSize" #.(swig-lispify "Cudd_zddDagSize" 'function)) :int
+	(p_node node))
 
-(cl:export '#.(swig-lispify "Cudd_zddDagSize" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddDagSize" 'function))
 
-(cffi:defcfun ("Cudd_zddCountMinterm" #.(swig-lispify "Cudd_zddCountMinterm" 'function)) :double
-  (zdd manager)
-  (node node)
-  (path :int))
+  (cffi:defcfun ("Cudd_zddCountMinterm" #.(swig-lispify "Cudd_zddCountMinterm" 'function)) :double
+	(zdd manager)
+	(node node)
+	(path :int))
 
-(cl:export '#.(swig-lispify "Cudd_zddCountMinterm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddCountMinterm" 'function))
 
-(cffi:defcfun ("Cudd_zddPrintSubtable" #.(swig-lispify "Cudd_zddPrintSubtable" 'function)) :void
-  (table manager))
+  (cffi:defcfun ("Cudd_zddPrintSubtable" #.(swig-lispify "Cudd_zddPrintSubtable" 'function)) :void
+	(table manager))
 
-(cl:export '#.(swig-lispify "Cudd_zddPrintSubtable" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddPrintSubtable" 'function))
 
-(cffi:defcfun ("Cudd_zddPortFromBdd" #.(swig-lispify "Cudd_zddPortFromBdd" 'function)) node
-  (dd manager)
-  (B node))
+  (cffi:defcfun ("Cudd_zddPortFromBdd" #.(swig-lispify "Cudd_zddPortFromBdd" 'function)) node
+	(dd manager)
+	(B node))
 
-(cl:export '#.(swig-lispify "Cudd_zddPortFromBdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddPortFromBdd" 'function))
 
-(cffi:defcfun ("Cudd_zddPortToBdd" #.(swig-lispify "Cudd_zddPortToBdd" 'function)) node
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_zddPortToBdd" #.(swig-lispify "Cudd_zddPortToBdd" 'function)) node
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_zddPortToBdd" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddPortToBdd" 'function))
 
-(cffi:defcfun ("Cudd_zddReduceHeap" #.(swig-lispify "Cudd_zddReduceHeap" 'function)) :int
-  (table manager)
-  (heuristic #.(swig-lispify "Cudd_ReorderingType" 'enumname))
-  (minsize :int))
+  (cffi:defcfun ("Cudd_zddReduceHeap" #.(swig-lispify "Cudd_zddReduceHeap" 'function)) :int
+	(table manager)
+	(heuristic #.(swig-lispify "Cudd_ReorderingType" 'enumname))
+	(minsize :int))
 
-(cl:export '#.(swig-lispify "Cudd_zddReduceHeap" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddReduceHeap" 'function))
 
-(cffi:defcfun ("Cudd_zddShuffleHeap" #.(swig-lispify "Cudd_zddShuffleHeap" 'function)) :int
-  (table manager)
-  (permutation :pointer))
+  (cffi:defcfun ("Cudd_zddShuffleHeap" #.(swig-lispify "Cudd_zddShuffleHeap" 'function)) :int
+	(table manager)
+	(permutation :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_zddShuffleHeap" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddShuffleHeap" 'function))
 
-(cffi:defcfun ("Cudd_zddIte" #.(swig-lispify "Cudd_zddIte" 'function)) node
-  (dd manager)
-  (f node)
-  (g node)
-  (h node))
+  (cffi:defcfun ("Cudd_zddIte" #.(swig-lispify "Cudd_zddIte" 'function)) node
+	(dd manager)
+	(f node)
+	(g node)
+	(h node))
 
-(cl:export '#.(swig-lispify "Cudd_zddIte" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddIte" 'function))
 
-(cffi:defcfun ("Cudd_zddUnion" #.(swig-lispify "Cudd_zddUnion" 'function)) node
-  (dd manager)
-  (P node)
-  (Q node))
+  (cffi:defcfun ("Cudd_zddUnion" #.(swig-lispify "Cudd_zddUnion" 'function)) node
+	(dd manager)
+	(P node)
+	(Q node))
 
-(cl:export '#.(swig-lispify "Cudd_zddUnion" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddUnion" 'function))
 
-(cffi:defcfun ("Cudd_zddIntersect" #.(swig-lispify "Cudd_zddIntersect" 'function)) node
-  (dd manager)
-  (P node)
-  (Q node))
+  (cffi:defcfun ("Cudd_zddIntersect" #.(swig-lispify "Cudd_zddIntersect" 'function)) node
+	(dd manager)
+	(P node)
+	(Q node))
 
-(cl:export '#.(swig-lispify "Cudd_zddIntersect" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddIntersect" 'function))
 
-(cffi:defcfun ("Cudd_zddDiff" #.(swig-lispify "Cudd_zddDiff" 'function)) node
-  (dd manager)
-  (P node)
-  (Q node))
+  (cffi:defcfun ("Cudd_zddDiff" #.(swig-lispify "Cudd_zddDiff" 'function)) node
+	(dd manager)
+	(P node)
+	(Q node))
 
-(cl:export '#.(swig-lispify "Cudd_zddDiff" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddDiff" 'function))
 
-(cffi:defcfun ("Cudd_zddDiffConst" #.(swig-lispify "Cudd_zddDiffConst" 'function)) node
-  (zdd manager)
-  (P node)
-  (Q node))
+  (cffi:defcfun ("Cudd_zddDiffConst" #.(swig-lispify "Cudd_zddDiffConst" 'function)) node
+	(zdd manager)
+	(P node)
+	(Q node))
 
-(cl:export '#.(swig-lispify "Cudd_zddDiffConst" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddDiffConst" 'function))
 
-(cffi:defcfun ("Cudd_zddSubset1" #.(swig-lispify "Cudd_zddSubset1" 'function)) node
-  (dd manager)
-  (P node)
-  (var :int))
+  (cffi:defcfun ("Cudd_zddSubset1" #.(swig-lispify "Cudd_zddSubset1" 'function)) node
+	(dd manager)
+	(P node)
+	(var :int))
 
-(cl:export '#.(swig-lispify "Cudd_zddSubset1" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddSubset1" 'function))
 
-(cffi:defcfun ("Cudd_zddSubset0" #.(swig-lispify "Cudd_zddSubset0" 'function)) node
-  (dd manager)
-  (P node)
-  (var :int))
+  (cffi:defcfun ("Cudd_zddSubset0" #.(swig-lispify "Cudd_zddSubset0" 'function)) node
+	(dd manager)
+	(P node)
+	(var :int))
 
-(cl:export '#.(swig-lispify "Cudd_zddSubset0" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddSubset0" 'function))
 
-(cffi:defcfun ("Cudd_zddChange" #.(swig-lispify "Cudd_zddChange" 'function)) node
-  (dd manager)
-  (P node)
-  (var :int))
+  (cffi:defcfun ("Cudd_zddChange" #.(swig-lispify "Cudd_zddChange" 'function)) node
+	(dd manager)
+	(P node)
+	(var :int))
 
-(cl:export '#.(swig-lispify "Cudd_zddChange" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddChange" 'function))
 
-(cffi:defcfun ("Cudd_zddSymmProfile" #.(swig-lispify "Cudd_zddSymmProfile" 'function)) :void
-  (table manager)
-  (lower :int)
-  (upper :int))
+  (cffi:defcfun ("Cudd_zddSymmProfile" #.(swig-lispify "Cudd_zddSymmProfile" 'function)) :void
+	(table manager)
+	(lower :int)
+	(upper :int))
 
-(cl:export '#.(swig-lispify "Cudd_zddSymmProfile" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddSymmProfile" 'function))
 
-(cffi:defcfun ("Cudd_zddPrintMinterm" #.(swig-lispify "Cudd_zddPrintMinterm" 'function)) :int
-  (zdd manager)
-  (node node))
+  (cffi:defcfun ("Cudd_zddPrintMinterm" #.(swig-lispify "Cudd_zddPrintMinterm" 'function)) :int
+	(zdd manager)
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_zddPrintMinterm" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddPrintMinterm" 'function))
 
-(cffi:defcfun ("Cudd_zddPrintCover" #.(swig-lispify "Cudd_zddPrintCover" 'function)) :int
-  (zdd manager)
-  (node node))
+  (cffi:defcfun ("Cudd_zddPrintCover" #.(swig-lispify "Cudd_zddPrintCover" 'function)) :int
+	(zdd manager)
+	(node node))
 
-(cl:export '#.(swig-lispify "Cudd_zddPrintCover" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddPrintCover" 'function))
 
-(cffi:defcfun ("Cudd_zddPrintDebug" #.(swig-lispify "Cudd_zddPrintDebug" 'function)) :int
-  (zdd manager)
-  (f node)
-  (n :int)
-  (pr :int))
+  (cffi:defcfun ("Cudd_zddPrintDebug" #.(swig-lispify "Cudd_zddPrintDebug" 'function)) :int
+	(zdd manager)
+	(f node)
+	(n :int)
+	(pr :int))
 
-(cl:export '#.(swig-lispify "Cudd_zddPrintDebug" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddPrintDebug" 'function))
 
-(cffi:defcfun ("Cudd_zddFirstPath" #.(swig-lispify "Cudd_zddFirstPath" 'function)) :pointer
-  (zdd manager)
-  (f node)
-  (path :pointer))
+  (cffi:defcfun ("Cudd_zddFirstPath" #.(swig-lispify "Cudd_zddFirstPath" 'function)) :pointer
+	(zdd manager)
+	(f node)
+	(path :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_zddFirstPath" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddFirstPath" 'function))
 
-(cffi:defcfun ("Cudd_zddNextPath" #.(swig-lispify "Cudd_zddNextPath" 'function)) :int
-  (gen :pointer)
-  (path :pointer))
+  (cffi:defcfun ("Cudd_zddNextPath" #.(swig-lispify "Cudd_zddNextPath" 'function)) :int
+	(gen :pointer)
+	(path :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_zddNextPath" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddNextPath" 'function))
 
-(cffi:defcfun ("Cudd_zddCoverPathToString" #.(swig-lispify "Cudd_zddCoverPathToString" 'function)) :string
-  (zdd manager)
-  (path :pointer)
-  (str :string))
+  (cffi:defcfun ("Cudd_zddCoverPathToString" #.(swig-lispify "Cudd_zddCoverPathToString" 'function)) :string
+	(zdd manager)
+	(path :pointer)
+	(str :string))
 
-(cl:export '#.(swig-lispify "Cudd_zddCoverPathToString" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddCoverPathToString" 'function))
 
-(cffi:defcfun ("Cudd_zddSupport" #.(swig-lispify "Cudd_zddSupport" 'function)) node
-  (dd manager)
-  (f node))
+  (cffi:defcfun ("Cudd_zddSupport" #.(swig-lispify "Cudd_zddSupport" 'function)) node
+	(dd manager)
+	(f node))
 
-(cl:export '#.(swig-lispify "Cudd_zddSupport" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddSupport" 'function))
 
-(cffi:defcfun ("Cudd_zddDumpDot" #.(swig-lispify "Cudd_zddDumpDot" 'function)) :int
-  (dd manager)
-  (n :int)
-  (f :pointer)
-  (inames :pointer)
-  (onames :pointer)
-  (fp :pointer))
+  (cffi:defcfun ("Cudd_zddDumpDot" #.(swig-lispify "Cudd_zddDumpDot" 'function)) :int
+	(dd manager)
+	(n :int)
+	(f :pointer)
+	(inames :pointer)
+	(onames :pointer)
+	(fp :pointer))
 
-(cl:export '#.(swig-lispify "Cudd_zddDumpDot" 'function))
+  (cl:export '#.(swig-lispify "Cudd_zddDumpDot" 'function))
 
-(cffi:defcfun ("Cudd_bddSetPiVar" #.(swig-lispify "Cudd_bddSetPiVar" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddSetPiVar" #.(swig-lispify "Cudd_bddSetPiVar" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddSetPiVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddSetPiVar" 'function))
 
-(cffi:defcfun ("Cudd_bddSetPsVar" #.(swig-lispify "Cudd_bddSetPsVar" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddSetPsVar" #.(swig-lispify "Cudd_bddSetPsVar" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddSetPsVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddSetPsVar" 'function))
 
-(cffi:defcfun ("Cudd_bddSetNsVar" #.(swig-lispify "Cudd_bddSetNsVar" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddSetNsVar" #.(swig-lispify "Cudd_bddSetNsVar" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddSetNsVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddSetNsVar" 'function))
 
-(cffi:defcfun ("Cudd_bddIsPiVar" #.(swig-lispify "Cudd_bddIsPiVar" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddIsPiVar" #.(swig-lispify "Cudd_bddIsPiVar" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddIsPiVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIsPiVar" 'function))
 
-(cffi:defcfun ("Cudd_bddIsPsVar" #.(swig-lispify "Cudd_bddIsPsVar" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddIsPsVar" #.(swig-lispify "Cudd_bddIsPsVar" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddIsPsVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIsPsVar" 'function))
 
-(cffi:defcfun ("Cudd_bddIsNsVar" #.(swig-lispify "Cudd_bddIsNsVar" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddIsNsVar" #.(swig-lispify "Cudd_bddIsNsVar" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddIsNsVar" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIsNsVar" 'function))
 
-(cffi:defcfun ("Cudd_bddSetPairIndex" #.(swig-lispify "Cudd_bddSetPairIndex" 'function)) :int
-  (dd manager)
-  (index :int)
-  (pairIndex :int))
+  (cffi:defcfun ("Cudd_bddSetPairIndex" #.(swig-lispify "Cudd_bddSetPairIndex" 'function)) :int
+	(dd manager)
+	(index :int)
+	(pairIndex :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddSetPairIndex" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddSetPairIndex" 'function))
 
-(cffi:defcfun ("Cudd_bddReadPairIndex" #.(swig-lispify "Cudd_bddReadPairIndex" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddReadPairIndex" #.(swig-lispify "Cudd_bddReadPairIndex" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddReadPairIndex" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddReadPairIndex" 'function))
 
-(cffi:defcfun ("Cudd_bddSetVarToBeGrouped" #.(swig-lispify "Cudd_bddSetVarToBeGrouped" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddSetVarToBeGrouped" #.(swig-lispify "Cudd_bddSetVarToBeGrouped" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddSetVarToBeGrouped" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddSetVarToBeGrouped" 'function))
 
-(cffi:defcfun ("Cudd_bddSetVarHardGroup" #.(swig-lispify "Cudd_bddSetVarHardGroup" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddSetVarHardGroup" #.(swig-lispify "Cudd_bddSetVarHardGroup" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddSetVarHardGroup" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddSetVarHardGroup" 'function))
 
-(cffi:defcfun ("Cudd_bddResetVarToBeGrouped" #.(swig-lispify "Cudd_bddResetVarToBeGrouped" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddResetVarToBeGrouped" #.(swig-lispify "Cudd_bddResetVarToBeGrouped" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddResetVarToBeGrouped" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddResetVarToBeGrouped" 'function))
 
-(cffi:defcfun ("Cudd_bddIsVarToBeGrouped" #.(swig-lispify "Cudd_bddIsVarToBeGrouped" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddIsVarToBeGrouped" #.(swig-lispify "Cudd_bddIsVarToBeGrouped" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddIsVarToBeGrouped" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIsVarToBeGrouped" 'function))
 
-(cffi:defcfun ("Cudd_bddSetVarToBeUngrouped" #.(swig-lispify "Cudd_bddSetVarToBeUngrouped" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddSetVarToBeUngrouped" #.(swig-lispify "Cudd_bddSetVarToBeUngrouped" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddSetVarToBeUngrouped" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddSetVarToBeUngrouped" 'function))
 
-(cffi:defcfun ("Cudd_bddIsVarToBeUngrouped" #.(swig-lispify "Cudd_bddIsVarToBeUngrouped" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddIsVarToBeUngrouped" #.(swig-lispify "Cudd_bddIsVarToBeUngrouped" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddIsVarToBeUngrouped" 'function))
+  (cl:export '#.(swig-lispify "Cudd_bddIsVarToBeUngrouped" 'function))
 
-(cffi:defcfun ("Cudd_bddIsVarHardGroup" #.(swig-lispify "Cudd_bddIsVarHardGroup" 'function)) :int
-  (dd manager)
-  (index :int))
+  (cffi:defcfun ("Cudd_bddIsVarHardGroup" #.(swig-lispify "Cudd_bddIsVarHardGroup" 'function)) :int
+	(dd manager)
+	(index :int))
 
-(cl:export '#.(swig-lispify "Cudd_bddIsVarHardGroup" 'function))
- ) ;; end of eval-when to avoid top-level export
+  (cl:export '#.(swig-lispify "Cudd_bddIsVarHardGroup" 'function))
+  ) ;; end of eval-when to avoid top-level export
 
 (defun cudd-bdd-not (manager node)
   (declare (ignore manager))
   ;; TODO What happens on big-endian machines?
   (let ((result (cffi:make-pointer (logxor 1 (cffi:pointer-address node)))))
-    (cudd-ref result)
-    result))
+	(cudd-ref result)
+	result))
 
 (defun cudd-add-cube (manager vars)
   "Build an add cube out of the variables."
   (let ((n (length vars)))
-    (cffi:with-foreign-object (array :pointer n)
-      (loop :for v :in vars
-            :for i :from 0
-         :do (setf (cffi:mem-aref array :pointer i) v))
-      (cudd-add-compute-cube manager array (cffi:null-pointer) n))))
+	(cffi:with-foreign-object (array :pointer n)
+	  (loop :for v :in vars
+			:for i :from 0
+			:do (setf (cffi:mem-aref array :pointer i) v))
+	  (cudd-add-compute-cube manager array (cffi:null-pointer) n))))
 
 (defun cudd-bdd-cube (manager vars)
   "Build an bdd cube out of the variables."
   (let ((n (length vars)))
-    (cffi:with-foreign-object (array :pointer n)
-      (loop :for v :in vars
-            :for i :from 0
-         :do (setf (cffi:mem-aref array :pointer i) v))
-      (cudd-bdd-compute-cube manager array (cffi:null-pointer) n))))
+	(cffi:with-foreign-object (array :pointer n)
+	  (loop :for v :in vars
+			:for i :from 0
+			:do (setf (cffi:mem-aref array :pointer i) v))
+	  (cudd-bdd-compute-cube manager array (cffi:null-pointer) n))))
 
 (cffi:defcfun "fopen" :pointer (path :string) (mode :string))
 (cffi:defcfun "fclose" :pointer (file :pointer))
+(cffi:defcfun "fflush" :int (file :pointer))
+(cl:export 'fflush) ; TODO: don't export?
+
 (cffi:defcvar "stdout" :pointer
   "Equivalent to the `FILE* stdout` constant from <cstdio>.")
-
 (cl:export '*stdout*)
-(cffi:defcfun "fflush" :int (file :pointer))
-(cl:export 'fflush)
 
 (defun dump-dot (manager nodes pathname &key inames onames)
   "Writes a file representing the argument DDs in a format suitable
@@ -3467,38 +3468,38 @@
 
   The dot options are chosen so that the drawing fits on a letter-size sheet."
   (let* ((nodes (if (typep nodes 'sequence) nodes (list nodes)))
-         (n (length nodes))
-         (n-names (if inames (length inames) 0)))
-    (cffi:with-foreign-objects
-        ((node-array :pointer n)
-         (iname-array :string n-names)
-         (oname-array :string n))
-        (loop :for i :from 0 :below n
-              :for node :in nodes
-              :do (setf (cffi:mem-aref node-array :pointer i) node))
-        (when inames
-          (loop :for i :from 0 :below n-names
-                :for name :across inames
-                :do (setf (cffi:mem-aref iname-array :string i)
-                          (or name (cffi:null-pointer)))))
-        (when onames
-          (loop :for i :from 0 :below n
-                :for name :across onames
-                :do (setf (cffi:mem-aref oname-array :string i)
-                          (or name (cffi:null-pointer)))))
-        (let ((file (fopen (coerce pathname 'string) "w")))
-          (if (cffi:null-pointer-p file)
-              (error "Could not open file for writing")
-              (unwind-protect
-                   (let ((result
-                          (cudd-dump-dot manager n node-array
-                                         (if inames iname-array (cffi:null-pointer))
-                                         (if onames oname-array (cffi:null-pointer))
-                                         file)))
-                     (if (= result 1)
-                         nil
-                         (error "Could not dump to dot file")))
-                (fclose file)))))))
+		 (n (length nodes))
+		 (n-names (if inames (length inames) 0)))
+	(cffi:with-foreign-objects
+		((node-array :pointer n)
+		 (iname-array :string n-names)
+		 (oname-array :string n))
+	  (loop :for i :from 0 :below n
+			:for node :in nodes
+			:do (setf (cffi:mem-aref node-array :pointer i) node))
+	  (when inames
+		(loop :for i :from 0 :below n-names
+			  :for name :across inames
+			  :do (setf (cffi:mem-aref iname-array :string i)
+						(or name (cffi:null-pointer)))))
+	  (when onames
+		(loop :for i :from 0 :below n
+			  :for name :across onames
+			  :do (setf (cffi:mem-aref oname-array :string i)
+						(or name (cffi:null-pointer)))))
+	  (let ((file (fopen (coerce pathname 'string) "w")))
+		(if (cffi:null-pointer-p file)
+			(error "Could not open file for writing")
+			(unwind-protect
+				 (let ((result
+						 (cudd-dump-dot manager n node-array
+										(if inames iname-array (cffi:null-pointer))
+										(if onames oname-array (cffi:null-pointer))
+										file)))
+				   (if (= result 1)
+					   nil
+					   (error "Could not dump to dot file")))
+			  (fclose file)))))))
 
 (defun add-var (manager &key nr level)
   "Creates a new ADD variable. At most one of nr and level may be given.
@@ -3518,11 +3519,11 @@ invokes a signal otherwise.
 An ADD variable differs from a BDD variable because it points to the arithmetic zero,
 instead of having a complement pointer to 1."
   (when (and nr level)
-    (error "ADD-VAR accepts at most one of I and LEVEL"))
+	(error "ADD-VAR accepts at most one of I and LEVEL"))
   (cond
-    (nr (cudd-add-ith-var manager nr))
-    (level (cudd-add-new-var-at-level manager level))
-    (t (cudd-add-new-var manager))))
+	(nr (cudd-add-ith-var manager nr))
+	(level (cudd-add-new-var-at-level manager level))
+	(t (cudd-add-new-var manager))))
 
 (defun bdd-var (manager &key nr level)
   "Creates a new BDD variable. At most one of nr and level may be given.
@@ -3542,32 +3543,46 @@ invokes a signal otherwise.
 An ADD variable differs from a BDD variable because it points to the arithmetic zero,
 instead of having a complement pointer to 1."
   (when (and nr level)
-    (error "BDD-VAR accepts at most one of I and LEVEL"))
+	(error "BDD-VAR accepts at most one of I and LEVEL"))
   (cond
-    (nr (cudd-bdd-ith-var manager nr))
-    (level (cudd-bdd-new-var-at-level manager level))
-    (t (cudd-bdd-new-var manager))))
+	(nr (cudd-bdd-ith-var manager nr))
+	(level (cudd-bdd-new-var-at-level manager level))
+	(t (cudd-bdd-new-var manager))))
 
-(defun print-info (manager pathname)
-  (let ((file (fopen (coerce pathname 'string) "w")))
-    (if (cffi:null-pointer-p file)
-        (error "Could not open file for writing")
-        (unwind-protect
-             (let ((result
-                    (cudd-print-info manager file)))
-               (if (= result 1)
-                   nil
-                   (error "Could not dump to dot file")))
-          (fclose file))))
-  (with-open-file (in pathname :direction :input)
-    (loop :for c = (read-char in nil :eof)
-       :until (eq c :eof)
-       :do (write-char c))))
+(defun print-info (manager &optional (pathname-or-pointer *stdout*))
+  "
+  * TODO: Typecheck MANAGER
+  * TODO: `pathname-designator' type
+"
+  (let ((file (typecase pathname-or-pointer
+				((or string pathname)
+				 (fopen (coerce pathname-or-pointer 'string) "w"))
+				(t
+				 (assert (cffi:pointerp pathname-or-pointer))
+				 pathname-or-pointer))))
+	(assert (cffi:pointerp file))
+	(if (cffi:null-pointer-p file)
+		(error "Could not open file for writing")
+		(unwind-protect
+			 (let ((result
+					 (cudd-print-info manager file)))
+			   (if (= result 1)
+				   nil
+				   (error "Failure in (~A); Cudd_PrintInfo() returned 1" 'print-info)))
+		  (typecase pathname-or-pointer
+			((or string pathname)
+			 (fclose file))))))
+  (typecase pathname-or-pointer
+	((or string pathname)
+	 (with-open-file (in pathname-or-pointer :direction :input)
+	   (loop :for c = (read-char in nil :eof)
+			 :until (eq c :eof)
+			 :do (write-char c))))))
 
 (defun cudd-regular (node)
   (let ((addr (pointer-address node)))
-    (setf (ldb (byte 1 0) addr) 0)
-    (make-pointer addr)))
+	(setf (ldb (byte 1 0) addr) 0)
+	(make-pointer addr)))
 
 (defparameter sizeof-void-p
   (foreign-type-size '(:pointer :void)))
@@ -3577,10 +3592,10 @@ instead of having a complement pointer to 1."
 
 (defparameter +cudd-max-index+
   (if (and (= sizeof-void-p 8) (= sizeof-int 4))
-      ;; ((unsigned int) ~0) >> 1
-      (- (expt 2 31) 1)
-      ;; ((unsigned short) ~0)
-      (- (expt 2 16) 1)))
+	  ;; ((unsigned int) ~0) >> 1
+	  (- (expt 2 31) 1)
+	  ;; ((unsigned short) ~0)
+	  (- (expt 2 16) 1)))
 
 (defun cudd-node-is-constant (manager node)
   (declare (ignore manager))
@@ -3594,28 +3609,24 @@ Warning: Undefined behaviour if DD is not a leaf node"
   (cudd-v node))
 
 (defun cudd-node-get-then (manager node)
-    "Return the then-child of an inner node.
+  "Return the then-child of an inner node.
 
 Warning: Undefined behaviour if DD is a leaf node"
-    (declare (ignore manager))
-    (let ((result (cudd-t node)))
-      (cudd-ref result)
-      result))
+  (declare (ignore manager))
+  (let ((result (cudd-t node)))
+	(cudd-ref result)
+	result))
 
 (defun cudd-node-get-else (manager node)
-    "Return the else-child of an inner node.
+  "Return the else-child of an inner node.
 
 Warning: Undefined behaviour if DD is a leaf node"
-    (declare (ignore manager))
-    (let ((result (cudd-e node)))
-      (cudd-ref result)
-      result))
+  (declare (ignore manager))
+  (let ((result (cudd-e node)))
+	(cudd-ref result)
+	result))
 
 (defun cudd-node-get-ref-count (manager node)
-    "Return the reference count of the node."
-    (declare (ignore manager))
-    0) ; no public API
-
-
-
-
+  "Return the reference count of the node."
+  (declare (ignore manager))
+  0) ; no public API
