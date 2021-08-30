@@ -88,6 +88,7 @@
 
    #:node-or
    #:node-and
+   #:node-xor
 
    #:plus-infinity
    #:minus-infinity

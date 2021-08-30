@@ -3555,8 +3555,10 @@ instead of having a complement pointer to 1."
   * TODO: `pathname-designator' type
 "
   (let ((file (typecase pathname-or-pointer
-				((or string pathname)
+				(string
 				 (fopen (coerce pathname-or-pointer 'string) "w"))
+				(pathname
+				 (fopen (the string (pathname-name pathname-or-pointer)) "w"))
 				(t
 				 (assert (cffi:pointerp pathname-or-pointer))
 				 pathname-or-pointer))))

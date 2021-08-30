@@ -244,6 +244,12 @@ Set the finalizer to call cudd-recursive-deref."
   :add     "Conjunction of two 0-1 ADDs."
   :bdd     "Conjunction of two BDDs.")
 
+(def-cudd-call node-xor (( ;:add (lambda (mgr f g) (cudd-add-apply mgr +times+ f g))
+						  :bdd cudd-bdd-xor) (f :node) (g :node))
+			   :generic "Exclusive XOR of two 0-1 ADDs or two BDDs."
+			   ;; :add     "Conjunction of two 0-1 ADDs."
+			   :bdd     "XOR of two BDDs.")
+
 (def-cudd-call disable-gc ((:common cudd-disable-garbage-collection))
                :generic "Disables garbage collection. Garbage
 collection is initially enabled. This function may be called to
