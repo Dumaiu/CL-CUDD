@@ -99,4 +99,5 @@
    #:one-node
    #:zero-node
 
+   #:node-count
    #:with-nodes))
