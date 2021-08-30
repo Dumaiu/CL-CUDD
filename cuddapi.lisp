@@ -3444,6 +3444,12 @@
 
 (cffi:defcfun "fopen" :pointer (path :string) (mode :string))
 (cffi:defcfun "fclose" :pointer (file :pointer))
+(cffi:defcvar "stdout" :pointer
+  "Equivalent to the `FILE* stdout` constant from <cstdio>.")
+
+(cl:export '*stdout*)
+(cffi:defcfun "fflush" :int (file :pointer))
+(cl:export 'fflush)
 
 (defun dump-dot (manager nodes pathname &key inames onames)
   "Writes a file representing the argument DDs in a format suitable
