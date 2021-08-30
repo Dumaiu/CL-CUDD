@@ -2,14 +2,14 @@
 ;;;; See LICENSE for licensing information.
 ;;;; package.lisp
 
-(cl:defpackage :swig-macros
+(uiop:define-package :swig-macros
   (:use :cl :cffi)
   (:documentation
    "Package containing utility functions for SWIG cffi interface generation")
   (:export #:swig-lispify #:defanonenum))
 
 ;;; Low-level interface:
-(defpackage #:cuddapi
+(uiop:define-package #:cuddapi
   (:use :cl :cffi :swig-macros :alexandria)
   (:shadow #:pi)
   (:export #:cudd-manager #:cudd-node #:cudd-bdd-not #:cudd-add-cube #:cudd-bdd-cube
@@ -20,7 +20,7 @@
   )
 
 ;;; High-level interface
-(defpackage cl-cudd
+(uiop:define-package cl-cudd
   (:use cl cffi swig-macros alexandria cuddapi)
   (:nicknames cudd)
   (:export 
