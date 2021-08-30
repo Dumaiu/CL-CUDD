@@ -607,6 +607,15 @@ If abstracting an ADD, we assume that it is an 0-1-ADD")
   (check-type manager manager)
   (cudd-read-node-count (manager-pointer manager)))
 
+
+(defun size (&optional (manager *manager*))
+  (declare (type manager manager))
+  (cudd-read-size (manager-pointer manager)))
+
+(defun reorderings (&optional (manager *manager*))
+  (declare (type manager manager))
+  (cudd-read-reorderings (manager-pointer manager)))
+
 #|
 (defun dd-eval (node assignment)
   "Finds the value of a DD for a given variable assignment. The

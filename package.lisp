@@ -100,4 +100,7 @@
    #:zero-node
 
    #:node-count
+   #:size
+   #:reorderings
+
    #:with-nodes))
