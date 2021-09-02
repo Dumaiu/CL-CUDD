@@ -156,7 +156,8 @@
 ;;; Saving source code:
 #+sbcl (declaim (maybe-inline cudd-check-keys
 							  cudd-debug-check
-							  cudd-print-info))
+							  cudd-print-info
+							  cudd-heap-profile))
 
 
 (cffi:define-foreign-library libcudd
@@ -2814,6 +2815,13 @@
 	(phase :int))
 
   (cl:export '#.(swig-lispify "Cudd_EstimateCofactor" 'function))
+
+
+  (cffi:defcfun ("cuddHeapProfile" #.(swig-lispify "cuddHeapProfile" 'function)) :int
+	(dd manager))
+
+  (cl:export '#.(swig-lispify "cuddHeapProfile" 'function))
+
 
   (cffi:defcfun ("Cudd_EstimateCofactorSimple" #.(swig-lispify "Cudd_EstimateCofactorSimple" 'function)) :int
 	(node node)
