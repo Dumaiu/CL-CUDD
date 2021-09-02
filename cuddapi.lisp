@@ -153,6 +153,10 @@
 			 ,gvalue)))))
 
 
+;;; Saving source code:
+#+sbcl (declaim (maybe-inline cudd-check-keys
+							  cudd-debug-check
+							  cudd-print-info))
 
 
 (cffi:define-foreign-library libcudd
@@ -3632,3 +3636,4 @@ Warning: Undefined behaviour if DD is a leaf node"
   "Return the reference count of the node."
   (declare (ignore manager))
   0) ; no public API
+
