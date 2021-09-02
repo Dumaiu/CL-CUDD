@@ -14,7 +14,7 @@
  :depends-on (:cffi
               :alexandria
               :trivial-garbage
-              :cl-cudd.build
+              ;; :cl-cudd.build
               :trivia.cffi
               :iterate)
  :serial t
