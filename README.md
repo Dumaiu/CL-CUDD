@@ -1,3 +1,5 @@
+Text of Masataro Asai's README below.
+
 Common Lisp binding to CUDD [![Build Status](https://travis-ci.org/guicho271828/CL-CUDD.svg?branch=master)](https://travis-ci.org/guicho271828/CL-CUDD)
 ===========================
 
