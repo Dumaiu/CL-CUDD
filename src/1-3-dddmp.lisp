@@ -124,9 +124,11 @@
 
 ;;; mtr
 
+;; (declaim (ftype (function (t) boolean) null-pointer- p))
 (defun dump-mtr-tree (tree acc)
   (ematch tree
-    ((null-pointer)
+    ((guard p (null-pointer-p p))  ;;(null-pointer) ; XXX The "constructor-matching" syntax doesn't work here?  Perhaps because `null-pointer' isn't a declared type?
+	 ;; XXX (satisfies null-pointer-p) ; also fails
      (nreverse acc))
     ((-> (:struct mtr-node)
        flags
