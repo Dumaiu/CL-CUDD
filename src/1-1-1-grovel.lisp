@@ -21,8 +21,13 @@
                     (directory
                      (merge-pathnames
                       "*/"
-                      (asdf:system-relative-pathname :cl-cudd "cudd-3.0.0/")))))
-(cc-flags #.(format nil "-I~A" (asdf:system-relative-pathname :cl-cudd "cudd-3.0.0/")))
+					  ;; FIXME: Kludge:
+                      (asdf:system-relative-pathname :cl-cudd "cudd/")))))
+
+;; FIXME: Kludge:
+(cc-flags #.(format nil "-I~A" (asdf:system-relative-pathname :cl-cudd "cudd/")))
+;; FIXME: Added this, the build directory:
+(cc-flags #.(format nil "-I~A" (asdf:system-relative-pathname :cl-cudd "../../build-cudd-3.1.0/")))
 (include "config.h")
 (include "cudd/cudd.h")
 (include "cudd/cuddInt.h")
