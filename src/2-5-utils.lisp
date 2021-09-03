@@ -84,3 +84,12 @@ Follow the then-branch when 1, else-branch otherwise."
       (bdd-node (wrap-and-finalize p 'bdd-node))
       (zdd-node (wrap-and-finalize p 'zdd-node)))))
 
+
+(defun cudd-print (node &optional (manager *manager*))
+  "Print a DD to cstdout.  See cuddP().  Returns T on success, 0 on failure.
+  * TODO: Print to Lisp *stdout*.
+  * TODO: Raise exception?
+"
+  (declare (manager manager)
+		   (node node))
+  (= 1 (cuddp (manager-pointer manager) (node-pointer node))))

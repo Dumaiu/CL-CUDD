@@ -1662,3 +1662,6 @@
   (then node)
   (else node))
 
+(defcfun ("cuddP" cuddp) :int
+  (dd manager)
+  (f node))

@@ -484,6 +484,8 @@
            :cudd-node-level
            :cudd-node-level-zdd
            :cudd-node-index)
+  ;; In 2021:
+  (:export :cuddp)
   ;; mtr api
   (:export :mtr-flags
            :MTR-ALLOC-NODE
@@ -678,4 +680,5 @@
    #:zdd-supset
    #:zdd-maximal
    #:zdd-minimal
-   #:manager-init))
+   #:manager-init)
+  (:export #:cudd-print))
