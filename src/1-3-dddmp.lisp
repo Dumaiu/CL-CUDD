@@ -104,6 +104,7 @@
               (fclose file)))))))
 
 (defun print-info (manager pathname)
+  "(cudd-print-info) -> Cudd_PrintInfo().  Output is printed into PATHNAME and stdout."
   (declare (foreign-pointer manager)
            ((or string pathname) pathname))
   (let ((file (fopen (namestring pathname) "w")))
@@ -114,7 +115,7 @@
                    (cudd-print-info manager file)))
               (if (= result 1)
                   nil
-                  (error "Could not dump to dot file")))
+                  (error "Could not dump to ~S" pathname)))
           (fclose file))))
   (with-open-file (in pathname :direction :input)
     (loop :for c = (read-char in nil :eof)
