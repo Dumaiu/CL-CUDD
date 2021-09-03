@@ -27,7 +27,7 @@
 ;; FIXME: Kludge:
 (cc-flags #.(format nil "-I~A" (asdf:system-relative-pathname :cl-cudd "cudd/")))
 ;; FIXME: Added this, the build directory:
-(cc-flags #.(format nil "-I~A" (asdf:system-relative-pathname :cl-cudd "../../build-cudd-3.1.0/")))
+(cc-flags #.(format nil "-I~A" (asdf:system-relative-pathname :cl-cudd "build-cudd/")))
 (include "config.h")
 (include "cudd/cudd.h")
 (include "cudd/cuddInt.h")
