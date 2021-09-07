@@ -56,8 +56,10 @@ that the DdNode pointer bck is already referenced."
     (add-node (cudd-dag-size (node-pointer node)))
     (bdd-node (cudd-dag-size (node-pointer node)))))
 
-(define-simple-managed-function bdd-variables cudd-bdd-variables
-  "Return the number of BDD variables")
+(defun bdd-variables (&optional (manager *manager*))
+  "Return the number of BDD variables"
+  (declare (manager manager))
+  (cudd-bdd-variables (manager-pointer manager)))
 (define-simple-managed-function zdd-variables cudd-zdd-variables
   "Return the number of ZDD variables")
 (define-simple-managed-function bdd-max-variables cudd-bdd-max-variables

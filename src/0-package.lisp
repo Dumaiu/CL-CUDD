@@ -686,4 +686,5 @@
    #:manager-init)
   (:export #:cudd-print
 		   #:print-info
+		   #:print-debug
 		   eval))
