@@ -1,14 +1,14 @@
 ;;;; package.lisp
 
-(in-package :cl-user)
+(in-package :asdf-user)
 
-(defpackage cl-cudd.swig-macros
+(define-package cl-cudd.swig-macros
   (:use :cl :cffi)
   (:documentation
    "Package containing utility functions for SWIG cffi interface generation")
   (:export #:lispify))
 
-(defpackage cl-cudd.baseapi
+(define-package cl-cudd.baseapi
   (:documentation "Low-level interface")
   (:use :cl :cffi :cl-cudd.swig-macros :alexandria :trivia :trivia.cffi)
   (:shadow #:pi)
@@ -525,7 +525,7 @@
   ;; other exports done by swig
   )
 
-(defpackage cl-cudd
+(define-package cl-cudd
   (:documentation "High-level interface")
   (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi :trivia :iterate)
   (:nicknames :cudd)
