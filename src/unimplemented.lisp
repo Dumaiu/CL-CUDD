@@ -4,6 +4,7 @@
 
 (defvar *unimplemented*
     '(
+	  ;; TODO: analogue of DD::checkReturnValue() in cudObj.cc
       CUDD-ADD-AGREEMENT
       CUDD-ADD-APPLY
       CUDD-ADD-BDD-INTERVAL
