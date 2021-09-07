@@ -77,8 +77,10 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
   `(let ((*manager* (manager-init ,@keys)))
      ,@body))
 
-(defun info ()
-  (uiop:with-temporary-file (:stream s :pathname path)
-    (print-info %mp% path)
-    (uiop:slurp-stream-string s)))
+(defun info (&optional (manager *manager*))
+  (declare (type manager manager))
+  (with-temporary-file (:stream s :pathname path)
+    (print-info manager path)
+    (slurp-stream-string s)))
+
 

@@ -1,8 +1,10 @@
 
 (in-package :cudd)
 
-(defun print-info (pathname &optional (manager *manager*))
-  "Delegate to (cudd.baseapi:print-info)."
+(defun print-info (&optional (manager *manager*) (pathname "cudd.info"))
+  "Delegate to (cudd.baseapi:print-info).
+  * TODO: Better default filename...
+"
   (declare (manager manager)
 		   (type (or string pathname) pathname))
   (cl-cudd.baseapi:print-info (manager-pointer manager) pathname))
