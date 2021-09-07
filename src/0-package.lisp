@@ -529,7 +529,9 @@
   (:documentation "High-level interface")
   (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi :trivia :iterate)
   (:nicknames :cudd)
-  (:shadow eval)
+  ;; 2021:
+  (:shadow eval
+		   #:print-info)
   (:export 
    #:+AGREEMENT+
    #:+AND+
@@ -683,4 +685,5 @@
    #:zdd-minimal
    #:manager-init)
   (:export #:cudd-print
+		   #:print-info
 		   eval))

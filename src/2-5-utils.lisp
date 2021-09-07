@@ -1,6 +1,24 @@
 
 (in-package :cudd)
 
+(defun print-info (pathname &optional (manager *manager*))
+  "Delegate to (cudd.baseapi:print-info)."
+  (declare (manager manager)
+		   (type (or string pathname) pathname))
+  (cl-cudd.baseapi:print-info (manager-pointer manager) pathname))
+
+#|
+(defgeneric print-info (manager pathname)
+  (:documentation "Delegate to (cudd.baseapi:print-info).")
+  (:method ((manager manager) pathname)
+	"Recurse."
+	(print-info (manager-pointer manager) pathname))
+  (:method (manager pathname)
+	(declare (foreign-pointer manager)
+			 ((or string pathname) pathname))
+	(cl-cudd.baseapi:print-info manager pathname)))
+|#
+
 (defgeneric eval (dd inputs &optional manager)
   (:documentation "TODO: Other DD types.")
   (:argument-precedence-order inputs dd) ; convert INPUTS first
