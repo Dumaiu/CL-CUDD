@@ -14,6 +14,16 @@
   (next node)
   (type (:union dd-node/type)))
 
+(defmacro defcfun-lispified (c-name return-type &body parameters)
+  (let ((lisp-name (lispify c-name :function)))
+	`(defcfun (,c-name ,lisp-name) ,return-type
+	   ,@parameters)))
+
+(defmacro define-external-lispified (c-name (&body parameters) return-type)
+  "Argument-reordering."
+  (declare (string c-name))
+  `(defcfun-lispified ,c-name ,return-type ,@parameters))
+
 ;;;; external functions
 
 (defcfun ("Cudd_addNewVar" #.(lispify "Cudd_addNewVar" :function)) node
