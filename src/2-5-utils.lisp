@@ -1,6 +1,36 @@
 
 (in-package :cudd)
 
+(defgeneric eval (dd inputs &optional manager)
+  (:documentation "TODO: Other DD types.")
+  (:argument-precedence-order inputs dd) ; convert INPUTS first
+  (:method (dd (inputs sequence) &optional (manager *manager*))
+	"Coerce SEQUENCE, which should consist of booleans, to a C int array, and recurse."
+	(declare (type node dd))
+	(let (;; (int-sz (foreign-type-size :int))
+		  (num-inputs (length inputs)))
+	  (with-foreign-object (input-arr :int num-inputs)
+		(iter
+		  (for (the boolean b) in-sequence inputs with-index i)
+		  (setf (mem-aref input-arr :int i) (if b 1 0)))
+		(eval dd input-arr manager))))
+  (:method ((bdd bdd-node) input-arr &optional (manager *manager*))
+	(check-type input-arr foreign-pointer)
+	(let ((res-ptr (cudd-eval (manager-pointer manager) (node-pointer bdd) input-arr)))
+	  (declare (foreign-pointer res-ptr))
+	  ;; TODO (check-result-value res-ptr)
+	  ;; (call-next-method res-ptr input-arr manager)
+	  (let ((res (wrap-and-finalize res-ptr 'bdd-node)))
+		(declare (bdd-node res))
+		res)))
+  ;; (:method (ptr input-arr &optional (manager *manager*))
+  ;; 	(check-type ptr foreign-pointer)
+  ;; 	(check-type input-arr foreign-pointer)
+  ;; 	(let ((res (make-bdd-node :pointer res-ptr)))
+  ;; 	  (declare (bdd-node res))
+  ;; 	  res))
+  )
+
 (defun map-ones (node fn)
   "Runs a DFS on a ZDD. It calls the given callback function when it reaches the 1-node.
 The callback is called with an argument containing a bit vector which stores 1-bit.
