@@ -1,3 +1,8 @@
+* Working on the 'unimplemented.lisp' C wrappers.
+* In order to use a precompiled CUDD library, I've removed :cl-cudd.build from the dependency list for :cl-cudd
+* Similarly--to accommodate existing CUDD source and build directories, the groveller now looks for directories 'cudd/' and 'build-cudd/' within the 'cl-cudd3/' dir.  These can be symlinks.
+
+
 Text of Masataro Asai's README below.
 
 Common Lisp binding to CUDD [![Build Status](https://travis-ci.org/guicho271828/CL-CUDD.svg?branch=master)](https://travis-ci.org/guicho271828/CL-CUDD)
