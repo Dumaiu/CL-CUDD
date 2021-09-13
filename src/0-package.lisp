@@ -406,9 +406,9 @@
            :CUDD-SUPERSET-COMPRESS 
            :CUDD-SUPERSET-HEAVY-BRANCH 
            :CUDD-SUPERSET-SHORT-PATHS 
-           :CUDD-SUPPORT 
-           :CUDD-SUPPORT-INDEX 
-           :CUDD-SUPPORT-SIZE 
+           :CUDD-SUPPORT
+		   :CUDD-SUPPORT-SIZE
+		   :CUDD-SUPPORT-INDEX
            :CUDD-SYMM-PROFILE 
            :CUDD-TLC-INFO-FREE 
            :CUDD-TURN-OFF-COUNT-DEAD 
@@ -687,4 +687,7 @@
   (:export #:cudd-print
 		   #:print-info
 		   #:print-debug
+		   #:sharing-size
+		   #:support-size
+		   #:support-index
 		   eval))

@@ -1,5 +1,44 @@
 (in-package :cudd)
 
+(defun support-index (node &optional (manager *manager*)
+					  &aux (C-array-element :int))
+  "Returns a bit-vector whose length is Cudd_ReadSize().  Each element is T iff the variable with that index is in the support of NODE."
+  (declare (manager manager))
+  (check-type node node)
+  (let* ((manager-ptr (manager-pointer manager))
+		 (total-num-vars (cudd-read-size manager-ptr))
+		 (int-array-ptr (cudd-support-index manager-ptr (node-pointer node))))
+	(declare (foreign-pointer manager-ptr int-array-ptr)
+			 (type (integer 0) total-num-vars))
+	(iter
+	  (with bitv = (make-array total-num-vars :element-type 'boolean :initial-element nil :adjustable nil))
+	  (for i below total-num-vars)
+	  (for b_i = (mem-aref int-array-ptr C-array-element i))
+	  (declare (integer b_i))
+	  (assert (member b_i '(0 1) :test #'=))
+	  (setf (aref bitv i) (= b_i 1))
+	  (finally (return bitv)))))
+
+(defun support-size (node &optional (manager *manager*))
+  "See Cudd_SupportSize()."
+  (declare (manager manager))
+  (check-type node node)
+  (cudd-support-size (manager-pointer manager)
+					 (node-pointer node)))
+
+(defun sharing-size (nodes #|&optional (manager *manager*)|#)
+  (check-type nodes sequence)
+  (let ((n (length nodes)))
+	(with-foreign-object (node_arr :pointer n)
+	  (iter
+		(for (the node node) in-sequence nodes with-index i)
+		(for node_ptr = (node-pointer node))
+		(setf (mem-aref node_arr :pointer i) node_ptr))
+	  (let ((result (cudd-sharing-size node_arr n)))
+		(declare (fixnum result))
+		result))))
+
+
 (defun print-debug (node &key
 						   (manager *manager*)
 						   ((:n num-vars) (bdd-variables manager))
