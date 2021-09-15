@@ -43,7 +43,9 @@
 						   (manager *manager*)
 						   ((:n num-vars) (bdd-variables manager))
 						   (level 1))
-  "TODO: Raise custom exception on failure"
+  "* TODO: Raise custom exception on failure.
+ * TODO: Print to *standard-output*, not cstdout.
+"
   (declare (manager manager))
   (check-type node node)
   (check-type num-vars (integer 0))
