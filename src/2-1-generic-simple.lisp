@@ -15,6 +15,12 @@
   :add     "Conjunction of two 0-1 ADDs."
   :bdd     "Conjunction of two BDDs.")
 
+(def-cudd-call node-xor ((#|FIXME :add (lambda (mgr f g) (cudd-add-apply mgr +times+ f g))|#
+						  :bdd cudd-bdd-xor) (f :node) (g :node))
+			   :generic "Symmetric difference of two 0-1 ADDs or two BDDs."
+			   :add     "Symmetric difference of two 0-1 ADDs.  (Not yet implemented!)"
+			   :bdd     "Symmetric difference of two BDDs.")
+
 (def-cudd-call node-complement ((:add cudd-add-cmpl :bdd cudd-bdd-not
                                  :zdd cudd-zdd-complement)
                                 (node :node))
