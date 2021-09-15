@@ -690,4 +690,5 @@
 		   #:sharing-size
 		   #:support-size
 		   #:support-index
+		   #:node-xor
 		   eval))
