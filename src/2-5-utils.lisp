@@ -87,7 +87,14 @@
 		  (num-inputs (length inputs)))
 	  (with-foreign-object (input-arr :int num-inputs)
 		(iter
-		  (for (the boolean b) in-sequence inputs with-index i)
+		  (with inputs = (mapcar (lambda (x)
+								   (check-type x (or boolean (member 0 1)))
+								   (case x
+									 ((0 nil) nil)
+									 ((1 t) t)))
+								 inputs))
+		  (for b in-sequence inputs with-index i)
+		  (check-type b boolean)
 		  (setf (mem-aref input-arr :int i) (if b 1 0)))
 		(eval dd input-arr manager))))
   (:method ((bdd bdd-node) input-arr &optional (manager *manager*))
