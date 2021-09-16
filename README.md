@@ -1,3 +1,4 @@
+* TODO: Make (node-add|or|xor) variadic?
 * TODO: Some of my additions have probably not been to the correct file.  I tend to put everything in the 'util' one.
 * TODO: (node-xor) needs ADD support.
 * Working on the 'unimplemented.lisp' C wrappers.
