@@ -19,7 +19,11 @@
   * dotted line: complement arcs;
   * dashed line: regular ELSE arcs.
 
-  The dot options are chosen so that the drawing fits on a letter-size sheet."
+  The dot options are chosen so that the drawing fits on a letter-size sheet.
+
+  - Note [2021-09-21 Tue]: For a higher-level function which tries to output the rendered graph to PDF, see `cudd:plot'.
+  * TODO [2021-09-21 Tue]: More specific error types
+"
   (let* ((nodes (if (typep nodes 'sequence) nodes (list nodes)))
          (n (length nodes))
          (n-names (if inames (length inames) 0)))
