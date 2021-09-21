@@ -2,8 +2,13 @@
 (in-package :cudd)
 
 (defun plot (pathname node)
+  "Create '<PATHNAME>.dot' and process it to '<PATHNAME>.pdf'.  Requires that Graphviz be installed.
+  * TODO [2021-09-21 Tue]: Raise a specialized exception when `uiop:run-program' fails.
+"
+  ;; (setq pathname (uiop:ensure-absolute-pathname pathname))
   (let ((dot (namestring (make-pathname :type "dot" :defaults pathname)))
         (pdf (namestring (make-pathname :type "pdf" :defaults pathname))))
+	;; (break)
     (etypecase node
       ((or add-node bdd-node)
        (cl-cudd.baseapi:dump-dot
