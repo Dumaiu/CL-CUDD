@@ -77,25 +77,26 @@
 (cl-cudd.baseapi:print-info manager pathname)))
 |#
 
+(deftype generalized-bit ()
+  '(or boolean (member 0 1)))
+
 (defgeneric eval (dd inputs &optional manager)
   (:documentation "TODO: Other DD types.")
   (:argument-precedence-order inputs dd) ; convert INPUTS first
   (:method (dd (inputs sequence) &optional (manager *manager*))
-	"Coerce SEQUENCE, which should consist of booleans, to a C int array, and recurse."
+	"Coerce SEQUENCE, which should consist of generalized-booleans, to a C int array, and recurse."
 	(declare (type node dd))
 	(let (;; (int-sz (foreign-type-size :int))
 		  (num-inputs (length inputs)))
 	  (with-foreign-object (input-arr :int num-inputs)
 		(iter
-		  (with inputs = (mapcar (lambda (x)
-								   (check-type x (or boolean (member 0 1)))
-								   (case x
-									 ((0 nil) nil)
-									 ((1 t) t)))
-								 inputs))
 		  (for b in-sequence inputs with-index i)
-		  (check-type b boolean)
-		  (setf (mem-aref input-arr :int i) (if b 1 0)))
+		  (check-type b generalized-bit)
+		  (for b* = (the bit (case b
+					   ((0 nil) 0)
+					   ((1 t) 1))))
+		  (declare (bit b*))
+		  (setf (mem-aref input-arr :int i) b*))
 		(eval dd input-arr manager))))
   (:method ((bdd bdd-node) input-arr &optional (manager *manager*))
 	(check-type input-arr foreign-pointer)
