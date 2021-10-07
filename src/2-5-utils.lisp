@@ -27,6 +27,7 @@
 					 (node-pointer node)))
 
 (defun sharing-size (nodes #|&optional (manager *manager*)|#)
+  "Wrapper for (cudd-sharing-size).  NODES should be a collection of nodes/BDDs."
   (check-type nodes sequence)
   (let ((n (length nodes)))
 	(with-foreign-object (node_arr :pointer n)
