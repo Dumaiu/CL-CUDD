@@ -1,5 +1,15 @@
 (in-package :cudd)
 
+(defun bdd-compose (f g v &optional (manager *manager*))
+  (declare (manager manager))
+  (check-type f node)
+  (check-type g node)
+  (check-type v (integer 0))
+  (let ((manager-ptr (manager-pointer manager))
+		(f-ptr (node-pointer f))
+		(g-ptr (node-pointer g)))
+	  (cudd-bdd-compose manager-ptr f-ptr g-ptr v)))
+
 (defun support-index (node &optional (manager *manager*)
 					  &aux (C-array-element :int))
   "Returns a bit-vector whose length is Cudd_ReadSize().  Each element is T iff the variable with that index is in the support of NODE."
