@@ -691,4 +691,5 @@
 		   #:support-size
 		   #:support-index
 		   #:node-xor
+		   #:bdd-compose
 		   eval))
