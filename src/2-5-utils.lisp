@@ -1,5 +1,8 @@
 (in-package :cudd)
 
+(deftype node-pointer ()
+  'foreign-pointer)
+
 (defun bdd-compose (f g v &optional (manager *manager*))
   (declare (manager manager))
   (check-type f node)
@@ -8,7 +11,11 @@
   (let ((manager-ptr (manager-pointer manager))
 		(f-ptr (node-pointer f))
 		(g-ptr (node-pointer g)))
-	  (cudd-bdd-compose manager-ptr f-ptr g-ptr v)))
+	(let* ((res-ptr (cudd-bdd-compose manager-ptr f-ptr g-ptr v))
+		   (res (wrap-and-finalize res-ptr 'bdd-node)))
+	  (declare (node-pointer res-ptr)
+			   (bdd-node res))
+	  res)))
 
 (defun support-index (node &optional (manager *manager*)
 					  &aux (C-array-element :int))
