@@ -692,5 +692,6 @@
 		   #:support-size
 		   #:support-index
 		   #:node-xor
-		   #:bdd-compose
+		   #:bdd-compose ; TODO: Rename to 'compose'?
+		   #:boolean-diff
 		   eval))
