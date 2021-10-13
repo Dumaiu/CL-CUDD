@@ -531,6 +531,7 @@
   (:nicknames :cudd)
   ;; 2021:
   (:shadow eval
+		   variable
 		   #:print-info)
   (:export 
    #:+AGREEMENT+
