@@ -3,6 +3,8 @@
 (deftype node-pointer ()
   'foreign-pointer)
 
+(deftype variable ()
+  '(integer 0))
 (defun bdd-compose (f g v &optional (manager *manager*))
   (declare (manager manager))
   (check-type f node)
