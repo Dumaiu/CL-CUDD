@@ -695,5 +695,5 @@
 		   #:node-xor
 		   #:compose
 		   #:boolean-diff
-		   ;; #:restrict
+		   #:restrict
 		   eval))

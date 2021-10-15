@@ -6,6 +6,21 @@
 (deftype variable ()
   '(integer 0))
 
+
+(defgeneric restrict (f c &optional manager)
+  (:documentation "TODO: `add-node' method")
+  (:method ((f bdd-node) c &optional (manager *manager*))
+	(declare (manager manager))
+	(check-type c variable)
+	(let* ((res-ptr (cudd-bdd-restrict (manager-pointer manager)
+							   (node-pointer f)
+							   c))
+		   (res (wrap-and-finalize res-ptr 'bdd-node)))
+	  (declare (node-pointer res-ptr)
+			   (bdd-node res))
+	  res)))
+
+
 (defgeneric boolean-diff (f v &optional manager)
   (:documentation "CUDD's 'Boolean difference', also known as the Boolean, or logical, derivative.")
   (:method ((f bdd-node) v &optional (manager *manager*))
