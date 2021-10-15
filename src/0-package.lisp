@@ -532,6 +532,7 @@
   ;; 2021:
   (:shadow eval
 		   variable
+		   compose
 		   #:print-info)
   (:export 
    #:+AGREEMENT+
@@ -692,6 +693,7 @@
 		   #:support-size
 		   #:support-index
 		   #:node-xor
-		   #:bdd-compose ; TODO: Rename to 'compose'?
+		   #:compose
 		   #:boolean-diff
+		   ;; #:restrict
 		   eval))

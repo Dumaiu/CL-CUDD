@@ -21,7 +21,7 @@
 				 (bdd-node res))
 		res))))
 
-(defun bdd-compose (f g v &optional (manager *manager*))
+(defun compose (f g v &optional (manager *manager*))
   (declare (manager manager))
   (check-type f bdd-node)
   (check-type g bdd-node)
