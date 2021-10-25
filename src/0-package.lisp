@@ -485,7 +485,10 @@
            :cudd-node-level-zdd
            :cudd-node-index)
   ;; In 2021:
-  (:export :cuddp)
+  (:export
+   :cuddp
+   :cudd-T
+   :cudd-E)
   ;; mtr api
   (:export :mtr-flags
            :MTR-ALLOC-NODE
@@ -532,7 +535,10 @@
   ;; 2021:
   (:shadow eval
 		   variable
-		   compose
+		   #:compose
+		   ;; TODO: Rename these two?:
+		   #:cudd-T
+		   #:cudd-E
 		   #:print-info)
   (:export 
    #:+AGREEMENT+
@@ -696,4 +702,6 @@
 		   #:compose
 		   #:boolean-diff
 		   ;; #:restrict
+		   #:cudd-T
+		   #:cudd-E
 		   eval))
