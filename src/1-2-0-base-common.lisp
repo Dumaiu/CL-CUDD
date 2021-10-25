@@ -124,3 +124,22 @@ Warning: Undefined behaviour if DD is a leaf node"
 (defun cudd-zdd-max-variables (manager)
   "Return the maximum number of ZDD variables"
   (foreign-slot-value manager '(:struct dd-manager) 'max-size-z))
+
+
+
+(defun cudd-T (node)
+  "Evaluate the 'then' branch.  Undefined if NODE is not a branch node!"
+  ;; Copying the (cudd-regular) technique:
+  (assert (cudd-node-is-constant node))
+  (let ((regular (cudd-regular node)))
+	(foreign-funcall "Cudd_T" :pointer regular
+							  :pointer)))
+
+(defun cudd-E (node)
+  "Evaluate the 'else' branch.  Undefined if NODE is not a branch node!"
+  ;; Copying the (cudd-regular) technique:
+  (assert (cudd-node-is-constant node))
+  (let ((regular (cudd-regular node)))
+	(foreign-funcall "Cudd_E" :pointer regular
+							  :pointer)))
+

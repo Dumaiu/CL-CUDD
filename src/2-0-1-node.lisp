@@ -100,3 +100,21 @@ only if their pointers are the same."
 
 (deftype node-type ()
   `(member bdd-node add-node zdd-node))
+
+
+(assert (not (eq 'cudd-T 'cl-cudd.baseapi:cudd-T)))
+(defun cudd-T (node)
+  "Evaluate the 'then' branch.  Undefined if NODE is not a branch node!"
+  (check-type node bdd-node)
+  (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-T (node-pointer node)) 'bdd-node)))
+	(declare (bdd-node res))
+	res))
+
+
+(assert (not (eq 'cudd-E 'cl-cudd.baseapi:cudd-E)))
+(defun cudd-E (node)
+  "Evaluate the 'else' branch.  Undefined if NODE is not a branch node!"
+  (check-type node bdd-node)
+  (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-E (node-pointer node)) 'bdd-node)))
+	(declare (bdd-node res))
+	res))
