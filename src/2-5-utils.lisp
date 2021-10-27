@@ -6,6 +6,79 @@
 (deftype variable ()
   '(integer 0))
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  #+sbcl (import '(sb-kernel:pathname-designator))
+  #-sbcl (deftype pathname-designator ()
+		   '(or string pathname synonym-stream file-stream)))
+
+(defmacro with-C-file-pointer ((ptr pathname &key direction) &body body)
+  "Utility for C file I/O.  Adapted from def. of 'dump-dot'."
+  (check-type ptr symbol)
+  (let ((dir (ecase direction
+			   (:input "r")
+			   (:output "w"))))
+	`(progn
+	   (check-type ,pathname pathname-designator)
+	   (let* ((filename (namestring (pathname ,pathname)))
+			  (,ptr (fopen filename ,dir)))
+		 (unwind-protect
+			  (progn
+				,@body)
+		   (fclose ,ptr))))))
+
+(defgeneric dump-blif (pathname nodes &key)
+  (:method (pathname-designator (nodes array) &rest keys)
+	"Canonicalize PATHNAME-DESIGNATOR and recurse."
+	(check-type pathname-designator pathname-designator)
+	(assert (not (pathnamep pathname-designator)))
+	(let ((pathname (ensure-absolute-pathname pathname-designator *default-pathname-defaults*)))
+	  (declare (pathname pathname))
+	  (apply #'dump-blif pathname nodes keys)))
+
+  (:method ((pathname pathname) (nodes array) &key
+												(manager *manager*))
+	"Primary method.
+  * TODO: Other keys.
+"
+	(let ((n (length nodes)))
+	  (declare (fixnum n))
+
+	  ;; KLUDGE: Copying pointers myself:
+	  (with-foreign-object (node-array :pointer n)
+		(iter (for node in-vector nodes with-index i)
+		  (for node-ptr = (node-pointer node))
+		  (setf (mem-aref node-array :pointer i) node-ptr))
+
+		(with-C-file-pointer (f pathname :direction :output)
+		  (let ((result-code (convert-from-foreign
+							  (cudd-dump-blif (manager-pointer manager)
+											  (convert-to-foreign n :int)
+											  node-array
+											  ;; TODO:
+											  (null-pointer)
+											  (null-pointer)
+											  (null-pointer)
+											  f)
+							  :int)))
+			(ecase result-code
+			  (0 (error "Cudd_DumpBlif() reported failure"))
+			  (1
+			   (assert (file-exists-p pathname))
+			   t)))))))
+
+  (:method (pathname (nodes sequence) &rest keys)
+	(let ((element-type (type-of (elt nodes 0))))
+	  (assert (every (lambda (x) (typep x element-type)) nodes))
+	  (let ((array (coerce nodes 'array)))
+		(declare (array array))
+		(apply #'dump-blif pathname array keys))))
+
+  (:method (pathname (node node) &rest keys)
+	"Recurse."
+	;; (break)
+	;; (print node)
+	(apply #'dump-blif pathname (vector node) keys)))
+
 (defgeneric boolean-diff (f v &optional manager)
   (:documentation "CUDD's 'Boolean difference', also known as the Boolean, or logical, derivative.")
   (:method ((f bdd-node) v &optional (manager *manager*))

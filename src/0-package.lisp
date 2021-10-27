@@ -10,7 +10,10 @@
 
 (define-package cl-cudd.baseapi
   (:documentation "Low-level interface")
-  (:use :cl :cffi :cl-cudd.swig-macros :alexandria :trivia :trivia.cffi)
+  (:mix :cffi :cl-cudd.swig-macros
+		:asdf :uiop
+		:alexandria :trivia :trivia.cffi
+		:cl)
   (:shadow #:pi)
   ;; constants/variables/enums
   (:export :+CUDD-MAXINDEX+
@@ -530,8 +533,18 @@
 
 (define-package cl-cudd
   (:documentation "High-level interface")
-  (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi :trivia :iterate)
+  (:mix
+   :cl-cudd.baseapi
+   :cl-cudd.swig-macros
+   :cffi
+   :iterate
+   :asdf :uiop
+   :alexandria
+   :trivia :trivia.cffi
+   :cl)
   (:nicknames :cudd)
+  (:import-from :cl-cudd.baseapi
+				#:fopen #:fclose)
   ;; 2021:
   (:shadow eval
 		   variable
@@ -704,4 +717,6 @@
 		   ;; #:restrict
 		   #:cudd-T
 		   #:cudd-E
+		   #:dump-blif
+		   ;; TODO: #:dump-blif-body
 		   eval))
