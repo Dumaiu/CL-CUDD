@@ -530,7 +530,9 @@
 
 (define-package cl-cudd
   (:documentation "High-level interface")
-  (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi :trivia :iterate)
+  (:mix :alexandria :uiop) ; TODO: Combine with :use
+  (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi :trivia :iterate
+   :asdf :uiop)
   (:nicknames :cudd)
   ;; 2021:
   (:shadow eval
