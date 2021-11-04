@@ -252,6 +252,7 @@
            :CUDD-FIRST-PRIME 
            :CUDD-FREE-TREE 
            :CUDD-FREE-ZDD-TREE 
+		   ;; :CUDD-GARBAGE-COLLECT
            :CUDD-GARBAGE-COLLECTION-ENABLED 
            :CUDD-GEN-FREE 
            :CUDD-HOOK-TYPE 
@@ -486,9 +487,10 @@
            :cudd-node-index)
   ;; In 2021:
   (:export
-   :cuddp
-   :cudd-T
-   :cudd-E)
+   #:cudd-garbage-collect
+   #:cuddp
+   #:cudd-T
+   #:cudd-E)
   ;; mtr api
   (:export :mtr-flags
            :MTR-ALLOC-NODE
@@ -537,11 +539,15 @@
   ;; 2021:
   (:shadow eval
 		   variable
+		   #:garbage-collect
 		   #:compose
 		   ;; TODO: Rename these two?:
 		   #:cudd-T
 		   #:cudd-E
 		   #:print-info)
+  (:intern
+   #:with-C-file-pointer ; helper
+   )
   (:export 
    #:+AGREEMENT+
    #:+AND+
@@ -706,4 +712,5 @@
 		   ;; #:restrict
 		   #:cudd-T
 		   #:cudd-E
+		   #:garbage-collect
 		   eval))

@@ -224,6 +224,9 @@
 (defcfun ("Cudd_SetGroupcheck" #.(lispify "Cudd_SetGroupcheck" :function)) :void
   (dd manager)
   (gc #.(lispify "Cudd_AggregationType" :enumname)))
+(defcfun ("cuddGarbageCollect" #.(lispify "cuddGarbageCollect" :function)) :int
+  (dd manager)
+  (clear-cache? :int))
 (defcfun ("Cudd_GarbageCollectionEnabled" #.(lispify "Cudd_GarbageCollectionEnabled" :function)) :int
   (dd manager))
 (defcfun ("Cudd_EnableGarbageCollection" #.(lispify "Cudd_EnableGarbageCollection" :function)) :void
