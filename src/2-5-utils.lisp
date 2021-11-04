@@ -11,6 +11,22 @@
   #-sbcl (deftype pathname-designator ()
 		   '(or string pathname synonym-stream file-stream)))
 
+
+(defun garbage-collect (&key ((:cache clear-cache?) t) (manager *manager*))
+  "Runs the CUDD garbage collector.  According to the docs, ':cache nil' \"should only be specified if the cache has been cleared right before.\"
+  - http://web.mit.edu/sage/export/tmp/y/usr/share/doc/polybori/cudd/cuddAllDet.html#cuddGarbageCollect
+"
+  (declare (boolean clear-cache?)
+		   (manager manager))
+  (let ((manager-ptr (manager-pointer manager))
+		(clear-cache?/int (if clear-cache? 1 0)))
+	(declare (foreign-pointer manager-ptr)
+			 (fixnum clear-cache?/int))
+	(let ((res (cudd-garbage-collect manager-ptr clear-cache?/int)))
+	  (declare (fixnum res))
+	  res)))
+
+
 (defmacro with-C-file-pointer ((ptr pathname &key direction) &body body)
   "Utility for C file I/O.  Adapted from def. of 'dump-dot'."
   (check-type ptr symbol)
