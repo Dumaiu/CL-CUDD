@@ -29,12 +29,12 @@
 
 (defmacro with-C-file-pointer ((ptr pathname &key direction) &body body)
   "Utility for C file I/O.  Adapted from def. of 'dump-dot'."
-  (check-type ptr symbol)
+  (declare (symbol ptr))
   (let ((dir (ecase direction
 			   (:input "r")
 			   (:output "w"))))
-	`(progn
-	   (check-type ,pathname pathname-designator)
+	`(locally
+		 (declare (pathname-designator ,pathname))
 	   (let* ((filename (namestring (pathname ,pathname)))
 			  (,ptr (fopen filename ,dir)))
 		 (unwind-protect
@@ -45,7 +45,7 @@
 (defgeneric dump-blif (pathname nodes &key)
   (:method (pathname-designator (nodes array) &rest keys)
 	"Canonicalize PATHNAME-DESIGNATOR and recurse."
-	(check-type pathname-designator pathname-designator)
+	(declare (pathname-designator pathname-designator))
 	(assert (not (pathnamep pathname-designator)))
 	(let ((pathname (ensure-absolute-pathname pathname-designator *default-pathname-defaults*)))
 	  (declare (pathname pathname))
@@ -62,6 +62,7 @@
 	  ;; KLUDGE: Copying pointers myself:
 	  (with-foreign-object (node-array :pointer n)
 		(iter (for node in-vector nodes with-index i)
+		  (declare ((or null node) node) (fixnum i))
 		  (for node-ptr = (node-pointer node))
 		  (setf (mem-aref node-array :pointer i) node-ptr))
 
@@ -100,7 +101,7 @@
   (:method ((f bdd-node) v &optional (manager *manager*))
 	"Wrapper for cudd_bddBooleanDiff()."
 	(declare (manager manager))
-	(check-type v variable)
+	(declare (variable v))
 	(let ((manager-ptr (manager-pointer manager))
 		  (f-ptr (node-pointer f)))
 	  (declare (foreign-pointer manager-ptr f-ptr))
@@ -112,9 +113,9 @@
 
 (defun compose (f g v &optional (manager *manager*))
   (declare (manager manager))
-  (check-type f bdd-node)
-  (check-type g bdd-node)
-  (check-type v (integer 0))
+  (declare (bdd-node f))
+  (declare (bdd-node g))
+  (declare (type (and fixnum (integer 0)) v))
   (let ((manager-ptr (manager-pointer manager))
 		(f-ptr (node-pointer f))
 		(g-ptr (node-pointer g)))
@@ -128,7 +129,7 @@
 					  &aux (C-array-element :int))
   "Returns a bit-vector whose length is Cudd_ReadSize().  Each element is T iff the variable with that index is in the support of NODE."
   (declare (manager manager))
-  (check-type node node)
+  (declare (node node))
   (let* ((manager-ptr (manager-pointer manager))
 		 (total-num-vars (cudd-read-size manager-ptr))
 		 (int-array-ptr (cudd-support-index manager-ptr (node-pointer node))))
@@ -146,13 +147,13 @@
 (defun support-size (node &optional (manager *manager*))
   "See Cudd_SupportSize()."
   (declare (manager manager))
-  (check-type node node)
+  (declare (node node))
   (cudd-support-size (manager-pointer manager)
 					 (node-pointer node)))
 
 (defun sharing-size (nodes #|&optional (manager *manager*)|#)
   "Wrapper for (cudd-sharing-size).  NODES should be a collection of nodes/BDDs."
-  (check-type nodes sequence)
+  (declare (sequence nodes))
   (let ((n (length nodes)))
 	(with-foreign-object (node_arr :pointer n)
 	  (iter
@@ -216,7 +217,7 @@
 	  (with-foreign-object (input-arr :int num-inputs)
 		(iter
 		  (for b in-sequence inputs with-index i)
-		  (check-type b generalized-bit)
+		  (declare (generalized-bit b))
 		  (for b* = (the bit (case b
 							   ((0 nil) 0)
 							   ((1 t) 1))))
@@ -224,7 +225,7 @@
 		  (setf (mem-aref input-arr :int i) b*))
 		(eval dd input-arr manager))))
   (:method ((bdd bdd-node) input-arr &optional (manager *manager*))
-	(check-type input-arr foreign-pointer)
+	(declare (foreign-pointer input-arr))
 	(let ((res-ptr (cudd-eval (manager-pointer manager) (node-pointer bdd) input-arr)))
 	  (declare (foreign-pointer res-ptr))
 	  ;; TODO (check-result-value res-ptr)
@@ -233,8 +234,8 @@
 		(declare (bdd-node res))
 		res)))
   ;; (:method (ptr input-arr &optional (manager *manager*))
-  ;;	(check-type ptr foreign-pointer)
-  ;;	(check-type input-arr foreign-pointer)
+  ;;	(declare (foreign-pointer ptr))
+  ;;	(declare (foreign-pointer input-arr))
   ;;	(let ((res (make-bdd-node :pointer res-ptr)))
   ;;	  (declare (bdd-node res))
   ;;	  res))
@@ -331,4 +332,4 @@ Follow the then-branch when 1, else-branch otherwise."
 "
   (declare (manager manager)
 		   (node node))
-  (= 1 (cuddp (manager-pointer manager) (node-pointer node))))
+  (= 1 (the fixnum (cuddp (manager-pointer manager) (node-pointer node)))))
