@@ -1,6 +1,15 @@
 (in-package :cudd)
 
+(declaim (ftype function fopen
+				fclose))
+
+(deftype uint ()
+  'non-negative-fixnum)
+
 (deftype node-pointer ()
+  'foreign-pointer)
+
+(deftype manager-pointer ()
   'foreign-pointer)
 
 (deftype variable ()
