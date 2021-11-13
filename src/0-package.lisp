@@ -713,5 +713,6 @@
 		   #:cudd-T
 		   #:cudd-E
 		   #:garbage-collect
+		   #:read-size
 		   #:bdd-vector-compose
 		   eval))

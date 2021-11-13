@@ -216,7 +216,7 @@
       CUDD-READ-PERM-ZDD
       CUDD-READ-RECOMB
       CUDD-READ-REORDERINGS
-      CUDD-READ-SIZE
+      ;; CUDD-READ-SIZE
       CUDD-READ-SLOTS
       CUDD-READ-STDERR
       CUDD-READ-STDOUT
@@ -329,7 +329,7 @@
          cudd-gen-free cudd-read-one cudd-set-tree cudd-zdd-diff cudd-zdd-isop
          cudd-add-apply cudd-add-const cudd-add-minus cudd-add-times cudd-add-walsh
          cudd-bdd-npand cudd-dump-blif cudd-free-tree cudd-hook-type cudd-next-cube
-         cudd-next-node cudd-read-dead cudd-read-keys cudd-read-perm cudd-read-size
+         cudd-next-node cudd-read-dead cudd-read-keys cudd-read-perm ;; cudd-read-size
          cudd-read-tree cudd-read-vars cudd-read-zero cudd-solve-eqn cudd-split-set
          cudd-zdd-count cudd-zdd-union cudd-add-divide cudd-add-negate
          cudd-add-set-nz cudd-bdd-to-add cudd-check-keys cudd-count-path
