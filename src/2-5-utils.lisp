@@ -20,6 +20,72 @@
   #-sbcl (deftype pathname-designator ()
 		   '(or string pathname synonym-stream file-stream)))
 
+(define-simple-managed-function read-size cudd-read-size)
+
+#+sbcl (declaim (sb-ext:maybe-inline helper/bdd-seq-to-ptr-vector!
+									 bdd-vector-compose))
+(defun helper/bdd-seq-to-ptr-vector! (ptr-array bdds manager-ptr
+									  &aux (node-pointer-t :pointer))
+  "Not really a vector, but a CFFI C array.
+  - PTR-ARRAY must refer to preallocated data.  This array is modified.
+  * TODO: Would this be safe to memoize--if that would help with speed?--or does (cudd-bdd-char-to-vect) make sure nodes are still living?
+"
+  (declare ;(node-pointer f-ptr)
+   (foreign-pointer ptr-array)
+   (sequence bdds)
+   (manager-pointer manager-ptr))
+
+  (let ((n (cudd-read-size manager-ptr)))
+	(declare (uint n))
+
+	;; Initialization pass:
+	(iter
+	  (for i from 0 below n)
+	  ;; (break "~D" i)
+	  (for g-ptr = (cudd-bdd-ith-var manager-ptr i))
+	  (declare ((or null node-pointer) g-ptr))
+	  (setf (mem-aref ptr-array node-pointer-t i) g-ptr))
+
+	;; Assignment pass:
+	(iter
+	  (for g in-sequence bdds with-index i)
+	  (declare ((or null bdd-node) g))
+	  ;; (break "~D" i)
+	  (unless (null g)
+		(let ((g-ptr (node-pointer g)))
+		  (declare (node-pointer g-ptr))
+		  (setf (mem-aref ptr-array node-pointer-t i) g-ptr)))))
+  ptr-array)
+
+(defun bdd-vector-compose (f v &optional (manager *manager*)
+						   &aux (node-pointer-t :pointer))
+  "If V has more elements than there are variables in MANAGER, the extras are ignored.
+
+  - V should be a sequence of `bdd-node' objects.
+"
+  (declare (bdd-node f))
+  (declare (sequence v))
+  (declare (manager manager))
+
+  (let ((manager-ptr (manager-pointer manager))
+		(f-ptr (node-pointer f)))
+	(declare (manager-pointer manager-ptr)
+			 (node-pointer f-ptr))
+
+	(let ((n (read-size manager)))
+	  (declare (uint n))
+
+	  (with-foreign-object (ptr-array node-pointer-t n)
+
+		(helper/bdd-seq-to-ptr-vector! ptr-array v manager-ptr)
+
+		(let ((res-ptr (cudd-bdd-vector-compose manager-ptr f-ptr ptr-array)))
+		  (declare (node-pointer res-ptr))
+		  (let ((res (wrap-and-finalize res-ptr 'bdd-node)))
+			(declare (bdd-node res))
+			res))))))
+
+
 
 (defun garbage-collect (&key ((:cache clear-cache?) t) (manager *manager*))
   "Runs the CUDD garbage collector.  According to the docs, ':cache nil' \"should only be specified if the cache has been cleared right before.\"
@@ -161,7 +227,9 @@
 					 (node-pointer node)))
 
 (defun sharing-size (nodes #|&optional (manager *manager*)|#)
-  "Wrapper for (cudd-sharing-size).  NODES should be a collection of nodes/BDDs."
+  "Wrapper for (cudd-sharing-size).  NODES should be a collection of nodes/BDDs.
+  * TODO: Get the 'n' count from (read-size)?
+"
   (declare (sequence nodes))
   (let ((n (length nodes)))
 	(with-foreign-object (node_arr :pointer n)
@@ -227,7 +295,8 @@
 		(iter
 		  (for b in-sequence inputs with-index i)
 		  (declare (generalized-bit b))
-		  (for b* = (the bit (case b
+		  ;; TODO: Initialize to 0:
+		  (for b* = (the bit (ecase b
 							   ((0 nil) 0)
 							   ((1 t) 1))))
 		  (declare (bit b*))

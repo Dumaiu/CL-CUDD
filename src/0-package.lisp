@@ -713,4 +713,5 @@
 		   #:cudd-T
 		   #:cudd-E
 		   #:garbage-collect
+		   #:bdd-vector-compose
 		   eval))
