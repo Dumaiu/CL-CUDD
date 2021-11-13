@@ -2,10 +2,10 @@
 
 (defmacro define-simple-managed-function (name interface &body doc)
   "[2021-11-04 Thu]: The generated function will have an &optional 'manager' parameter."
-  `(defun ,name (&optional (manager %mp%))
+  `(defun ,name (&optional (manager *manager*))
      ,@doc
      (,interface
-      manager)))
+      (manager-pointer manager))))
 
 (define-simple-managed-function disable-gc cudd-disable-garbage-collection
   "Disables garbage collection. Garbage
