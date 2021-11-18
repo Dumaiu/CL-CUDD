@@ -1,6 +1,11 @@
 ;;; base class definitions and macros for defining APIs
 (in-package :cudd)
 
+(defvar config/enable-gc t
+  "When true, new nodes are equipped with finalizers.")
+
+(export 'config/enable-gc)
+
 (defun required ()
   (error "Required slot"))
 ;;; Wrapped CUDD node
@@ -19,53 +24,54 @@ We also set a finalizer for the node
 which calls cudd-recursive-deref on the pointer when the lisp node is garbage collected.
 "
   (declare (foreign-pointer pointer)
-           ((member bdd-node add-node zdd-node) type))
+		   ((member bdd-node add-node zdd-node) type))
   (ensure-gethash
    (cffi:pointer-address pointer)
    (manager-node-hash *manager*)
    (progn
-     (when ref
-       (cudd-ref pointer))
-     (let ((node (ecase type
-                   (bdd-node (make-bdd-node :pointer pointer))
-                   (add-node (make-add-node :pointer pointer))
-                   (zdd-node (make-zdd-node :pointer pointer)))))
-       (when ref
-         (trivial-garbage:finalize
-          node
-          (let ((manager *manager*))
-            ;; NOTE: ^^^ This holds the reference from the __finalizer function__ to
-            ;; the manager (along with avoiding problems related to dynamic binding).
-            ;; Without it, the finalizer may be called after the manager is finalized
-            ;; (i.e. cudd-quit is called), invalidating the pointer to the node.
-            ;; It is insufficient to reference a manager from a node, since the order
-            ;; to call finalizers is unspecified. If a manager and a node is freed in
-            ;; the same gc, it could be possible that cudd-quit is called
-            ;; first. Manager object should be referenced until the node finalizer
-            ;; is called.
-            (lambda ()
-              (let ((mp (manager-pointer manager)))
-                (when (zerop (cudd-node-ref-count pointer))
-                  (error "Tried to decrease reference count of node that already has refcount zero"))
-                (ecase type
-                  (bdd-node (cudd-recursive-deref mp pointer))
-                  (add-node (cudd-recursive-deref mp pointer))
-                  (zdd-node (cudd-recursive-deref-zdd mp pointer))))))))
-       node))))
+	 (when ref
+	   (cudd-ref pointer))
+	 (let ((node (ecase type
+				   (bdd-node (make-bdd-node :pointer pointer))
+				   (add-node (make-add-node :pointer pointer))
+				   (zdd-node (make-zdd-node :pointer pointer)))))
+	   (when config/enable-gc
+		 (when ref
+		   (trivial-garbage:finalize
+			node
+			(let ((manager *manager*))
+			  ;; NOTE: ^^^ This holds the reference from the __finalizer function__ to
+			  ;; the manager (along with avoiding problems related to dynamic binding).
+			  ;; Without it, the finalizer may be called after the manager is finalized
+			  ;; (i.e. cudd-quit is called), invalidating the pointer to the node.
+			  ;; It is insufficient to reference a manager from a node, since the order
+			  ;; to call finalizers is unspecified. If a manager and a node is freed in
+			  ;; the same gc, it could be possible that cudd-quit is called
+			  ;; first. Manager object should be referenced until the node finalizer
+			  ;; is called.
+			  (lambda ()
+				(let ((mp (manager-pointer manager)))
+				  (when (zerop (cudd-node-ref-count pointer))
+					(error "Tried to decrease reference count of node that already has refcount zero"))
+				  (ecase type
+					(bdd-node (cudd-recursive-deref mp pointer))
+					(add-node (cudd-recursive-deref mp pointer))
+					(zdd-node (cudd-recursive-deref-zdd mp pointer)))))))))
+	   node))))
 
 (defmethod print-object ((object node) stream)
   (print-unreadable-object (object stream :type (type-of object) :identity nil)
-    (format stream "INDEX ~A " (cudd-node-read-index (node-pointer object)))
-    (if (node-constant-p object)
-        (format stream "LEAF (VALUE ~A)" (node-value object))
-        (format stream "INNER 0x~x" (pointer-address (node-pointer object))))
-    (format stream " REF ~d"
-            (cudd-node-ref-count (node-pointer object)))))
+	(format stream "INDEX ~A " (cudd-node-read-index (node-pointer object)))
+	(if (node-constant-p object)
+		(format stream "LEAF (VALUE ~A)" (node-value object))
+		(format stream "INNER 0x~x" (pointer-address (node-pointer object))))
+	(format stream " REF ~d"
+			(cudd-node-ref-count (node-pointer object)))))
 
 (declaim (inline node-index
-                 node-equal
-                 node-constant-p
-                 node-value))
+				 node-equal
+				 node-constant-p
+				 node-value))
 
 (defun node-index (node)
   (cudd-node-read-index (node-pointer node)))

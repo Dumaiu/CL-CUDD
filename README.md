@@ -4,10 +4,21 @@
 * TODO: On SBCL, the file '2-1-add.lisp' sometimes needs to be double-complied.  Moving the def of `*add-apply-doc*` to another form might be enough.
 * Working on the 'unimplemented.lisp' C wrappers.
 * In order to use a precompiled CUDD library, I've removed :cl-cudd.build from the dependency list for :cl-cudd
-* Similarly--to accommodate existing CUDD source and build directories, the groveller now looks for directories 'cudd/' and 'build-cudd/' within the 'cl-cudd3/' dir.  These can be symlinks.
+* Similarly--to accommodate existing CUDD source and build directories, the groveller now looks for directories 'cudd/' and 'build-cudd/' within the 'cl-cudd3/** dir.  These can be symlinks.
+
 
 * [2021-11-18 Thu] Reenabled the code in '2-0-1-node.lisp' responsible for invoking `cudd-recursive-deref` when a node gets GC'd by Lisp.  CUDD leaks memory otherwise!
-
+  * FIXME: There is now a bug which sometimes causes this:
+  
+  ```
+  cuddGarbageCollect: problem in table 6
+  dead count != deleted
+  This problem is often due to a missing call to Cudd_Ref
+  or to an extra call to Cudd_RecursiveDeref.
+  See the CUDD Programmer's Guide for additional details.fatal error encountered in SBCL pid ...:
+  SIGABRT received.
+  ```
+	* TODO Can we trap the SIGABRT?  Or change it to something less fatal?
 
 Text of Masataro Asai's README below.
 
