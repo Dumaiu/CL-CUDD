@@ -96,7 +96,9 @@ MINSIZE specifies the lower threshold of the number of the (live/referenced) nod
 Number of nodes should be larger than this value.
 Default value is 33000000. In CUDD each node consumes 3 words, so this threshold corresponds to 100MB."
   (declare (bdd-reordering-method method))
-  (assert (= 0 (cudd-reduce-heap %mp% method minsize))))
+  (let ((result (cudd-reduce-heap %mp% method minsize)))
+	(or (= 1 result)
+		(error "(cudd-reduce-heap) failed"))))
 
 (defun zdd-reduce-heap (&optional (method :cudd-reorder-same) (minsize 33000000))
   "Initiates variable reordering explicitly (for zdd).
