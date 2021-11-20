@@ -14,6 +14,7 @@
  :depends-on (:cffi
               :alexandria
               :trivial-garbage
+			  :bordeaux-threads
               ;; TODO :cl-cudd.build
               :trivia.cffi
               :iterate)

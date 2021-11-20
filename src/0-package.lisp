@@ -8,9 +8,19 @@
    "Package containing utility functions for SWIG cffi interface generation")
   (:export #:lispify))
 
+#+thread-support
+(define-package cl-cudd.internal-utils
+	(:mix
+	 :bordeaux-threads
+	 :cl)
+  (:reexport :bordeaux-threads)
+  (:export #:*cudd-mutex*))
+
 (define-package cl-cudd.baseapi
   (:documentation "Low-level interface")
-  (:use :cl :cffi :cl-cudd.swig-macros :alexandria :trivia :trivia.cffi)
+  (:use :cl :cffi :cl-cudd.swig-macros :alexandria :trivia :trivia.cffi
+		#+thread-support cl-cudd.internal-utils
+		)
   (:shadow #:pi)
   ;; constants/variables/enums
   (:export :+CUDD-MAXINDEX+
@@ -534,6 +544,7 @@
   (:documentation "High-level interface")
   (:mix :alexandria :uiop) ; TODO: Combine with :use
   (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi :trivia :iterate
+		#+thread-support cl-cudd.internal-utils
    :asdf :uiop)
   (:nicknames :cudd)
   ;; 2021:
