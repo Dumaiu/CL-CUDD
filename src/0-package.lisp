@@ -14,7 +14,8 @@
 	 :bordeaux-threads
 	 :cl)
   (:reexport :bordeaux-threads)
-  (:export #:*cudd-mutex*))
+  (:export #:*cudd-mutex*
+		   #:make-lock))
 
 (define-package cl-cudd.baseapi
   (:documentation "Low-level interface")
