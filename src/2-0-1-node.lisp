@@ -1,13 +1,12 @@
 ;;; base class definitions and macros for defining APIs
 (in-package :cudd)
 
-(defvar *cudd-mutex* (make-lock "cudd-mutex")
-  "Used in (wrap-and-finalize).")
-
 (defvar config/enable-gc t
   "When true, new nodes are equipped with finalizers.")
 
 (export 'config/enable-gc)
+
+(assert (fboundp 'with-lock-held))
 
 (defun required ()
   (error "Required slot"))
