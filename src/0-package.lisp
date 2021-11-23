@@ -8,20 +8,40 @@
    "Package containing utility functions for SWIG cffi interface generation")
   (:export #:lispify))
 
-#+thread-support
 (define-package cl-cudd.internal-utils
 	(:mix
-	 :bordeaux-threads
+	 #+thread-support :bordeaux-threads
 	 :cl)
-  (:reexport :bordeaux-threads)
+  #+thread-support (:reexport :bordeaux-threads)
+  #-thread-support (:shadow
+					#:with-lock-held
+					#:make-lock)
+  (:intern #:with-lock-held)
   (:export #:*cudd-mutex*
+		   #:with-lock-held
 		   #:make-lock))
+
+(in-package cl-cudd.internal-utils)
+
+#+thread-support
+(defvar *cudd-mutex* (make-lock "cudd-mutex")
+  "Used in (wrap-and-finalize).")
+
+#-thread-support
+(defmacro with-lock-held ((_lock) &body body)
+  "Execute BODY unconditionally.  Should only run in the absence of a real (with-lock-held)."
+  (declare (symbol _lock)
+		   (ignore _lock))
+  `(progn
+	 ,@body))
+
+
+(in-package :asdf-user)
 
 (define-package cl-cudd.baseapi
   (:documentation "Low-level interface")
   (:use :cl :cffi :cl-cudd.swig-macros :alexandria :trivia :trivia.cffi
-		#+thread-support cl-cudd.internal-utils
-		)
+		:cl-cudd.internal-utils)
   (:shadow #:pi)
   ;; constants/variables/enums
   (:export :+CUDD-MAXINDEX+
@@ -545,7 +565,7 @@
   (:documentation "High-level interface")
   (:mix :alexandria :uiop) ; TODO: Combine with :use
   (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi :trivia :iterate
-		#+thread-support cl-cudd.internal-utils
+		:cl-cudd.internal-utils
    :asdf :uiop)
   (:nicknames :cudd)
   ;; 2021:
