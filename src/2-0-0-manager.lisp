@@ -12,7 +12,9 @@
   ;; It stores a mapping between a node pointer <-> a lisp node.
   ;; This is added since each dd-node is considered unique and
   ;; it is ugly when there are multiple lisp node objects for a single dd-node pointer.
-  (node-hash (tg:make-weak-hash-table :weakness :value)
+  (node-hash #.(append '(tg:make-weak-hash-table :weakness :value)
+					   (when (featurep :sb-thread)
+						 '(:synchronized t)))
              :type hash-table))
 
 (define-symbol-macro %mp% (manager-pointer *manager*))
