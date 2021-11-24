@@ -6,7 +6,7 @@
 
 (export 'config/enable-gc)
 
-(assert (fboundp 'with-lock-held))
+(assert (fboundp 'with-cudd-critical-section))
 
 (defun required ()
   (error "Required slot"))
@@ -27,7 +27,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
 "
   (declare (foreign-pointer pointer)
 		   ((member bdd-node add-node zdd-node) type))
-  (with-lock-held (*cudd-mutex*)
+  (with-cudd-critical-section
 	(ensure-gethash
 	 (cffi:pointer-address pointer)
 	 (manager-node-hash *manager*)
@@ -55,7 +55,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
 				(lambda ()
 				  (let ((mp (manager-pointer manager)))
 					;; (log:info "Finalizing node.")
-					(with-lock-held (*cudd-mutex*)
+					(with-cudd-critical-section
 					  (when (zerop (cudd-node-ref-count pointer))
 						;; TODO: Hopefully releases the mutex?:
 						(error "Tried to decrease reference count of node that already has refcount zero"))
