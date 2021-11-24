@@ -22,28 +22,32 @@
   ;; It stores a mapping between a node pointer <-> a lisp node.
   ;; This is added since each dd-node is considered unique and
   ;; it is ugly when there are multiple lisp node objects for a single dd-node pointer.
-  (node-hash #.(append '(tg:make-weak-hash-table :weakness :value)
-					   (when (featurep :sb-thread)
-						 '(:synchronized t)))
+  (node-hash #.`(tg:make-weak-hash-table :weakness :value
+										 ,@(when (featurep :sb-thread)
+											 '(:synchronized t)))
    :type hash-table))
 
 (define-symbol-macro %mp% (manager-pointer *manager*))
 
 (defun manager-init #.`(&key
 						,@+manager-initarg-defaults+)
-  (let* ((p (cudd-init initial-num-vars
-					   initial-num-vars-z
-					   initial-num-slots
-					   cache-size
-					   max-memory))
-		 (m (make-manager :pointer p)))
-	;; see 2-4-hook.lisp
-	(cudd-add-hook p (callback before-gc-hook) :cudd-pre-gc-hook)
-	(cudd-add-hook p (callback after-gc-hook) :cudd-post-gc-hook)
-	(cudd-add-hook p (callback before-gc-hook) :cudd-pre-reordering-hook)
-	(cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
-	(tg:finalize m (lambda () (format *error-output* "~&freeing a cudd manager at ~a~%" p) (cudd-quit p)))
-	m))
+  (with-cudd-critical-section
+	(let* ((p (cudd-init initial-num-vars
+						 initial-num-vars-z
+						 initial-num-slots
+						 cache-size
+						 max-memory))
+		   (m (make-manager :pointer p)))
+	  ;; see 2-4-hook.lisp
+	  (cudd-add-hook p (callback before-gc-hook) :cudd-pre-gc-hook)
+	  (cudd-add-hook p (callback after-gc-hook) :cudd-post-gc-hook)
+	  (cudd-add-hook p (callback before-gc-hook) :cudd-pre-reordering-hook)
+	  (cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
+	  (tg:finalize m (lambda ()
+					   (with-cudd-critical-section
+						 (format *error-output* "~&freeing a cudd manager at ~a~%" p)
+						 (cudd-quit p))))
+	  m)))
 
 (defvar *manager* nil "The current manager.
 

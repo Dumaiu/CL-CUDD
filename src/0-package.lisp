@@ -16,10 +16,10 @@
   #-thread-support (:shadow
 					#:with-lock-held
 					#:make-lock)
-  (:intern #:with-lock-held)
   (:export #:*cudd-mutex*
 		   #:with-lock-held
-		   #:make-lock))
+		   #:make-lock
+		   #:with-cudd-critical-section))
 
 (in-package cl-cudd.internal-utils)
 
@@ -33,6 +33,13 @@
   (declare (symbol _lock)
 		   (ignore _lock))
   `(progn
+	 ,@body))
+
+(assert (fboundp 'with-lock-held))
+
+(defmacro with-cudd-critical-section (&body body)
+  "Acquire lock around the CUDD API while executing BODY."
+  `(with-lock-held (*cudd-mutex*)
 	 ,@body))
 
 
