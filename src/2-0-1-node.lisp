@@ -55,7 +55,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
 				(lambda ()
 				  (let ((mp (manager-pointer manager)))
 					;; (log:info "Finalizing node.")
-					( with-lock-held (*cudd-mutex*)
+					(with-lock-held (*cudd-mutex*)
 					  (when (zerop (cudd-node-ref-count pointer))
 						;; TODO: Hopefully releases the mutex?:
 						(error "Tried to decrease reference count of node that already has refcount zero"))
