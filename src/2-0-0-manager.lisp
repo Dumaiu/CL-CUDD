@@ -3,6 +3,16 @@
 
 ;;; Manager
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (define-constant +manager-initarg-defaults+
+	  '((initial-num-vars 0)
+		(initial-num-vars-z 0)
+		(initial-num-slots 256)
+		(cache-size 262144)
+		(max-memory 0))
+	:documentation "Used by (manager-init), (with-manager)."
+	:test #'equal))
+
 (defstruct manager
   "A boxed CUDD manager class"
   (pointer (error "MANAGER needs to wrap a pointer")
