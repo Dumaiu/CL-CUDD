@@ -39,7 +39,7 @@ This is a fork of original CL-CUDD using the modern common lisp convension.
 * **Related work**: 
   trivialib.bdd is another common lisp library for BDDs, which is entirely written in lisp. CUDD is more on the state-of-the-art side.
 
-What is BDDs and CUDD?
+What are BDDs and CUDD?
 -------------
 
 BDDs (Binary Decision Diagrams) are awesome datastructures that can compactly represent exponentially large number of datasets, as well as allowing the direct computation over the compressed representation, i.e., you can take the sum/product/union/intersection of the datasets without decompressing the data!
