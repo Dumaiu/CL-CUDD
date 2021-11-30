@@ -3,8 +3,10 @@
 * TODO: (node-xor) needs ADD support.
 * TODO: On SBCL, the file '2-1-add.lisp' sometimes needs to be double-complied.  Moving the def of `*add-apply-doc*` to another form might be enough.
 * Working on the 'unimplemented.lisp' C wrappers.
-* In order to use a precompiled CUDD library, I've removed :cl-cudd.build from the dependency list for :cl-cudd
-* Similarly--to accommodate existing CUDD source and build directories, the groveller now looks for directories 'cudd/' and 'build-cudd/' within the 'cl-cudd3/** dir.  These can be symlinks.
+* TODO: `cl-cudd.build.asd` should be more customizable.
+    * TODO: support CUDD ≠ v3.0.0
+* NB: In order to use a precompiled CUDD library, I've removed :cl-cudd.build from the dependency list for :cl-cudd
+* Similarly--to accommodate existing CUDD source and build directories, the groveller (`src/1-1-1-grovel.lisp`) now looks for directories 'cudd/' and 'build-cudd/' within the 'cl-cudd3/** dir.  These can be symlinks.
 
 
 * [2021-11-18 Thu] Reenabled the code in '2-0-1-node.lisp' responsible for invoking `cudd-recursive-deref` when a node gets GC'd by Lisp.  CUDD leaks memory otherwise!
