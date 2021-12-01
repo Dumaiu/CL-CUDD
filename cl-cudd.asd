@@ -44,3 +44,16 @@
 
 See README.md for more details."
   :in-order-to ((test-op (test-op cl-cudd.test))))
+
+
+(defsystem :cl-cudd/signal
+  :description "
+  * TODO: I wished to name this 'cl-cudd.signal' for consistency, but can't seem get ASDF to find it.
+"
+  :depends-on (:cl-cudd
+               :bordeaux-threads
+               :trivial-signal)
+  :pathname "src/"
+  :serial t
+  :components
+  ((:file "3-0-sigabrt")))
