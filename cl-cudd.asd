@@ -11,6 +11,8 @@
                :bordeaux-threads
                ;; TODO :cl-cudd.build
                :trivia.cffi
+               ;; FIXME: Refactor:
+               :trivial-signal
                :iterate)
   :serial t
   :components ((:file "src/0-package")

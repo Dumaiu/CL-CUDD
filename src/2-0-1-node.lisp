@@ -1,6 +1,11 @@
 ;;; base class definitions and macros for defining APIs
 (in-package :cudd)
 
+;; FIXME: Refactor:
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (use-package ;:cl-cudd/signal
+   :trivial-signal))
+
 (defvar config/enable-gc t
   "When true, new nodes are equipped with finalizers.")
 
@@ -26,58 +31,62 @@ We also set a finalizer for the node
 which calls cudd-recursive-deref on the pointer when the lisp node is garbage collected.
 "
   (declare (foreign-pointer pointer)
-		   ((member bdd-node add-node zdd-node) type))
+           ((member bdd-node add-node zdd-node) type))
   (with-cudd-critical-section
-	(ensure-gethash
-	 (cffi:pointer-address pointer)
-	 (manager-node-hash *manager*)
-	 (progn
-	   (when ref
-		 (cudd-ref pointer))
-	   (let ((node (ecase type
-					 (bdd-node (make-bdd-node :pointer pointer))
-					 (add-node (make-add-node :pointer pointer))
-					 (zdd-node (make-zdd-node :pointer pointer)))))
-		 (when config/enable-gc
-		   (when ref
-			 (trivial-garbage:finalize
-			  node
-			  (let ((manager *manager*))
-				;; NOTE: ^^^ This holds the reference from the __finalizer function__ to
-				;; the manager (along with avoiding problems related to dynamic binding).
-				;; Without it, the finalizer may be called after the manager is finalized
-				;; (i.e. cudd-quit is called), invalidating the pointer to the node.
-				;; It is insufficient to reference a manager from a node, since the order
-				;; to call finalizers is unspecified. If a manager and a node is freed in
-				;; the same gc, it could be possible that cudd-quit is called
-				;; first. Manager object should be referenced until the node finalizer
-				;; is called.
-				(lambda ()
-				  (let ((mp (manager-pointer manager)))
-					;; (log:info "Finalizing node.")
-					(with-cudd-critical-section
-					  (when (zerop (cudd-node-ref-count pointer))
-						;; TODO: Hopefully releases the mutex?:
-						(error "Tried to decrease reference count of node that already has refcount zero"))
-					  (ecase type
-						(bdd-node (cudd-recursive-deref mp pointer))
-						(add-node (cudd-recursive-deref mp pointer))
-						(zdd-node (cudd-recursive-deref-zdd mp pointer))))))))))
-		 node)))))
+    (ensure-gethash
+     (cffi:pointer-address pointer)
+     (manager-node-hash *manager*)
+     (progn
+       (when ref
+         (cudd-ref pointer))
+       (let ((node (ecase type
+                     (bdd-node (make-bdd-node :pointer pointer))
+                     (add-node (make-add-node :pointer pointer))
+                     (zdd-node (make-zdd-node :pointer pointer)))))
+         (when config/enable-gc
+           (when ref
+             (trivial-garbage:finalize
+              node
+              (let ((manager *manager*))
+                ;; NOTE: ^^^ This holds the reference from the __finalizer function__ to
+                ;; the manager (along with avoiding problems related to dynamic binding).
+                ;; Without it, the finalizer may be called after the manager is finalized
+                ;; (i.e. cudd-quit is called), invalidating the pointer to the node.
+                ;; It is insufficient to reference a manager from a node, since the order
+                ;; to call finalizers is unspecified. If a manager and a node is freed in
+                ;; the same gc, it could be possible that cudd-quit is called
+                ;; first. Manager object should be referenced until the node finalizer
+                ;; is called.
+                (lambda ()
+                  (let ((mp (manager-pointer manager)))
+                    ;; (log:info "Finalizing node.")
+                    (signal-handler-bind ((#.+sigabrt+
+                                           (lambda (c)
+                                             (declare (ignorable c))
+                                             (break "Caught SIGABRT"))))
+                      (with-cudd-critical-section
+                        (when (zerop (cudd-node-ref-count pointer))
+                          ;; TODO: Hopefully releases the mutex?:
+                          (error "Tried to decrease reference count of node that already has refcount zero"))
+                        (ecase type
+                          (bdd-node (cudd-recursive-deref mp pointer))
+                          (add-node (cudd-recursive-deref mp pointer))
+                          (zdd-node (cudd-recursive-deref-zdd mp pointer)))))))))))
+         node)))))
 
 (defmethod print-object ((object node) stream)
   (print-unreadable-object (object stream :type (type-of object) :identity nil)
-	(format stream "INDEX ~A " (cudd-node-read-index (node-pointer object)))
-	(if (node-constant-p object)
-		(format stream "LEAF (VALUE ~A)" (node-value object))
-		(format stream "INNER 0x~x" (pointer-address (node-pointer object))))
-	(format stream " REF ~d"
-			(cudd-node-ref-count (node-pointer object)))))
+    (format stream "INDEX ~A " (cudd-node-read-index (node-pointer object)))
+    (if (node-constant-p object)
+        (format stream "LEAF (VALUE ~A)" (node-value object))
+        (format stream "INNER 0x~x" (pointer-address (node-pointer object))))
+    (format stream " REF ~d"
+            (cudd-node-ref-count (node-pointer object)))))
 
 (declaim (inline node-index
-				 node-equal
-				 node-constant-p
-				 node-value))
+                 node-equal
+                 node-constant-p
+                 node-value))
 
 (defun node-index (node)
   (cudd-node-read-index (node-pointer node)))
@@ -119,8 +128,8 @@ only if their pointers are the same."
   "Evaluate the 'then' branch.  Undefined if NODE is not a branch node!"
   (check-type node bdd-node)
   (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-T (node-pointer node)) 'bdd-node)))
-	(declare (bdd-node res))
-	res))
+    (declare (bdd-node res))
+    res))
 
 
 (assert (not (eq 'cudd-E 'cl-cudd.baseapi:cudd-E)))
@@ -128,5 +137,5 @@ only if their pointers are the same."
   "Evaluate the 'else' branch.  Undefined if NODE is not a branch node!"
   (check-type node bdd-node)
   (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-E (node-pointer node)) 'bdd-node)))
-	(declare (bdd-node res))
-	res))
+    (declare (bdd-node res))
+    res))
