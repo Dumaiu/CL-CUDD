@@ -48,7 +48,8 @@
 (define-package cl-cudd.baseapi
   (:documentation "Low-level interface")
   (:use :cl :cffi :cl-cudd.swig-macros :alexandria :trivia :trivia.cffi
-		:cl-cudd.internal-utils)
+        :cl-cudd.internal-utils
+        :trivial-garbage)
   (:shadow #:pi)
   ;; constants/variables/enums
   (:export :+CUDD-MAXINDEX+
@@ -572,7 +573,8 @@
   (:documentation "High-level interface")
   (:mix :alexandria :uiop) ; TODO: Combine with :use
   (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi :trivia :iterate
-		:cl-cudd.internal-utils
+   :cl-cudd.internal-utils
+        :trivial-garbage
    :asdf :uiop)
   (:nicknames :cudd)
   ;; 2021:
