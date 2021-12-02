@@ -7,3 +7,4 @@
 *.png
 /build-cudd
 /cudd
+**/cudd.info
