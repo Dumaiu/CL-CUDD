@@ -45,11 +45,14 @@
 
 (assert (fboundp 'with-lock-held))
 
-(defmacro with-cudd-critical-section (&body body)
-  "Acquire lock around the CUDD API while executing BODY."
-  `(with-lock-held (*cudd-mutex*)
-	 ,@body))
+;; (defmacro with-cudd-critical-section (&body body)
+;;   "Acquire lock around the CUDD API while executing BODY."
+;;   `(with-lock-held (*cudd-mutex*)
+;; 	 ,@body))
 
+(defmacro with-cudd-critical-section (&body body)
+  "Execute BODY."
+  `(progn ,@body))
 
 (defmacro log-error (&rest args)
   `(progn
