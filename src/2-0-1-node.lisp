@@ -87,8 +87,10 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                         (error xc)))))))))
          (assert (let ((mp (manager-pointer *manager*)))
                    ;; (assert (zerop (cudd-check-keys mp)))
+                   (assert (zerop (cudd-check-keys mp)) (mp)
+                           "Assert 5 failed: during (wrap-and-finalize): ~A" '(zerop (cudd-check-keys mp)))
                    (assert (zerop (cudd-debug-check mp)) (mp)
-                           "Assert 5 failed: during (wrap-and-finalize): ~A" '(zerop (cudd-debug-check mp)))
+                           "Assert 6 failed: during (wrap-and-finalize): ~A" '(zerop (cudd-debug-check mp)))
                    t))
          node)))))
 
