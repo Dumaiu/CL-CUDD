@@ -11,6 +11,7 @@
                :bordeaux-threads
                ;; TODO :cl-cudd.build
                :trivia.cffi
+               :log4cl
                :iterate)
   :serial t
   :components ((:file "src/0-package")

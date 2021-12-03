@@ -10,12 +10,14 @@
 
 (define-package cl-cudd.internal-utils
 	(:mix
+   :log4cl
 	 #+thread-support :bordeaux-threads
 	 :cl)
   #+thread-support (:reexport :bordeaux-threads)
   #-thread-support (:shadow
 					#:with-lock-held
 					#:make-lock)
+  (:reexport :log4cl)
   (:export #:*cudd-mutex*
 		   #:with-lock-held
 		   #:make-lock
