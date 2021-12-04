@@ -33,11 +33,12 @@
                        ,@(clean-arguments arguments))))
     (with-gensyms (pointer)
       `(defmethod ,generic-name ,(convert-arguments arguments)
-         ,(if dont-wrap-result
-              (make-funcall native-function arguments)
-              `(let* ((,pointer
-                       ,(make-funcall native-function arguments)))
-                 (wrap-and-finalize ,pointer ',node-type)))))))
+         (with-cudd-critical-section
+           ,(if dont-wrap-result
+               (make-funcall native-function arguments)
+               `(let* ((,pointer
+                         ,(make-funcall native-function arguments)))
+                  (wrap-and-finalize ,pointer ',node-type))))))))
 
 (defun add-function (generic-name arguments add-function dont-wrap)
   (node-function generic-name arguments add-function 'add-node dont-wrap))
@@ -70,6 +71,7 @@
 
 (defmacro def-cudd-call (generic-name ((&rest functions) &rest arguments)
                          &rest documentation)
+  "TODO: (with-cudd-critical-section)?"
   (let* ((add-function    (find-2list :add functions))
          (bdd-function    (find-2list :bdd functions))
          (zdd-function    (find-2list :zdd functions))
