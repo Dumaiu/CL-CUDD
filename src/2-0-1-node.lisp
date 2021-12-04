@@ -13,7 +13,6 @@
   (with-package-log-hierarchy
     (defvar cudd-logger (make-logger))))
 
-
 #|
 (progn
 (shadowing-import 'cudd:cudd-logger)
@@ -22,6 +21,8 @@
 |#
 
 (assert (fboundp 'with-cudd-critical-section))
+(assert (fboundp 'log-error))
+(assert (boundp '*stderr*))
 
 (defun required ()
   (error "Required slot"))
@@ -84,10 +85,14 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                     (handler-case
                         (let ((mp (manager-pointer manager)))
 
-                          (assert (zerop (cudd-check-keys mp)) ()
-                                  "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer")
-                          (assert (zerop (cudd-debug-check mp)) ()
-                                  "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer")
+                          (unless (zerop (cudd-check-keys mp))
+                            (log-error "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer"))
+                          ;; (assert (zerop (cudd-check-keys mp)) ()
+                          ;;         "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer")
+                          (unless (zerop (cudd-debug-check mp))
+                            (log-error "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer"))
+                          ;; (assert (zerop (cudd-debug-check mp)) ()
+                          ;;         "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer")
 
                           (with-cudd-critical-section
                             (when (zerop (cudd-node-ref-count pointer))
@@ -98,26 +103,38 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                               (add-node (cudd-recursive-deref mp pointer))
                               (zdd-node (cudd-recursive-deref-zdd mp pointer))))
 
-                          (assert (zerop (cudd-check-keys mp)) (mp)
-                                  "Assert 3 failed at end of finalizer: ~A" '(zerop (cudd-check-keys mp)))
-                          (assert (zerop (cudd-debug-check mp)) (mp)
-                                  "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))
+                          (unless (zerop (cudd-check-keys mp))
+                            (log-error "Assert 3 failed at end of finalizer: ~A" '(zerop (cudd-check-keys mp))))
+                          ;; (assert (zerop (cudd-check-keys mp)) (mp)
+                          ;;         "Assert 3 failed at end of finalizer: ~A" '(zerop (cudd-check-keys mp)))
+                          (unless (zerop (cudd-debug-check mp))
+                            (log-error "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp)))))
+                      ;; (assert (zerop (cudd-debug-check mp)) (mp)
+                      ;;         "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))
 
                       ;; TODO: Remove reliance on #+sbcl :
                       (sb-sys:memory-fault-error (xc)
-                        (let ((str (format nil "* Caught a memory-fault error: ~A; ~A; ~A"
-                                           xc
-                                           (slot-value xc 'sb-kernel::address)
-                                           (slot-value xc 'sb-kernel::context))))
-                          (print str *error-output*)
-                          (print str *stderr*)
+                        (let ((str (log-error "* Caught a memory-fault error: ~A; ~A; ~A"
+                                              xc
+                                              (slot-value xc 'sb-kernel::address)
+                                              (slot-value xc 'sb-kernel::context))))
                           (error xc)))))))))
            (assert (let ((mp (manager-pointer *manager*)))
-                     ;; (assert (zerop (cudd-check-keys mp)))
-                     (assert (zerop (cudd-check-keys mp)) (mp)
-                             "Assert 5 failed: during (wrap-and-finalize): ~A" '(zerop (cudd-check-keys mp)))
-                     (assert (zerop (cudd-debug-check mp)) (mp)
-                             "Assert 6 failed: during (wrap-and-finalize): ~A" '(zerop (cudd-debug-check mp)))
+
+                     (unless (zerop (cudd-check-keys mp))
+                       (log-error "Assert 5 failed: during (wrap-and-finalize): ~A" '(zerop (cudd-check-keys mp))))
+                     ;; (assert (zerop (cudd-check-keys mp)) (mp)
+                     ;;         "Assert 5 failed: during (wrap-and-finalize): ~A" '(zerop (cudd-check-keys mp)))
+
+
+                     (unless (zerop (cudd-debug-check mp))
+                       (log-error "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"
+                                  '(zerop (cudd-debug-check mp))
+                                  mp))
+                     ;; (assert (zerop (cudd-debug-check mp)) (mp)
+                     ;;         "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"
+                     ;;         '(zerop (cudd-debug-check mp))
+                     ;;         mp)
                      t))
            node))))))
 
