@@ -32,7 +32,7 @@
 (in-package cl-cudd.internal-utils)
 
 #+thread-support
-(defvar *cudd-mutex* (make-lock "cudd-mutex")
+(defvar *cudd-mutex* (make-recursive-lock "cudd-mutex")
   "Used in (wrap-and-finalize).")
 
 #-thread-support
@@ -47,7 +47,7 @@
 
 (defmacro with-cudd-critical-section (&body body)
   "Acquire lock around the CUDD API while executing BODY."
-  `(with-lock-held (*cudd-mutex*)
+  `(with-recursive-lock-held (*cudd-mutex*)
 	 ,@body))
 
 
