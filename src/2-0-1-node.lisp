@@ -113,12 +113,12 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                       ;;         "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))
 
                       ;; TODO: Remove reliance on #+sbcl :
-                      (sb-sys:memory-fault-error (xc)
-                        (let ((str (log-error "* Caught a memory-fault error: ~A; ~A; ~A"
-                                              xc
-                                              (slot-value xc 'sb-kernel::address)
-                                              (slot-value xc 'sb-kernel::context))))
-                          (error xc)))))))))
+                      #+sbcl (sb-sys:memory-fault-error (xc)
+                               (log-error "* Memory-fault caught: ~A
+ Re-throwing." xc
+ #|(slot-value xc 'sb-kernel::address)
+ (slot-value xc 'sb-kernel::context)|#)
+                               (error xc))))))))
            (assert (let ((mp (manager-pointer *manager*)))
 
                      (unless (zerop (cudd-check-keys mp))
