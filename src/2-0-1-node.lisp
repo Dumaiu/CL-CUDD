@@ -4,8 +4,12 @@
 (defvar config/enable-gc t
   "When true, new nodes are equipped with finalizers.")
 
+(defvar config/debug-memory-errors nil)
+
 (export '(config/enable-gc
-          cudd-logger))
+          cudd-logger
+          config/debug-memory-errors
+          ))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter +finalizer-log-level+ :debu6
@@ -40,6 +44,9 @@ Otherwise, a new node object is instantiated.
 When a new lisp node is created, we call cudd-ref on the given pointer.
 We also set a finalizer for the node
 which calls cudd-recursive-deref on the pointer when the lisp node is garbage collected.
+
+  * TODO: Support kwargs
+  * TODO: Kwarg to disable (with-cudd-critical-section)
 "
   ;; TODO:
   (declare (optimize debug))
@@ -114,11 +121,16 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
 
                       ;; TODO: Remove reliance on #+sbcl :
                       #+sbcl (sb-sys:memory-fault-error (xc)
-                               (log-error "* Memory-fault caught: ~A
+                               (cond
+                                 (config/debug-memory-errors
+                                  (log-error :logger cudd-logger "* Memory-fault caught: '~A'
  Re-throwing." xc
  #|(slot-value xc 'sb-kernel::address)
  (slot-value xc 'sb-kernel::context)|#)
-                               (error xc))))))))
+                                  (error xc))
+                                 (t
+                                  ;; suppress error
+                                  )))))))))
            (assert (let ((mp (manager-pointer *manager*)))
 
                      (unless (zerop (cudd-check-keys mp))
