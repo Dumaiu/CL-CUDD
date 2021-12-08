@@ -26,6 +26,8 @@
                (:file "src/1-2-1-base-bdd")
                (:file "src/1-2-1-base-zdd")
                (:file "src/1-3-dddmp")
+               (:file "src/2-config"
+                :description "Added [2021-12-08 Wed] -- JJ-S")
                (:file "src/2-0-0-manager")
                (:file "src/2-0-1-node")
                (:file "src/2-0-2-def-cudd-call")
