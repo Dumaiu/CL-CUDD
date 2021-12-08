@@ -18,12 +18,16 @@
 
 (defun make-manager-hash-table ()
   (let ((table #.`(make-weak-hash-table :weakness :value
-                                    ,@(when (featurep :sb-thread)
-                                        '(:synchronized t)))))
+                                        ,@(when (featurep :sb-thread)
+                                            '(:synchronized t)))))
     (declare (hash-table table))
     table))
 
-(defstruct manager
+;; TODO:
+;; (declaim (maybe-inline internal/manager-pointer
+;;                        internal/manager-node-hash))
+(defstruct (manager
+            (:conc-name internal/manager-))
   "A boxed CUDD manager class"
   (pointer (error "MANAGER needs to wrap a pointer")
    :type foreign-pointer)
@@ -35,32 +39,60 @@
   (node-hash (make-manager-hash-table)
    :type hash-table))
 
+;; Alias (manager-node-hash):
+(setf (fdefinition 'manager-node-hash) #'internal/manager-node-hash)
+(setf (fdefinition '(setf manager-node-hash))
+      #'(setf internal/manager-node-hash))
+
+#.(cond
+    (config/guard-pointer-access
+     `(defun manager-pointer (manager)
+        ,(format nil "Slot access with ptr validation test.  To disable, set ~S=NIL and rebuild :cl-cudd."
+                 'config/guard-pointer-access)
+        (declare (manager manager))
+        ;; TODO: Should we alaso do a nullity test in here?
+        (with-slots (pointer) manager
+          (cond
+            ((null-pointer-p pointer)
+             (error 'cudd-null-pointer-error "Call to (manager-pointer) of `manager' object, ~A, with null pointer"
+                    manager))
+            ('otherwise
+             pointer)))))
+    ('otherwise ; alias (manager-pointer) -> (internal/manager-pointer)
+     `(setf (fdefinition 'manager-pointer) #'internal/manager-pointer)))
+;; Alias (setf (manager-pointer)) -> (setf (internal/manager-pointer)):
+(setf (fdefinition '(setf manager-pointer))
+      #'(setf internal/manager-pointer))
+
 (define-symbol-macro %mp% (manager-pointer *manager*))
 
-(defun manager-init #.`(&key
-                        ,@+manager-initarg-defaults+)
-  (with-cudd-critical-section
-    (let* ((p (cudd-init initial-num-vars
-                         initial-num-vars-z
-                         initial-num-slots
-                         cache-size
-                         max-memory))
-           (m (make-manager :pointer p)))
+(defun manager-init #.`(&key ,@+manager-initarg-defaults+)
+  "Construct and return a new `manager' instance, loading CUDD backend to go with it."
+  (let* ((p (cudd-init initial-num-vars
+                       initial-num-vars-z
+                       initial-num-slots
+                       cache-size
+                       max-memory))
+         (m (make-manager :pointer p)))
+    (with-cudd-critical-section
       ;; see 2-4-hook.lisp
       (cudd-add-hook p (callback before-gc-hook) :cudd-pre-gc-hook)
       (cudd-add-hook p (callback after-gc-hook) :cudd-post-gc-hook)
       (cudd-add-hook p (callback before-gc-hook) :cudd-pre-reordering-hook)
       (cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
       (finalize m (lambda ()
+                    (format *error-output* "~&freeing a cudd manager at ~a~%" p)
+                    (log:debug :logger cudd-logger "Freeing CUDD manager at ~A." p)
                     (with-cudd-critical-section
-                      (format *error-output* "~&freeing a cudd manager at ~a~%" p)
                       (let ((undead-node-count (cudd-check-zero-ref p)))
                         (declare (fixnum undead-node-count)) ; TODO: Better type
                         (assert (zerop undead-node-count) (p undead-node-count)
                                 "Assert failed in finalizer of manager ~A, with ~D unrecovered nodes (should be 0)."
                                 p undead-node-count))
-                      (cudd-quit p))))
-      m)))
+                      (cudd-quit p)))))
+
+    (log:debug :logger cudd-logger "Initialized new CUDD manager ~A." m)
+    m))
 
 (defmacro manager-initf (&optional (manager-form '*manager*)
                          &key force)
@@ -132,6 +164,7 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
 (defun manager-quit (&optional (manager *manager*))
   "TODO: GC after dismantling hashtable?"
   (declare (manager manager))
+  (log:debug :logger cudd-logger "Closing CUDD manager ~A." manager)
   (with-cudd-critical-section
     (with-slots (node-hash pointer) manager
       (setf node-hash (make-manager-hash-table))
