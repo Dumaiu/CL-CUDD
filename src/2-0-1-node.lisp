@@ -1,20 +1,6 @@
 ;;; base class definitions and macros for defining APIs
 (in-package :cudd)
 
-(defvar config/enable-gc t
-  "When true, new nodes get equipped with finalizers.")
-
-(defvar config/debug-memory-errors nil)
-
-(defvar config/debug-consistency-checks nil
-  "TODO: Disable by default if assertions are turned off.")
-
-(export '(config/enable-gc
-          cudd-logger
-          config/debug-memory-errors
-          config/debug-consistency-checks
-          ))
-
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter +finalizer-log-level+ :debu6
     "FIXME: Unused.")
