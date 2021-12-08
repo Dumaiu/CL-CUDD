@@ -6,9 +6,13 @@
 
 (defvar config/debug-memory-errors nil)
 
+(defvar config/debug-consistency-checks nil
+  "TODO: Disable by default if assertions are turned off.")
+
 (export '(config/enable-gc
           cudd-logger
           config/debug-memory-errors
+          config/debug-consistency-checks
           ))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -92,32 +96,26 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                     (handler-case
                         (let ((mp (manager-pointer manager)))
 
-                          (unless (zerop (cudd-check-keys mp))
-                            (log-error "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer"))
-                          ;; (assert (zerop (cudd-check-keys mp)) ()
-                          ;;         "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer")
-                          (unless (zerop (cudd-debug-check mp))
-                            (log-error "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer"))
-                          ;; (assert (zerop (cudd-debug-check mp)) ()
-                          ;;         "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer")
-
                           (with-cudd-critical-section
+                            (when config/debug-consistency-checks
+                              (unless (zerop (cudd-check-keys mp))
+                                (log-error :logger cudd-logger "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer"))
+                              (unless (zerop (cudd-debug-check mp))
+                                (log-error :logger cudd-logger "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer")))
+
                             (when (zerop (cudd-node-ref-count pointer))
                               ;; TODO: Hopefully releases the mutex?:
                               (error "Tried to decrease reference count of node that already has refcount zero"))
                             (ecase type
                               (bdd-node (cudd-recursive-deref mp pointer))
                               (add-node (cudd-recursive-deref mp pointer))
-                              (zdd-node (cudd-recursive-deref-zdd mp pointer))))
+                              (zdd-node (cudd-recursive-deref-zdd mp pointer)))
 
-                          (unless (zerop (cudd-check-keys mp))
-                            (log-error "Assert 3 failed at end of finalizer: ~A" '(zerop (cudd-check-keys mp))))
-                          ;; (assert (zerop (cudd-check-keys mp)) (mp)
-                          ;;         "Assert 3 failed at end of finalizer: ~A" '(zerop (cudd-check-keys mp)))
-                          (unless (zerop (cudd-debug-check mp))
-                            (log-error "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp)))))
-                      ;; (assert (zerop (cudd-debug-check mp)) (mp)
-                      ;;         "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))
+                            (when config/debug-consistency-checks
+                              (unless (zerop (cudd-check-keys mp))
+                                (log-error :logger cudd-logger "Assert 3 failed at end of finalizer: ~A" '(zerop (cudd-check-keys mp))))
+                              (unless (zerop (cudd-debug-check mp))
+                                (log-error :logger cudd-logger "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp)))))))
 
                       ;; TODO: Remove reliance on #+sbcl :
                       #+sbcl (sb-sys:memory-fault-error (xc)
@@ -132,21 +130,14 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                                   ;; suppress error
                                   )))))))))
            (assert (let ((mp (manager-pointer *manager*)))
-
-                     (unless (zerop (cudd-check-keys mp))
-                       (log-error "Assert 5 failed: during (wrap-and-finalize): ~A" '(zerop (cudd-check-keys mp))))
-                     ;; (assert (zerop (cudd-check-keys mp)) (mp)
-                     ;;         "Assert 5 failed: during (wrap-and-finalize): ~A" '(zerop (cudd-check-keys mp)))
-
-
-                     (unless (zerop (cudd-debug-check mp))
-                       (log-error "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"
-                                  '(zerop (cudd-debug-check mp))
-                                  mp))
-                     ;; (assert (zerop (cudd-debug-check mp)) (mp)
-                     ;;         "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"
-                     ;;         '(zerop (cudd-debug-check mp))
-                     ;;         mp)
+                     (when config/debug-consistency-checks
+                       (with-cudd-critical-section
+                         (unless (zerop (cudd-check-keys mp))
+                           (log-error :logger cudd-logger "Assert 5 failed: during (wrap-and-finalize): ~A" '(zerop (cudd-check-keys mp))))
+                         (unless (zerop (cudd-debug-check mp))
+                           (log-error :logger cudd-logger "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"
+                                      '(zerop (cudd-debug-check mp))
+                                      mp))))
                      t))
            node))))))
 
