@@ -108,7 +108,9 @@
               (fclose file)))))))
 
 (defun print-info (manager pathname)
-  "(cudd-print-info) -> Cudd_PrintInfo().  Output is printed into PATHNAME and stdout."
+  "(cudd-print-info) -> Cudd_PrintInfo().  Output is printed into PATHNAME and stdout.
+  * TODO: More specific error types.
+"
   (declare (foreign-pointer manager)
            ((or string pathname) pathname))
   (let ((file (fopen (namestring pathname) "w")))
@@ -116,7 +118,8 @@
         (error "Could not open file for writing")
         (unwind-protect
             (let ((result
-                   (cudd-print-info manager file)))
+                    (with-cudd-critical-section
+                      (cudd-print-info manager file))))
               (if (= result 1)
                   nil
                   (error "Could not dump to ~S" pathname)))
