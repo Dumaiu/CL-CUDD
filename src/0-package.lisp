@@ -593,7 +593,7 @@
    :cudd-cache-flush
            :new-cached-operator)
   ;; other exports done by swig
-  )
+  ); cl-cudd.baseapi
 
 (define-package cl-cudd
     (:documentation "High-level interface")
@@ -767,7 +767,8 @@
    #:zdd-maximal
    #:zdd-minimal
    #:manager-init)
-  (:export #:cudd-print
+  (:export #:manager-quit
+           #:cudd-print
            #:print-info
            #:print-debug
            #:sharing-size
@@ -782,4 +783,5 @@
            #:garbage-collect
            #:read-size
            #:bdd-vector-compose
-           eval))
+           eval)
+  ); cl-cudd
