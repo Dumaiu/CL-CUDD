@@ -2,7 +2,7 @@
 (in-package :cudd)
 
 (defvar config/enable-gc t
-  "When true, new nodes are equipped with finalizers.")
+  "When true, new nodes get equipped with finalizers.")
 
 (defvar config/debug-memory-errors nil)
 
