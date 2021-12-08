@@ -137,14 +137,15 @@
   - http://web.mit.edu/sage/export/tmp/y/usr/share/doc/polybori/cudd/cuddAllDet.html#cuddGarbageCollect
 "
   (declare (boolean clear-cache?)
-		   (manager manager))
-  (let ((manager-ptr (manager-pointer manager))
-		(clear-cache?/int (if clear-cache? 1 0)))
-	(declare (foreign-pointer manager-ptr)
-			 (fixnum clear-cache?/int))
-	(let ((res (cudd-garbage-collect manager-ptr clear-cache?/int)))
-	  (declare (fixnum res))
-	  res)))
+           (manager manager))
+  (with-cudd-critical-section
+    (let ((manager-ptr (manager-pointer manager))
+          (clear-cache?/int (if clear-cache? 1 0)))
+      (declare (foreign-pointer manager-ptr)
+               (fixnum clear-cache?/int))
+      (let ((res (cudd-garbage-collect manager-ptr clear-cache?/int)))
+        (declare (fixnum res))
+        res))))
 
 
 (defmacro with-C-file-pointer ((ptr pathname &key direction) &body body)
