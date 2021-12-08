@@ -289,9 +289,9 @@
 
 
 (defun print-debug (node &key
-						   (manager *manager*)
-						   ((:n num-vars) (bdd-variables manager))
-						   (level 1))
+                           (manager *manager*)
+                           ((:n num-vars) (bdd-variables manager))
+                           (level 1))
   "* TODO: Raise custom exception on failure.
  * TODO: Print to *standard-output*, not cstdout.
 "
@@ -300,18 +300,18 @@
   (check-type num-vars (integer 0))
   (check-type level (integer 0))
   (let ((errcode (cudd-print-debug (manager-pointer manager)
-								   (node-pointer node)
-								   num-vars level)))
-	(declare (type integer errcode))
-	(if (= 1 errcode) nil
-		(error "Cudd_PrintDebug() failed"))))
+                                   (node-pointer node)
+                                   num-vars level)))
+    (declare (type integer errcode))
+    (if (= 1 errcode) nil
+        (error "Cudd_PrintDebug() failed"))))
 
 (defun print-info (&optional (manager *manager*) (pathname "cudd.info"))
   "Delegate to (cudd.baseapi:print-info).
   * TODO: Better default filename...
 "
   (declare (manager manager)
-		   (type (or string pathname) pathname))
+           (type (or string pathname) pathname))
   (cl-cudd.baseapi:print-info (manager-pointer manager) pathname))
 
 #|
