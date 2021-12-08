@@ -12,12 +12,17 @@
     (:mix
      :log4cl
      #+thread-support :bordeaux-threads
+     :trivia
+     :alexandria
      :cl)
   #+thread-support (:reexport :bordeaux-threads)
   #-thread-support (:shadow
                     #:with-lock-held
                     #:make-lock)
-  (:reexport :log4cl)
+  (:reexport
+   :trivia
+   :log4cl
+   :alexandria)
   (:shadow #:log-error)
   (:import-from :uiop
                 #:*stderr*)
@@ -48,15 +53,20 @@
 (defmacro with-cudd-critical-section (&body body)
   "Acquire lock around the CUDD API while executing BODY."
   `(with-recursive-lock-held (*cudd-mutex*)
-	 ,@body))
+     ,@body))
 
 
 (defmacro log-error (&rest args)
-  `(progn
-     (log:error ,@args)
-     (format *stderr* ,@args)
-     ;; (format *error-output* ,@args)
-     ))
+  "KLUDGE: Strips out ':logger «logger»' if it's first in ARGS."
+  (match args
+    ((list* :logger logger format-args)
+     `(progn
+        (log:error :logger ,logger ,@format-args)
+        (format *stderr* ,@format-args)))
+    (_
+     `(progn
+        (log:error ,@args)
+        (format *stderr* ,@args)))))
 
 
 (in-package :asdf-user)
