@@ -14,15 +14,21 @@
   (next node)
   (type (:union dd-node/type)))
 
-(defmacro defcfun-lispified (c-name return-type &body parameters)
-  (let ((lisp-name (lispify c-name :function)))
-	`(defcfun (,c-name ,lisp-name) ,return-type
-	   ,@parameters)))
+(defmacro defcfun-lispified (c_name return-type &body parameters)
+  "Synsugar.  Like (defcfun), but expects a string holding a function having C naming conventions."
+  (let ((lisp-name (lispify c_name :function)))
+    `(defcfun (,c_name ,lisp-name) ,return-type
+       ,@parameters)))
 
-(defmacro define-external-lispified (c-name (&body parameters) return-type)
+;; (defmacro defcfun* (name return-type &body parameters)
+;;   (etypecase name
+;;     ())
+;;   )
+
+(defmacro define-external-lispified (c_name (&body parameters) return-type)
   "Argument-reordering."
-  (declare (string c-name))
-  `(defcfun-lispified ,c-name ,return-type ,@parameters))
+  (declare (string c_name))
+  `(defcfun-lispified ,c_name ,return-type ,@parameters))
 
 ;;;; external functions
 
