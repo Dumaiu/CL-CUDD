@@ -3,6 +3,9 @@
 
 ;;; Manager
 
+(export '(manager-init
+          manager-initf))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (define-constant +manager-initarg-defaults+
       '((initial-num-vars 0)
@@ -58,6 +61,31 @@
                                 p undead-node-count))
                       (cudd-quit p))))
       m)))
+
+(defmacro manager-initf (&optional (manager-form '*manager*)
+                         &key force)
+  "Like (manager-init), but expects a SETFable form.
+  - MANAGER-FORM must be evaluable.
+  - A truthy MANAGER-FORM is an error, unless FORCE=T as well, in which case the old manager will be killed.
+  * TODO: Support a more flexible mix of &optional|&key args.
+"
+  ;; (break "~A" manager-form)
+  (once-only (force
+              (manager manager-form))
+    `(progn
+       (check-type ,force boolean)
+       (check-type ,manager (or null manager))
+       (cond
+         ((or (null ,manager)
+              ,force)
+          (unless (null ,manager)
+            (manager-quit ,manager))
+          (setf ,manager-form (manager-init)))
+         (t (error "'~A' already denotes a live ~S.  ~&Use '~S' to override."
+                   ',manager-form
+                   'manager
+                   '(manager-initf ,manager-form :force t)
+                   ))))))
 
 (defvar *manager* nil "The current manager.
 
