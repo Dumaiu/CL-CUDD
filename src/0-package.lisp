@@ -597,7 +597,9 @@
 
 (define-package cl-cudd
     (:documentation "High-level interface")
-  (:mix :alexandria :uiop) ; TODO: Combine with :use
+  (:mix
+   :cl-cudd.swig-macros :cl-cudd.baseapi
+   :alexandria :uiop) ; TODO: Combine with :use
   (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi :trivia :iterate
    :cl-cudd.internal-utils
         :trivial-garbage
