@@ -48,11 +48,15 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
        address
        (manager-node-hash *manager*)
        (progn
-         (log:debu6 :logger cudd-logger "- Constructing wrapper node for ~A.  REFs: ~D." pointer
+         (log:debu6 :logger cudd-logger "Constructing wrapper node for ~A.  REFs: ~D."
+                    pointer
                     (cudd-node-ref-count pointer))
 
          (when ref
-           (cudd-ref pointer))
+           (cudd-ref pointer)
+           (log:debu7 :logger cudd-logger "- After (cudd-ref ~A), REFs = ~D."
+                      pointer
+                      (cudd-node-ref-count pointer)))
          (let ((node (ecase type
                        (bdd-node (make-bdd-node :pointer pointer))
                        (add-node (make-add-node :pointer pointer))
@@ -75,9 +79,9 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                     (let ((cur-address (pointer-address pointer)))
                       (assert (eql address cur-address))
 
-                      (log:debu6 :logger cudd-logger "- Finalizing node for ~A.  REFs: ~D" pointer ;;cur-address
-                                 (cudd-node-ref-count pointer)
-                                 ))
+                      (log:debu6 :logger cudd-logger "Destructing node for ~A.  REFs: ~D"
+                                 pointer ;;cur-address
+                                 (cudd-node-ref-count pointer)))
 
                     (handler-case
                         (let ((mp (manager-pointer manager)))
@@ -92,10 +96,15 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                             (when (zerop (cudd-node-ref-count pointer))
                               ;; TODO: Hopefully releases the mutex?:
                               (error "Tried to decrease reference count of node that already has refcount zero"))
+
                             (ecase type
                               (bdd-node (cudd-recursive-deref mp pointer))
                               (add-node (cudd-recursive-deref mp pointer))
                               (zdd-node (cudd-recursive-deref-zdd mp pointer)))
+
+                            (log:debu7 :logger cudd-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
+                                       pointer
+                                       (cudd-node-ref-count pointer))
 
                             (when config/debug-consistency-checks
                               (unless (zerop (cudd-check-keys mp))
