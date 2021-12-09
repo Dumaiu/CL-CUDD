@@ -57,4 +57,5 @@ WITH-MANAGER macro registers 4 global hooks which in turn call the functions in 
   (declare (ignore data))
   (hook-runner *after-reordering-hook* dd mode))
 
-(setf *manager* (manager-init))
+(when (null *manager*)
+  (manager-initf *manager*))
