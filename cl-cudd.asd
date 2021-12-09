@@ -40,7 +40,8 @@
                (:file "src/2-2-add-bdd-bridge")
                (:file "src/2-2-zdd-bdd-bridge")
                (:file "src/2-3-reordering")
-               (:file "src/2-4-hook")
+               (:file "src/2-4-hook"
+                :description "Side-effect: initializes `*manager*' if null.")
                (:file "src/2-5-utils")
                (:file "src/2-6-dot"))
   :description "A two-layered binding to the CUDD binary decision diagram library.

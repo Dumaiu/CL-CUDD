@@ -10,6 +10,10 @@
 * NB: In order to use a precompiled CUDD library, I've removed :cl-cudd.build from the dependency list for :cl-cudd
 * Similarly--to accommodate existing CUDD source and build directories, the groveller (`src/1-1-1-grovel.lisp`) now looks for directories 'cudd/' and 'build-cudd/' within the 'cl-cudd3/** dir.  These can be symlinks.
 
+* [2021-12-08 Wed] 
+    * Initialization of `*manager*` is now guarded.
+        * TODO: A command to easily force reinitialization.
+
 * [2021-12-07 Tue]
     * `config/debug-memory-errors`: When true, an error message is logged every time a node finalizer has to deal with a `sb-sys:memory-fault-error`.
     * `config/debug-consistency-checks`: When true, calls `(cudd-check-keys)` and (cudd-debug-check)` when creating and running finalizers.
