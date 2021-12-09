@@ -3,18 +3,6 @@
 (declaim (ftype function fopen
 				fclose))
 
-(deftype uint ()
-  'non-negative-fixnum)
-
-(deftype node-pointer ()
-  'foreign-pointer)
-
-(deftype manager-pointer ()
-  'foreign-pointer)
-
-(deftype variable ()
-  '(integer 0))
-
 (eval-when (:compile-toplevel :load-toplevel :execute)
   #+sbcl (import '(sb-kernel:pathname-designator))
   #-sbcl (deftype pathname-designator ()

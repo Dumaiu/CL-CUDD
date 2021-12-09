@@ -6,6 +6,24 @@
 (export '(manager-init
           manager-initf))
 
+
+(deftype uint ()
+  'non-negative-fixnum)
+
+(deftype node-pointer ()
+  'foreign-pointer)
+
+(deftype manager-pointer ()
+  'foreign-pointer)
+
+(deftype variable ()
+  '(integer 0))
+
+(assert (not (eq 'variable 'cl:variable)))
+(defmethod documentation (object (_ (eql 'variable)))
+  "Recurse.  Cause for this overload is the shadowing of 'cl:variable'."
+  (documentation object 'cl:variable))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (define-constant +manager-initarg-defaults+
       '((initial-num-vars 0)

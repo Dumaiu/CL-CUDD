@@ -101,14 +101,20 @@
   (defparameter +mod+ (probe-symbol "Cudd_addMod" '+mod+)
     "f modulo g")
   (defparameter +log-x-y+ (probe-symbol "Cudd_addLogXY" '+log-x-y+)
-    "log f base g")
+    "log f base g"))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *add-apply-doc*
-      (format nil "Applies op to the corresponding discriminants of f and g.
+    (format nil "Applies op to the corresponding discriminants of f and g.
 
 The following operations are supported:
 
 ~{~A~%~}" (mapcar (lambda (op)
-                    (format nil "~a (originally ~a) -- ~a" (car op) (cdr op) (documentation (car op) 'variable)))
+                    (destructuring-bind (lisp-name . c_name) op
+                      (assert (boundp lisp-name))
+                      (format nil "~a (originally ~a) -- ~a"
+                              lisp-name c_name
+                              (documentation lisp-name 'variable))))
                   *add-operators*))))
 
 (defun add-apply (op f g)
