@@ -205,9 +205,10 @@ only if their pointers are the same."
   "Evaluate the 'then' branch.  Undefined if NODE is not a branch node!"
   (declare (bdd-node node))
   ;; (check-type node bdd-node)
-  (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-T (node-pointer node)) 'bdd-node)))
-    (declare (bdd-node res))
-    res))
+  (with-cudd-critical-section
+    (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-T (node-pointer node)) 'bdd-node)))
+      (declare (bdd-node res))
+      res)))
 
 
 (assert (not (eq 'cudd-E 'cl-cudd.baseapi:cudd-E)))
@@ -215,6 +216,7 @@ only if their pointers are the same."
   "Evaluate the 'else' branch.  Undefined if NODE is not a branch node!"
   (declare (bdd-node node))
   ;; (check-type node bdd-node)
-  (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-E (node-pointer node)) 'bdd-node)))
-    (declare (bdd-node res))
-    res))
+  (with-cudd-critical-section
+    (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-E (node-pointer node)) 'bdd-node)))
+      (declare (bdd-node res))
+      res)))
