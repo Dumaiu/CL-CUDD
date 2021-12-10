@@ -43,7 +43,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
   (declare (foreign-pointer pointer)
            ((member bdd-node add-node zdd-node) type))
   (with-cudd-critical-section
-    (let ((address (cffi:pointer-address pointer)))
+    (let ((address (pointer-address pointer)))
       (ensure-gethash
        address
        (manager-node-hash *manager*)
@@ -203,7 +203,8 @@ only if their pointers are the same."
 (assert (not (eq 'cudd-T 'cl-cudd.baseapi:cudd-T)))
 (defun cudd-T (node)
   "Evaluate the 'then' branch.  Undefined if NODE is not a branch node!"
-  (check-type node bdd-node)
+  (declare (bdd-node node))
+  ;; (check-type node bdd-node)
   (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-T (node-pointer node)) 'bdd-node)))
     (declare (bdd-node res))
     res))
@@ -212,7 +213,8 @@ only if their pointers are the same."
 (assert (not (eq 'cudd-E 'cl-cudd.baseapi:cudd-E)))
 (defun cudd-E (node)
   "Evaluate the 'else' branch.  Undefined if NODE is not a branch node!"
-  (check-type node bdd-node)
+  (declare (bdd-node node))
+  ;; (check-type node bdd-node)
   (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-E (node-pointer node)) 'bdd-node)))
     (declare (bdd-node res))
     res))
