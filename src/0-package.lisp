@@ -23,12 +23,21 @@
    :trivia
    :log4cl
    :alexandria)
-  (:shadow #:log-error)
+  (:shadow
+   #:*cudd-mutex*
+   #:log-error
+   #:log-msg
+   #:log-keyword-to-level
+   #:with-cudd-critical-section)
   (:import-from :uiop
                 #:*stderr*)
+  (:import-from :log4cl-impl
+                #:+log-level-symbols+
+                #:expand-log-with-level)
   (:export
    #:*stderr*
    #:log-error
+   #:log-msg
    #:*cudd-mutex*
    #:with-lock-held
    #:make-lock
@@ -56,19 +65,35 @@
      ,@body))
 
 
+(defun log-keyword-to-level (keyword)
+  (declare (keyword keyword))
+  (let ((level (position (symbol-name keyword) +log-level-symbols+ :test #'string-equal)))
+    (unless (numberp level)
+      (error "Invalid log level: ~S" keyword))
+    level))
+
+(defmacro log-msg (&optional (level :info)
+                   &rest args
+                   &environment env)
+  "Wrapper for the :log4cl macros.  You can use them if you want, but going through this interface will make it easier to, for instance, compile out all CUDD logging, should that become necessary.  (If :log4cl already has a protocol for this, let me know.)
+  * TODO: Default to ':logger cudd-logger'
+"
+  (expand-log-with-level env (log-keyword-to-level level) args))
+
 (defmacro log-error (&rest args)
   "KLUDGE: Strips out ':logger «logger»' if it's first in ARGS."
   (match args
     ((list* :logger logger format-args)
      `(progn
-        (log:error :logger ,logger ,@format-args)
+        (log-msg :error :logger ,logger ,@format-args)
         (format *stderr* ,@format-args)))
     (_
      `(progn
-        (log:error ,@args)
+        (log-msg :error ,@args)
         (format *stderr* ,@args)))))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :asdf-user)
 
 (define-package cl-cudd.baseapi

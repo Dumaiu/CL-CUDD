@@ -51,9 +51,10 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
          ;;progn
          (cond
            (ref
-            (log:debu6 :logger cudd-logger "Constructing wrapper node for ~A.  Before incrementing, REFs = ~D."
-                       pointer
-                       (cudd-node-ref-count pointer))
+            (log-msg :debu6 :logger cudd-logger
+                     "Constructing wrapper node for ~A.  Before incrementing, REFs = ~D."
+                     pointer
+                     (cudd-node-ref-count pointer))
 
             ;; (log:debu6 :logger cudd-logger "- "
             ;;            (bordeaux-threads:current-thread))
@@ -102,9 +103,10 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                         (handler-case ; for sb-sys:memory-fault-error
                             (let ((mp (manager-pointer manager)))
 
-                              (log:debu6 :logger cudd-logger "Destructing node for ~A.  REFs: ~D"
-                                         pointer ;;cur-address
-                                         (cudd-node-ref-count pointer))
+                              (log-msg :debu6 :logger cudd-logger
+                                       "Destructing node for ~A.  REFs: ~D"
+                                       pointer ;;cur-address
+                                       (cudd-node-ref-count pointer))
 
                               (when config/debug-consistency-checks
                                 (unless (zerop (cudd-check-keys mp))
