@@ -60,20 +60,22 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
 
              ;; (log:debu6 :logger cudd-logger "- "
              ;;            (bordeaux-threads:current-thread))
+
+             ;; *Side-effect*:
              (cudd-ref pointer)
-             (log:debu7 :logger cudd-logger "- After (cudd-ref ~A), REFs = ~D."
+             (log-msg :debu7 :logger cudd-logger "- After (cudd-ref ~A), REFs = ~D."
                         pointer
                         (cudd-node-ref-count pointer)))
             ('otherwise ; ref=nil
              (let ((initial-ref-count (cudd-node-ref-count pointer)))
                (declare (fixnum initial-ref-count))
-               (log:debu6 :logger cudd-logger "NON-INCREMENTING wrapper for ~A being constructed (REFs = ~D).
+               (log-msg :debu6 :logger cudd-logger "NON-INCREMENTING wrapper for ~A being constructed (REFs = ~D).
  This should happen only for literals."
                           pointer
                           initial-ref-count)
                (assert (>= initial-ref-count 1))
                (unless (= 1 initial-ref-count)
-                 (log:warn :logger cudd-logger "Ref count of literal node ~A is ~D, which is > 1"
+                 (log-msg :warn :logger cudd-logger "Ref count of literal node ~A is ~D, which is > 1"
                            pointer
                            initial-ref-count)))))
 
