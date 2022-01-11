@@ -1,3 +1,4 @@
+* TODO [2022-01-10 Mon] How should we handle the BDD wrappers for constants?  If they have permanent extent, there's no point in reference counting with them.  The same could be said of variable nodes, which are also literals.
 * TODO: Avoid the SBCL dependency `sb-sys:memory-fault-error` present in `2-0-1-node.lisp`.
 * TODO: [optimize] (cudd:support-index)
 * TODO: Make (node-add|or|xor) variadic?
@@ -9,6 +10,7 @@
     * TODO: support CUDD ≠ v3.0.0
 * NB: In order to use a precompiled CUDD library, I've removed :cl-cudd.build from the dependency list for :cl-cudd
 * Similarly--to accommodate existing CUDD source and build directories, the groveller (`src/1-1-1-grovel.lisp`) now looks for directories 'cudd/' and 'build-cudd/' within the 'cl-cudd3/** dir.  These can be symlinks.
+
 
 * [2021-12-08 Wed] 
     * Initialization of `*manager*` is now guarded.
