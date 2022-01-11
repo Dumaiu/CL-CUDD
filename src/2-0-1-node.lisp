@@ -37,7 +37,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
   * TODO: Support kwargs
   * TODO: Kwarg to disable (with-cudd-critical-section)
 "
-  (declare (optimize debug)) ; TODO: remove
+  ;; (declare (optimize debug))
   `(with-cudd-critical-section
      (let* ((pointer ,pointer)
             (type ,type)
