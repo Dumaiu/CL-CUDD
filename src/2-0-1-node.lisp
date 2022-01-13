@@ -143,9 +143,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                                     (cond
                                       (config/debug-memory-errors
                                        (log-error :logger cudd-logger "* Memory-fault caught: '~A'
- Re-throwing." xc
- #|(slot-value xc 'sb-kernel::address)
- (slot-value xc 'sb-kernel::context)|#)
+ Re-throwing." xc)
                                        (error xc))
                                       (t
                                        ;; suppress error

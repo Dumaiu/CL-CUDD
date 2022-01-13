@@ -1,15 +1,18 @@
+* [2022-01-12 Wed] TODO: Convert a BDD to a `:cl-graph` graph.
 * TODO [2022-01-10 Mon] How should we handle the BDD wrappers for constants?  If they have permanent extent, there's no point in reference counting with them.  The same could be said of variable nodes, which are also literals.
-* TODO: Avoid the SBCL dependency `sb-sys:memory-fault-error` present in `2-0-1-node.lisp`.
 * TODO: [optimize] (cudd:support-index)
 * TODO: Make (node-add|or|xor) variadic?
 * TODO: Some of my additions have probably not been to the correct file.  I tend to put everything in the 'util' one.
 * TODO: (node-xor) needs ADD support.
 * TODO: On SBCL, the file '2-1-add.lisp' sometimes needs to be double-complied.  Moving the def of `*add-apply-doc*` to another form might be enough.
+    * [2022-01-12 Wed] TODO Is this fixed yet?
+* TODO: Config constant for disabling logging
 * Working on the 'unimplemented.lisp' C wrappers.
 * TODO: `cl-cudd.build.asd` should be more customizable.
     * TODO: support CUDD ≠ v3.0.0
 * NB: In order to use a precompiled CUDD library, I've removed :cl-cudd.build from the dependency list for :cl-cudd
 * Similarly--to accommodate existing CUDD source and build directories, the groveller (`src/1-1-1-grovel.lisp`) now looks for directories 'cudd/' and 'build-cudd/' within the 'cl-cudd3/** dir.  These can be symlinks.
+
 
 
 * [2021-12-08 Wed] 
@@ -18,7 +21,12 @@
 
 * [2021-12-07 Tue]
     * `config/debug-memory-errors`: When true, an error message is logged every time a node finalizer has to deal with a `sb-sys:memory-fault-error`.
-    * `config/debug-consistency-checks`: When true, calls `(cudd-check-keys)` and (cudd-debug-check)` when creating and running finalizers.
+        * Default: `T`.  Be careful disabling this, as the `sb-sys:memory-fault-error` will be silently squelched!
+            * FIXME: Avoid the SBCL dependency `sb-sys:memory-fault-error` present in `2-0-1-node.lisp`.
+    * `config/debug-consistency-checks`: When true, calls `(cudd-check-keys)` and `(cudd-debug-check)` when creating and running finalizers.
+        * Default: `nil`.
+        * NB: Will substantially affect performance when `T`, constantly spamming `stdout`.
+        * NB: There is also a correlation to a large number of `memory-fault-error`s being thrown; see `config/debug-memory-errors`.
 
 * [2021-11-30 Tue] Removed the  `update-asdf` instructions from 'cl-cudd.asd':
 
