@@ -118,7 +118,8 @@
         (error "Could not open file for writing")
         (unwind-protect
             (let ((result
-                    (with-cudd-critical-section
+                    ;; [2022-01-14 Fri] No side effects, according to docs, so we shouldn't need protection:
+                    (progn ;with-cudd-critical-section
                       (cudd-print-info manager file))))
               (if (= result 1)
                   nil
