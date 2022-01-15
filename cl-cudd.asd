@@ -13,7 +13,8 @@
                ;; TODO :cl-cudd.build
                :trivia.cffi
                :log4cl
-               :iterate)
+               :iterate
+               :series)
   :serial t
   :components ((:file "src/0-package")
                (:file "src/1-0-0-library")
