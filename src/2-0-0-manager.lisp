@@ -118,6 +118,7 @@
   - MANAGER-FORM must be evaluable.
   - A truthy MANAGER-FORM is an error, unless FORCE=T as well, in which case the old manager will be killed.
   * TODO: Support a more flexible mix of &optional|&key args.
+  * TODO: (define-modify-macro)?
 "
   ;; (break "~A" manager-form)
   (once-only (force
