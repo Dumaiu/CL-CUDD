@@ -4,7 +4,14 @@
 ;;; Manager
 
 (export '(manager-init
-          manager-initf))
+          manager-initf
+          cudd-logger))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter +finalizer-log-level+ :debu6
+    "FIXME: Unused.")
+  (with-package-log-hierarchy
+    (defvar cudd-logger (make-logger))))
 
 
 (deftype uint ()
@@ -43,7 +50,7 @@
 
 ;; TODO:
 ;; (declaim (maybe-inline internal/manager-pointer
-;;                        internal/manager-node-hash))
+;;                        internal/manager-node-table))
 (defstruct (manager
             (:conc-name internal/manager-))
   "A boxed CUDD manager class"
@@ -54,13 +61,14 @@
   ;; It stores a mapping between a node pointer <-> a lisp node.
   ;; This is added since each dd-node is considered unique and
   ;; it is ugly when there are multiple lisp node objects for a single dd-node pointer.
-  (node-hash (make-manager-hash-table)
+  (node-table (make-manager-hash-table)
    :type hash-table))
 
+(assert (fboundp 'internal/manager-node-table))
 ;; Alias (manager-node-hash):
-(setf (fdefinition 'manager-node-hash) #'internal/manager-node-hash)
+(setf (fdefinition 'manager-node-hash) #'internal/manager-node-table)
 (setf (fdefinition '(setf manager-node-hash))
-      #'(setf internal/manager-node-hash))
+      #'(setf internal/manager-node-table))
 
 #.(cond
     (config/guard-pointer-access

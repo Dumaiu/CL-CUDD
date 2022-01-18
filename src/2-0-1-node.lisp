@@ -1,12 +1,6 @@
 ;;; base class definitions and macros for defining APIs
 (in-package :cudd)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defparameter +finalizer-log-level+ :debu6
-    "FIXME: Unused.")
-  (with-package-log-hierarchy
-    (defvar cudd-logger (make-logger))))
-
 #|
 (progn
 (shadowing-import 'cudd:cudd-logger)
