@@ -107,17 +107,20 @@
       (cudd-add-hook p (callback before-gc-hook) :cudd-pre-reordering-hook)
       (cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
       (finalize m (lambda ()
-                    (format *error-output* "~&freeing a cudd manager at ~a~%" p)
-                    (log:debug :logger cudd-logger "Freeing CUDD manager at ~A." p)
                     (with-cudd-critical-section
+                      (format *error-output* "~&freeing a cudd manager at ~a~%" p)
+                      (log-msg :debug :logger cudd-logger "Freeing CUDD manager at ~A." p)
                       (let ((undead-node-count (cudd-check-zero-ref p)))
                         (declare (fixnum undead-node-count)) ; TODO: Better type
                         (assert (zerop undead-node-count) (p undead-node-count)
                                 "Assert failed in finalizer of manager ~A, with ~D unrecovered nodes (should be 0)."
                                 p undead-node-count))
-                      (cudd-quit p)))))
+                      (assert (not (null-pointer-p p)))
+                      (cudd-quit p)
+                      (setf p (null-pointer)))
+                    t)))
 
-    (log:debug :logger cudd-logger "Initialized new CUDD manager ~A." m)
+    (log-msg :debug :logger cudd-logger "Initialized new CUDD manager ~A." m)
     m))
 
 (defmacro manager-initf (&optional (manager-form '*manager*)
@@ -189,12 +192,21 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
     (uiop:slurp-stream-string s)))
 
 (defun manager-quit (&optional (manager *manager*))
-  "TODO: GC after dismantling hashtable?"
+  "Shut down the CUDD manager MANAGER:
+  After dismantling the hashtable, run a full Lisp garbage collection to hopefully reclaim the nodes' memory.  Then acquire the CUDD mutex and call `Cudd_Quit()`.
+"
   (declare (manager manager))
-  (log:debug :logger cudd-logger "Closing CUDD manager ~A." manager)
+  ;; We don't need to hold the CUDD mutex for this part:
+  (with-slots (node-table pointer) manager
+    (log-msg :debug :logger cudd-logger "Closing CUDD manager ~A." manager)
+    (clrhash node-table)
+    (setf node-table (make-manager-hash-table))
+    ;; This should call the finalizers:
+    (gc :full t))
+
   (with-cudd-critical-section
-    (with-slots (node-hash pointer) manager
-      (setf node-hash (make-manager-hash-table))
-      ;; TODO: CL GC?
-      (cudd-quit pointer)
-      (setf pointer (null-pointer)))))
+    ;; Re-read pointer, in it got changed elsewhere (like in the hashtable's finalizer):
+    (with-slots (node-table pointer) manager
+     (unless (null-pointer-p pointer)
+       (cudd-quit pointer)
+       (setf pointer (null-pointer))))))
