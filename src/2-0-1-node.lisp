@@ -17,7 +17,67 @@
 ;;; Wrapped CUDD node
 (defstruct node
   "A boxed CUDD node class. Top class of all CUDD nodes."
-  (pointer (required) :type cffi:foreign-pointer))
+  (pointer (required) :type foreign-pointer))
+
+;; #+sbcl (declaim (maybe-inline helper/make-node-finalizer))
+(defun helper/make-node-finalizer (manager
+                                   node-type
+                                   pointer
+                                   old-address)
+  (declare (manager manager)
+           (type node-type node-type)
+           (type foreign-pointer pointer))
+  (let ((callback
+          (lambda ()
+           (let ((cur-address (pointer-address pointer)))
+             (assert (eql old-address cur-address))
+
+             (with-cudd-critical-section
+               (handler-case ; for sb-sys:memory-fault-error
+                   (let ((mp (manager-pointer manager)))
+
+                     (log-msg :debu6 :logger cudd-logger
+                              "Destructing node for ~A.  REFs: ~D"
+                              pointer ;;cur-address
+                              (cudd-node-ref-count pointer))
+
+                     (when config/debug-consistency-checks
+                       (unless (zerop (cudd-check-keys mp))
+                         (log-error :logger cudd-logger "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer"))
+                       (unless (zerop (cudd-debug-check mp))
+                         (log-error :logger cudd-logger "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer")))
+
+                     (when (zerop (cudd-node-ref-count pointer))
+                       ;; TODO: Hopefully releases the mutex?:
+                       (error "Tried to decrease reference count of node that already has refcount zero"))
+
+                     (ecase node-type
+                       (bdd-node (cudd-recursive-deref mp pointer))
+                       (add-node (cudd-recursive-deref mp pointer))
+                       (zdd-node (cudd-recursive-deref-zdd mp pointer)))
+
+                     (log-msg :debu7 :logger cudd-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
+                              pointer
+                              (cudd-node-ref-count pointer))
+
+                     (when config/debug-consistency-checks
+                       (unless (zerop (cudd-check-keys mp))
+                         (log-error :logger cudd-logger "Assert 3 failed at end of finalizer: ~A" '(zerop (cudd-check-keys mp))))
+                       (unless (zerop (cudd-debug-check mp))
+                         (log-error :logger cudd-logger "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))))
+
+                 ;; TODO: Remove reliance on #+sbcl :
+                 #+sbcl (sb-sys:memory-fault-error (xc)
+                          (cond
+                            (config/debug-memory-errors
+                             (log-error :logger cudd-logger "* Memory-fault caught: '~A'
+ Re-throwing." xc)
+                             (error xc))
+                            (t
+                             ;; do nothing but suppress error
+                             )))))))))
+    (declare (function callback))
+    callback))
 
 (defmacro wrap-and-finalize (pointer type &optional (ref t))
   "Wrap the given pointer in a node of type TYPE.
@@ -38,8 +98,10 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
             (ref ,ref)
             (address (pointer-address pointer)))
        (declare (foreign-pointer pointer)
-                (type (member bdd-node add-node zdd-node) type)
-                (boolean ref))
+                (type node-type type)
+                (boolean ref)
+                ;; (type ??? address)
+                )
        (ensure-gethash
         address
         (manager-node-hash *manager*)
@@ -57,8 +119,8 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
              (cudd-ref pointer)
 
              (log-msg :debu7 :logger cudd-logger "- After (cudd-ref ~A), REFs = ~D."
-                        pointer
-                        (cudd-node-ref-count pointer)))
+                      pointer
+                      (cudd-node-ref-count pointer)))
 
             ('otherwise ; ref=nil
              (log-msg :debu6 :logger cudd-logger "NON-INCREMENTING wrapper for ~A being constructed (REFs = ~D).
@@ -67,12 +129,12 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                       (cudd-node-ref-count pointer))
 
              #|(let ((initial-ref-count (cudd-node-ref-count pointer)))
-               (declare (fixnum initial-ref-count))
-               (assert (>= initial-ref-count 1))
-               (unless (= 1 initial-ref-count)
-                 (log-msg :warn :logger cudd-logger "Ref count of literal node ~A is ~D, which is > 1"
-                           pointer
-                           initial-ref-count)))|#))
+             (declare (fixnum initial-ref-count))
+             (assert (>= initial-ref-count 1))
+             (unless (= 1 initial-ref-count)
+             (log-msg :warn :logger cudd-logger "Ref count of literal node ~A is ~D, which is > 1"
+             pointer
+             initial-ref-count)))|#))
 
           (let ((node (ecase type
                         (bdd-node (make-bdd-node :pointer pointer))
@@ -94,54 +156,8 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                   ;; is called.
                   (finalize
                    node
-                   (lambda ()
-                     (let ((cur-address (pointer-address pointer)))
-                       (assert (eql address cur-address))
-
-                       (with-cudd-critical-section
-                         (handler-case ; for sb-sys:memory-fault-error
-                             (let ((mp (manager-pointer manager)))
-
-                               (log-msg :debu6 :logger cudd-logger
-                                        "Destructing node for ~A.  REFs: ~D"
-                                        pointer ;;cur-address
-                                        (cudd-node-ref-count pointer))
-
-                               (when config/debug-consistency-checks
-                                 (unless (zerop (cudd-check-keys mp))
-                                   (log-error :logger cudd-logger "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer"))
-                                 (unless (zerop (cudd-debug-check mp))
-                                   (log-error :logger cudd-logger "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer")))
-
-                               (when (zerop (cudd-node-ref-count pointer))
-                                 ;; TODO: Hopefully releases the mutex?:
-                                 (error "Tried to decrease reference count of node that already has refcount zero"))
-
-                               (ecase type
-                                 (bdd-node (cudd-recursive-deref mp pointer))
-                                 (add-node (cudd-recursive-deref mp pointer))
-                                 (zdd-node (cudd-recursive-deref-zdd mp pointer)))
-
-                               (log:debu7 :logger cudd-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
-                                          pointer
-                                          (cudd-node-ref-count pointer))
-
-                               (when config/debug-consistency-checks
-                                 (unless (zerop (cudd-check-keys mp))
-                                   (log-error :logger cudd-logger "Assert 3 failed at end of finalizer: ~A" '(zerop (cudd-check-keys mp))))
-                                 (unless (zerop (cudd-debug-check mp))
-                                   (log-error :logger cudd-logger "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))))
-
-                           ;; TODO: Remove reliance on #+sbcl :
-                           #+sbcl (sb-sys:memory-fault-error (xc)
-                                    (cond
-                                      (config/debug-memory-errors
-                                       (log-error :logger cudd-logger "* Memory-fault caught: '~A'
- Re-throwing." xc)
-                                       (error xc))
-                                      (t
-                                       ;; suppress error
-                                       ))))))))))); finalizer
+                   (the function
+                        (helper/make-node-finalizer manager type pointer address)))))); finalizer
 
             ;; After constructing the finalizer:
             (assert (progn
