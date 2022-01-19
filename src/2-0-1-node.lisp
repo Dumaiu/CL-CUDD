@@ -14,13 +14,22 @@
 
 (defun required ()
   (error "Required slot"))
+
+
+(declaim (ftype (function (node) node-pointer)
+                node-pointer))
+(declaim (inline node-pointer))
 ;;; Wrapped CUDD node
 (defstruct node
   "A boxed CUDD node class. Top class of all CUDD nodes."
-  (pointer (required) :type foreign-pointer))
+  (pointer (required) :type node-pointer))
+
 
 (defun destruct-cudd-node-impl (node-pointer node-type manager)
-  (declare (type foreign-pointer node-pointer)
+  "Helper: called by BDD node finalizers when GC'd, or explicitly used by (destruct-cudd-node) when CUDD is deinitialized.
+  - No return value.
+"
+  (declare (type node-pointer node-pointer)
            (type node-type node-type)
            (manager manager))
   (with-cudd-critical-section
@@ -66,7 +75,8 @@
                   (error xc))
                  (t
                   ;; do nothing but suppress error
-                  ))))))
+                  )))))
+  (values))
 
 
 (declaim (inline helper/make-node-finalizer))
@@ -79,7 +89,7 @@
  * TODO: Maybe remove the CUR-ADDRESS check?"
   (declare (manager manager)
            (type node-type node-type)
-           (type foreign-pointer node-pointer))
+           (type node-pointer node-pointer))
   (let ((callback
           (lambda ()
             "Nullary closure.
@@ -109,7 +119,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
             (type ,type)
             (ref ,ref)
             (address (pointer-address pointer)))
-       (declare (foreign-pointer pointer)
+       (declare (node-pointer pointer)
                 (type node-type type)
                 (boolean ref)
                 ;; (type ??? address)
@@ -200,7 +210,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
 ;; "
 ;;   ;; TODO:
 ;;   (declare (optimize debug))
-;;   (declare (foreign-pointer pointer)
+;;   (declare (node-pointer pointer)
 ;;            ((member bdd-node add-node zdd-node) type))
 ;;   (with-cudd-critical-section
 ;;     (let ((address (pointer-address pointer)))
@@ -368,6 +378,10 @@ only if their pointers are the same."
 (deftype node-type ()
   `(member bdd-node add-node zdd-node))
 
+(declaim (inline node-type))
+(defun node-type (node)
+  (declare (node node))
+  (type-of node))
 
 (assert (not (eq 'cudd-T 'cl-cudd.baseapi:cudd-T)))
 (defun cudd-T (node)

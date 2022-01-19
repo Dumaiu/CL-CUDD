@@ -794,21 +794,28 @@
    #:zdd-maximal
    #:zdd-minimal
    #:manager-init)
-  (:export #:manager-quit
-           #:cudd-print
-           #:print-info
-           #:print-debug
-           #:sharing-size
-           #:support-size
-           #:support-index
-           #:node-xor
-           #:compose
-           #:boolean-diff
-           ;; #:restrict
-           #:cudd-T
-           #:cudd-E
-           #:garbage-collect
-           #:read-size
-           #:bdd-vector-compose
-           eval)
+  (:export
+   #:node-type
+   #:node-pointer
+   #:manager-pointer
+   #:manager-quit
+   #:manager-init
+   #:manager-initf
+   #:manager-reinitf
+   #:cudd-print
+   #:print-info
+   #:print-debug
+   #:sharing-size
+   #:support-size
+   #:support-index
+   #:node-xor
+   #:compose
+   #:boolean-diff
+   ;; #:restrict
+   #:cudd-T
+   #:cudd-E
+   #:garbage-collect
+   #:read-size
+   #:bdd-vector-compose
+   eval)
   ); cl-cudd

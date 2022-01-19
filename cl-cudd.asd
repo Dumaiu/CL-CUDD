@@ -30,6 +30,7 @@
                 :description "Added [2021-12-08 Wed] -- JJ-S")
                (:file "src/2-0-0-manager")
                (:file "src/2-0-1-node")
+               (:file "src/2-0-1-0-manager-quit")
                (:file "src/2-0-2-def-cudd-call")
                (:file "src/2-1-add")
                (:file "src/2-1-generic-complex")

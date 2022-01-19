@@ -31,6 +31,7 @@
   "Recurse.  Cause for this overload is the shadowing of 'cl:variable'."
   (documentation object 'cl:variable))
 
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (define-constant +manager-initarg-defaults+
       '((initial-num-vars 0)
@@ -92,62 +93,98 @@
 
 (define-symbol-macro %mp% (manager-pointer *manager*))
 
-(defun manager-init #.`(&key ,@+manager-initarg-defaults+)
-  "Construct and return a new `manager' instance, loading CUDD backend to go with it."
-  (let* ((p (cudd-init initial-num-vars
-                       initial-num-vars-z
-                       initial-num-slots
-                       cache-size
-                       max-memory))
+(defun destruct-manager-impl (manager-pointer)
+  "Acquire the CUDD mutex and call `Cudd_Quit()`.
+
+  Used by (destruct-manager) and the `manager' finalizer.
+
+  No return value; executed for side-effects.
+
+  Theoretically thread-safe.
+"
+  (declare (type manager-pointer manager-pointer))
+  (with-cudd-critical-section
+    (assert (not (null-pointer-p manager-pointer)))
+    (format *error-output* "~&freeing a cudd manager at ~a~%" manager-pointer)
+    (log-msg :debug :logger cudd-logger "Freeing CUDD manager at ~A." manager-pointer)
+    (let ((undead-node-count (cudd-check-zero-ref manager-pointer)))
+      (declare (fixnum undead-node-count)) ; TODO: Better type
+      (assert (zerop undead-node-count) (manager-pointer undead-node-count)
+              "Assert failed in finalizer of manager ~A, with ~D unrecovered nodes (should be 0)."
+              manager-pointer undead-node-count))
+    (cudd-quit manager-pointer)
+    (values)))
+
+(declaim (inline manager-init-impl))
+(defun manager-init-impl #.`(&key ,@+manager-initarg-defaults+)
+  "Create and return a new `manager-pointer'.
+
+  Helper for (manager-init), (manager-reinit).
+"
+  (let ((p (cudd-init initial-num-vars
+                      initial-num-vars-z
+                      initial-num-slots
+                      cache-size
+                      max-memory)))
+    (declare (manager-pointer p))
+
+    ;; see 2-4-hook.lisp
+    (cudd-add-hook p (callback before-gc-hook) :cudd-pre-gc-hook)
+    (cudd-add-hook p (callback after-gc-hook) :cudd-post-gc-hook)
+    (cudd-add-hook p (callback before-gc-hook) :cudd-pre-reordering-hook)
+    (cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
+
+    p))
+
+(defun manager-init (&rest keys)
+  "Construct and return a new `manager' instance, loading CUDD backend to go with it.
+
+  Lock-free because no other thread should be able to reach the new manager.  TODO: We should associate a mutex with each manager instance.
+"
+  (let* ((p (apply #'manager-init-impl keys))
          (m (make-manager :pointer p)))
-    (with-cudd-critical-section
-      ;; see 2-4-hook.lisp
-      (cudd-add-hook p (callback before-gc-hook) :cudd-pre-gc-hook)
-      (cudd-add-hook p (callback after-gc-hook) :cudd-post-gc-hook)
-      (cudd-add-hook p (callback before-gc-hook) :cudd-pre-reordering-hook)
-      (cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
-      (finalize m (lambda ()
-                    (with-cudd-critical-section
-                      (format *error-output* "~&freeing a cudd manager at ~a~%" p)
-                      (log-msg :debug :logger cudd-logger "Freeing CUDD manager at ~A." p)
-                      (let ((undead-node-count (cudd-check-zero-ref p)))
-                        (declare (fixnum undead-node-count)) ; TODO: Better type
-                        (assert (zerop undead-node-count) (p undead-node-count)
-                                "Assert failed in finalizer of manager ~A, with ~D unrecovered nodes (should be 0)."
-                                p undead-node-count))
-                      (assert (not (null-pointer-p p)))
-                      (cudd-quit p)
-                      (setf p (null-pointer)))
-                    t)))
+    (declare (manager-pointer p)
+             (manager m))
+    (finalize m (lambda ()
+                  (destruct-manager-impl p)
+                  ;; (setf p (null-pointer)) ; not really any need; its extent is done
+                  t))
 
     (log-msg :debug :logger cudd-logger "Initialized new CUDD manager ~A." m)
     m))
 
+
 (defmacro manager-initf (&optional (manager-form '*manager*)
                          &key force)
   "Like (manager-init), but expects a SETFable form.
-  - MANAGER-FORM must be evaluable.
+  - MANAGER-FORM must be evaluable.  TODO: This could be relaxed...
   - A truthy MANAGER-FORM is an error, unless FORCE=T as well, in which case the old manager will be killed.
+  - Returns the new manager.
+  - Theoretically thread-safe.
   * TODO: Support a more flexible mix of &optional|&key args.
   * TODO: (define-modify-macro)?
 "
-  ;; (break "~A" manager-form)
-  (once-only (force
-              (manager manager-form))
-    `(progn
-       (check-type ,force boolean)
-       (check-type ,manager (or null manager))
-       (cond
-         ((or (null ,manager)
-              ,force)
-          (unless (null ,manager)
-            (manager-quit ,manager))
-          (setf ,manager-form (manager-init)))
-         (t (error "'~A' already denotes a live ~S.  ~&Use '~S' to override."
-                   ',manager-form
-                   'manager
-                   '(manager-initf ,manager-form :force t)
-                   ))))))
+  (once-only (force)
+    ;; I want the evaluation of MANAGER-FORM inside the lock block.  That's why I use (with-gensyms) instead of (once-only):
+    (with-gensyms (manager)
+      `(locally (declare (boolean ,force))
+        (let ((new-manager
+                (with-cudd-critical-section
+                  (let ((,manager ,manager-form))
+                    (check-type ,manager (or null manager))
+
+                    (cond
+                      ((null ,manager)
+                       (setf ,manager-form (manager-init)))
+                      (,force
+                       (destruct-manager ,manager)
+                       (setf ,manager-form (manager-init)))
+                      (t (error "'~A' already denotes a live ~S.  ~&Use '~S' to override."
+                                ',manager-form
+                                'manager
+                                '(manager-initf ,manager-form :force t))))))))
+          (declare (manager new-manager))
+          new-manager)))))
 
 (defvar *manager* nil "The current manager.
 
@@ -185,6 +222,7 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
                       max-memory))
   `(let ((*manager* (manager-init ,@keys)))
      ,@body))
+
 
 (defun info (&optional (manager *manager*))
   (declare (type manager manager))
