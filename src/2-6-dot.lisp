@@ -20,4 +20,4 @@
         (manager-pointer *manager*)
         (cudd-regular (node-pointer node))
         dot)))
-    (uiop:run-program `("dot" ,dot "-Tpdf" "-o" ,pdf))))
+    (run-program `("dot" ,dot "-Tpdf" "-o" ,pdf))))
