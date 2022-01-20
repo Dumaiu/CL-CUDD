@@ -27,15 +27,23 @@
     ;; :CUDD-REORDER-EXACT
     ))
 
-(defun enable-reordering (&optional (method :cudd-reorder-same))
+(defun enable-reordering (&optional (method :cudd-reorder-same)
+                            (manager *manager*))
   "Enables automatic dynamic reordering of BDDs and ADDs.
 
   Parameter method is used to determine the method used for
   reordering. If CUDD_REORDER_SAME is passed, the method is unchanged.
 
-  @see Cudd_AutodynDisable Cudd_ReorderingStatus Cudd_AutodynEnableZdd "
-  (declare (bdd-reordering-method method))
-  (cudd-autodyn-enable %mp% method))
+  @see Cudd_AutodynDisable Cudd_ReorderingStatus Cudd_AutodynEnableZdd
+
+ - [2022-01-19 Wed] TODO: Keyword parameters. "
+  (declare (bdd-reordering-method method)
+           (manager manager))
+  (with-cudd-critical-section
+    (let ((mp (manager-pointer manager)))
+      (declare (manager-pointer mp))
+      (assert (not (null-pointer-p mp)))
+      (cudd-autodyn-enable mp method))))
 
 (define-simple-managed-function disable-reordering cudd-autodyn-disable
   "Disables automatic dynamic reordering of BDDs and ADDs.
