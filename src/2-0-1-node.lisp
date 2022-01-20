@@ -32,6 +32,7 @@
   (declare (type node-pointer node-pointer)
            (type node-type node-type)
            (manager manager))
+
   (with-cudd-critical-section
     (handler-case ; for sb-sys:memory-fault-error
         (let ((mp (manager-pointer manager)))
