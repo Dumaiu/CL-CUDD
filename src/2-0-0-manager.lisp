@@ -105,7 +105,7 @@
   (declare (type manager-pointer manager-pointer))
   (with-cudd-critical-section
     (assert (not (null-pointer-p manager-pointer)))
-    (format *error-output* "~&freeing a cudd manager at ~a~%" manager-pointer)
+    ;; (format *error-output* "~&freeing a cudd manager at ~a~%" manager-pointer)
     (log-msg :debug :logger cudd-logger "Freeing CUDD manager at ~A." manager-pointer)
     (let ((undead-node-count (cudd-check-zero-ref manager-pointer)))
       (declare (fixnum undead-node-count)) ; TODO: Better type
