@@ -1,8 +1,11 @@
+(in-package :asdf-user)
 
-(in-package :cl-user)
-
-(defpackage cl-cudd.test
-  (:use :cl :cl-cudd :cl-cudd.baseapi :fiveam :iterate :trivia :arrow-macros)
+(define-package cl-cudd.test
+    (:mix
+     :cl-cudd :cl-cudd.baseapi
+     :fiveam :iterate :trivia :arrow-macros
+     :asdf :uiop
+     :cl)
   (:shadow :next :<>))
 
 (in-package cl-cudd.test)
