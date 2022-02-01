@@ -9,10 +9,14 @@
   :license "BSD Style (see LICENSE)"
   :depends-on (:cl-cudd :fiveam :iterate :trivia :arrow-macros)
   :serial t
-  :components ((:file "test/package"))
+  :pathname "test/"
+  :components ((:file "package"))
   :description "A two-layered binding to the CUDD binary decision diagram library.
 
 See README.md for more details."
   :perform (test-op :after (op c)
                     (eval (read-from-string "(5am:run! :cl-cudd)")))
-  :build-operation "asdf:test-op")
+  :build-operation "asdf:test-op"
+  :build-pathname "test.exe"
+  :entry-point (lambda ()
+                 (symbol-call :fiveam '#:run! :cl-cudd)))
