@@ -130,7 +130,7 @@
   (with-cudd-critical-section
     (let ((manager-ptr (manager-pointer manager))
           (clear-cache?/int (if clear-cache? 1 0)))
-      (declare (foreign-pointer manager-ptr)
+      (declare (manager-pointer manager-ptr)
                (fixnum clear-cache?/int))
       (let ((res (cudd-garbage-collect manager-ptr clear-cache?/int)))
         (declare (fixnum res))
