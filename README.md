@@ -1,3 +1,8 @@
+* [2022-02-02 Wed] TODO: Wrappers for:
+    * `cudd-read-keys`
+    * `cudd-read-dead`
+    * `cudd-dead-are-counted`
+    * `cudd-turn-on-count-dead`
 * [2022-01-12 Wed] TODO: Convert a BDD to a `:cl-graph` graph.
 * TODO [2022-01-10 Mon] How should we handle the BDD wrappers for constants?  If they have permanent extent, there's no point in reference counting with them.  The same could be said of variable nodes, which are also literals.
 * TODO: [optimize] (cudd:support-index)
