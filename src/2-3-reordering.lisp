@@ -94,11 +94,15 @@ Secondary value returns the current reordering method.
   "Initiates variable reordering explicitly (for bdd/add).
 MINSIZE specifies the lower threshold of the number of the (live/referenced) nodes to initiate reordering:
 Number of nodes should be larger than this value.
-Default value is 33000000. In CUDD each node consumes 3 words, so this threshold corresponds to 100MB."
+Default value is 33000000. In CUDD each node consumes 3 words, so this threshold corresponds to 100MB.
+  * [2022-02-01 Tue] TODO: ':manager' kwarg.
+  * TODO: Factor out MINSIZE.
+"
   (declare (bdd-reordering-method method))
-  (let ((result (cudd-reduce-heap %mp% method minsize)))
-	(or (= 1 result)
-		(error "(cudd-reduce-heap) failed"))))
+  (with-cudd-critical-section
+    (let ((result (cudd-reduce-heap %mp% method minsize)))
+      (or (= 1 result)
+          (error "(cudd-reduce-heap) failed")))))
 
 (defun zdd-reduce-heap (&optional (method :cudd-reorder-same) (minsize 33000000))
   "Initiates variable reordering explicitly (for zdd).
