@@ -54,7 +54,9 @@
 ;;                        internal/manager-node-table))
 (defstruct (manager
             (:conc-name internal/manager-))
-  "A boxed CUDD manager class"
+  "A boxed CUDD manager class.
+  - Use `manager-node-hash' to accesss the node table.
+"
   (pointer (error "MANAGER needs to wrap a pointer")
    :type foreign-pointer)
 
