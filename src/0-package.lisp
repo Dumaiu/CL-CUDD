@@ -810,5 +810,7 @@
            #:garbage-collect
            #:read-size
            #:bdd-vector-compose
+           #:count-dead-bdd-nodes
+           #:count-live-bdd-nodes
            eval)
   ); cl-cudd

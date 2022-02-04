@@ -115,7 +115,7 @@
                                  (let ((res-ptr (cudd-bdd-vector-compose manager-ptr f-ptr ptr-array)))
                                    (declare (node-pointer res-ptr))
                                    res-ptr)))
-                             'bdd-node)))
+              'bdd-node)))
     (declare (bdd-node res))
     res))
 
@@ -448,3 +448,25 @@ Follow the then-branch when 1, else-branch otherwise."
   (declare (manager manager)
            (node node))
   (= 1 (the fixnum (cuddp (manager-pointer manager) (node-pointer node)))))
+
+(defun count-dead-bdd-nodes (&optional (manager *manager*))
+  "Return an int: number of currently dead ADD|BDD nodes."
+  (declare (manager manager))
+  (let* ((ptr (manager-pointer manager))
+         (dead (cudd-read-dead ptr)))
+    (declare (manager-pointer ptr))
+    (declare (fixnum dead))
+    dead))
+
+(defun count-live-bdd-nodes (&optional (manager *manager*))
+  "Return an int: the total number of live ADD|BDD nodes."
+  (declare (manager manager))
+  (let ((ptr (manager-pointer manager)))
+    (declare (manager-pointer ptr))
+    (let ((total (cudd-read-keys ptr))
+          (dead (cudd-read-dead ptr)))
+      (declare (fixnum total dead))
+      (let ((live (- total dead)))
+        (declare (fixnum live))
+        (assert (>= live 0))
+        live))))
