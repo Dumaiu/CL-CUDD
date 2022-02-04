@@ -265,6 +265,7 @@
 (defun sharing-size (nodes #|&optional (manager *manager*)|#)
   "Wrapper for (cudd-sharing-size).  NODES should be a collection of nodes/BDDs.
   * TODO: Get the 'n' count from (read-size)?
+  * TODO: [opt] with ':series'?
 "
   (declare (sequence nodes))
   (let ((n (length nodes)))
