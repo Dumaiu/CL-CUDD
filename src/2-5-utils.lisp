@@ -172,9 +172,9 @@
       ;; KLUDGE: Copying pointers myself:
       (with-foreign-object (node-array :pointer n)
         (iter (for node in-vector nodes with-index i)
-              (declare ((or null node) node) (fixnum i))
-              (for node-ptr = (node-pointer node))
-              (setf (mem-aref node-array :pointer i) node-ptr))
+          (declare ((or null node) node) (fixnum i))
+          (for node-ptr = (node-pointer node))
+          (setf (mem-aref node-array :pointer i) node-ptr))
 
         (with-C-file-pointer (f pathname :direction :output)
           (let ((result-code (convert-from-foreign
@@ -422,18 +422,18 @@ Follow the then-branch when 1, else-branch otherwise."
     (etypecase thing
       (integer
        (iter (for index = (cudd-node-read-index p))
-             (while (< index (integer-length thing)))
-             (setf p
-                   (if (logbitp index thing)
-                       (cudd-node-then p)
-                       (cudd-node-else p)))))
+         (while (< index (integer-length thing)))
+         (setf p
+               (if (logbitp index thing)
+                   (cudd-node-then p)
+                   (cudd-node-else p)))))
       (bit-vector
        (iter (for index = (cudd-node-read-index p))
-             (while (< index (length thing)))
-             (setf p
-                   (if (plusp (aref thing index))
-                       (cudd-node-then p)
-                       (cudd-node-else p))))))
+         (while (< index (length thing)))
+         (setf p
+               (if (plusp (aref thing index))
+                   (cudd-node-then p)
+                   (cudd-node-else p))))))
     (etypecase node
       (add-node (wrap-and-finalize p 'add-node))
       (bdd-node (wrap-and-finalize p 'bdd-node))
