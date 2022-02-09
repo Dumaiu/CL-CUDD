@@ -262,8 +262,9 @@
   (cudd-support-size (manager-pointer manager)
                      (node-pointer node)))
 
-(defun sharing-size (nodes #|&optional (manager *manager*)|#)
-  "Wrapper for (cudd-sharing-size).  NODES should be a collection of nodes/BDDs.
+(defun sharing-size (nodes)
+  "Wrapper for (cudd-sharing-size).  NODES should be a collection of nodes/BDDs.  Note that a `manager' parameter isn't useful to CUDD for this function!
+
   * TODO: Get the 'n' count from (read-size)?
   * TODO: [opt] with ':series'?
 "
