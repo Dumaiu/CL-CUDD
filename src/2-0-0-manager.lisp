@@ -156,6 +156,43 @@ Every function in this package works with this manager.
 Bound to a global manager by default.")
 (declaim (type (or manager null) *manager*))
 
+(defun helper/with-cudd-critical-section/parse-body (body)
+  (declare (list body))
+  (match body
+    ((list* (guard options
+                   (and (listp options)
+                        (match options
+                          ((list* (type keyword) _ _) t))))
+            body*)
+     (list :options options
+           :body body*))
+    (_
+     (list :options nil
+           :body body))))
+
+;; Some quick testing:
+(assert (equal
+         (helper/with-cudd-critical-section/parse-body
+          '(foo bar baz))
+         '(:options nil
+           :body (foo bar baz))))
+
+(assert (equal
+         (helper/with-cudd-critical-section/parse-body
+          '((:manager 'm :whatever x)
+            foo bar baz))
+         '(:options (:manager 'm :whatever x)
+           :body (foo bar baz))))
+
+(defmacro with-cudd-critical-section (&body body)
+  "Acquire lock around the CUDD API while executing BODY."
+  (let (())
+   `(with-recursive-lock-held (*cudd-mutex*)
+      ,@body))
+  )
+
+
+
 (defmacro with-manager (#.`(&rest
                               keys
                             &key
