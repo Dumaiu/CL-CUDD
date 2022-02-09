@@ -286,8 +286,10 @@
   "* TODO: Raise custom exception on failure.
  * TODO: Print to *standard-output*, not cstdout.
 "
-  (declare (manager manager))
-  (check-type node node)
+  (declare (node node)
+           (manager manager)
+           (fixnum num-vars)
+           (fixnum level))
   (check-type num-vars (integer 0))
   (check-type level (integer 0))
   (let ((errcode (cudd-print-debug (manager-pointer manager)
