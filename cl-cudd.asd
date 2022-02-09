@@ -8,6 +8,7 @@
   :depends-on (:cffi
                :alexandria
                :trivial-garbage
+               :let-plus
                :bordeaux-threads
                ;; TODO :cl-cudd.build
                :trivia.cffi

@@ -23,8 +23,10 @@
    :trivia
    :log4cl
    :alexandria)
+  (:intern #:mutex)
   (:shadow
    #:*cudd-mutex*
+   #:manager-mutex
    #:log-error
    #:log-msg
    #:log-keyword-to-level
@@ -39,31 +41,15 @@
    #:log-error
    #:log-msg
    #:*cudd-mutex*
+   #:manager-mutex
    #:with-lock-held
    #:make-lock
    #:with-cudd-critical-section))
 
 (in-package cl-cudd.internal-utils)
 
-#+thread-support
-(defvar *cudd-mutex* (make-recursive-lock "cudd-mutex")
-  "Used in (wrap-and-finalize).")
-
-#-thread-support
-(defmacro with-lock-held ((_lock) &body body)
-  "Execute BODY unconditionally.  Should only run in the absence of a real (with-lock-held)."
-  (declare (symbol _lock)
-           (ignore _lock))
-  `(progn
-     ,@body))
-
-(assert (fboundp 'with-lock-held))
-
-(defmacro with-cudd-critical-section (&body body)
-  "Acquire lock around the CUDD API while executing BODY."
-  `(with-recursive-lock-held (*cudd-mutex*)
-     ,@body))
-
+(deftype manager-mutex ()
+  'lock)
 
 (defun log-keyword-to-level (keyword)
   (declare (keyword keyword))
@@ -625,9 +611,10 @@
   (:mix
    :cl-cudd.swig-macros :cl-cudd.baseapi
    :alexandria :uiop) ; TODO: Combine with :use
-  (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi :trivia :iterate
+  (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi
+   :trivia :iterate :let-plus
    :cl-cudd.internal-utils
-        :trivial-garbage
+   :trivial-garbage
    :asdf :uiop)
   (:nicknames :cudd)
   ;; 2021:
@@ -642,6 +629,9 @@
   (:intern
    #:with-C-file-pointer ; helper
    )
+  (:import-from :cl-cudd.internal-utils
+                #:mutex
+                #:manager-mutex)
   (:export
    #:+AGREEMENT+
    #:+AND+
@@ -812,5 +802,9 @@
            #:bdd-vector-compose
            #:count-dead-bdd-nodes
            #:count-live-bdd-nodes
-           eval)
+           eval
+           #:bdd-transfer
+           #:*manager*
+           #:*cudd-mutex*
+           )
   ); cl-cudd

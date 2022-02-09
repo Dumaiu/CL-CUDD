@@ -7,6 +7,8 @@
           manager-initf
           cudd-logger))
 
+;; (assert (find-class 'manager-mutex))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter +finalizer-log-level+ :debu6
     "FIXME: Unused.")
@@ -51,6 +53,9 @@
 ;; TODO:
 ;; (declaim (maybe-inline internal/manager-pointer
 ;;                        internal/manager-node-table))
+(declaim (inline internal/manager-node-table
+                 (setf internal/manager-node-table)
+                 internal/manager-mutex))
 (defstruct (manager
             (:conc-name internal/manager-))
   "A boxed CUDD manager class"
@@ -62,13 +67,23 @@
   ;; This is added since each dd-node is considered unique and
   ;; it is ugly when there are multiple lisp node objects for a single dd-node pointer.
   (node-table (make-manager-hash-table)
-   :type hash-table))
+   :type hash-table)
+
+  #+thread-support (mutex (make-recursive-lock (string (gensym "cudd-manager-lock")))
+                    :type manager-mutex
+                    :read-only t))
 
 (assert (fboundp 'internal/manager-node-table))
 ;; Alias (manager-node-hash):
 (setf (fdefinition 'manager-node-hash) #'internal/manager-node-table)
 (setf (fdefinition '(setf manager-node-hash))
       #'(setf internal/manager-node-table))
+
+;; Alias (manager-mutex):
+#+thread-support
+(progn
+  (declaim (ftype (function (manager) manager-mutex) manager-mutex))
+  (setf (fdefinition 'manager-mutex) #'internal/manager-mutex))
 
 #.(cond
     (config/guard-pointer-access
@@ -100,7 +115,8 @@
                        cache-size
                        max-memory))
          (m (make-manager :pointer p)))
-    (with-cudd-critical-section
+    ;; (break "~A" m)
+    (with-cudd-critical-section (:manager m)
       ;; see 2-4-hook.lisp
       (cudd-add-hook p (callback before-gc-hook) :cudd-pre-gc-hook)
       (cudd-add-hook p (callback after-gc-hook) :cudd-post-gc-hook)
@@ -156,40 +172,67 @@ Every function in this package works with this manager.
 Bound to a global manager by default.")
 (declaim (type (or manager null) *manager*))
 
-(defun helper/with-cudd-critical-section/parse-body (body)
-  (declare (list body))
-  (match body
-    ((list* (guard options
-                   (and (listp options)
-                        (match options
-                          ((list* (type keyword) _ _) t))))
-            body*)
-     (list :options options
-           :body body*))
-    (_
-     (list :options nil
-           :body body))))
 
-;; Some quick testing:
-(assert (equal
-         (helper/with-cudd-critical-section/parse-body
-          '(foo bar baz))
-         '(:options nil
-           :body (foo bar baz))))
+#+thread-support
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (define-symbol-macro *cudd-mutex* (manager-mutex *manager*))
+  ;; (setf (documentation '*cudd-mutex* 'variable)
+  ;;       (format nil "Used in (~S)."
+  ;;               'wrap-and-finalize))
+  )
 
-(assert (equal
-         (helper/with-cudd-critical-section/parse-body
-          '((:manager 'm :whatever x)
-            foo bar baz))
-         '(:options (:manager 'm :whatever x)
-           :body (foo bar baz))))
+#-thread-support
+(defmacro with-lock-held ((_lock) &body body)
+  "Execute BODY unconditionally.  Should only run in the absence of a real (with-lock-held)."
+  (declare (symbol _lock)
+           (ignore _lock))
+  `(progn
+     ,@body))
+
+(assert (fboundp 'with-lock-held))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun helper/with-cudd-critical-section/parse-body (body)
+    (declare (list body))
+    (match body
+      ((list* (list* :manager manager  *other) body_)
+       ;; (list* (guard options
+       ;;               (and (listp options)
+       ;;                    (match options
+       ;;                      ((list* (type keyword) _ _) t))))
+       ;;        body*)
+       ;; (list :options options
+       ;;       :body body*)
+       (when *other (not-implemented-error 'with-cudd-critical-section/other-options
+                                           "Only ':manager' is accepted, for now.") )
+       (list :manager manager
+             :body body_))
+      (_
+       ;; (list :options nil
+       ;;       :body body)
+       (list :manager '*manager*
+             :body body))))
+
+  ;; Some quick testing:
+  (assert (equal
+           (helper/with-cudd-critical-section/parse-body
+            '(foo bar baz))
+           '(:manager *manager*
+             :body (foo bar baz))))
+
+  (assert (equal
+           (helper/with-cudd-critical-section/parse-body
+            '((:manager m)
+              foo bar baz))
+           '(:manager m
+             :body (foo bar baz)))))
 
 (defmacro with-cudd-critical-section (&body body)
   "Acquire lock around the CUDD API while executing BODY."
-  (let (())
-   `(with-recursive-lock-held (*cudd-mutex*)
-      ,@body))
-  )
+  (let+ ((parsed-body (helper/with-cudd-critical-section/parse-body body))
+         ((&plist-r/o (manager :manager) (body :body)) parsed-body))
+    `(with-recursive-lock-held ((manager-mutex ,manager))
+       ,@body)))
 
 
 
@@ -246,6 +289,6 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
   (with-cudd-critical-section
     ;; Re-read pointer, in it got changed elsewhere (like in the hashtable's finalizer):
     (with-slots (node-table pointer) manager
-     (unless (null-pointer-p pointer)
-       (cudd-quit pointer)
-       (setf pointer (null-pointer))))))
+      (unless (null-pointer-p pointer)
+        (cudd-quit pointer)
+        (setf pointer (null-pointer))))))

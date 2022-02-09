@@ -14,46 +14,67 @@
 (in-suite :cl-cudd)
 
 (defun models (kind)
+  "Helper for ':cl-cudd.test': look up a list of *.test files from one of the test/ subdirectories."
   (directory (merge-pathnames "*.tests" (asdf:system-relative-pathname :cl-cudd (format nil "test/~a/" kind)))))
 
 ;; we need a better api for creating a bdd
+;; -- No kidding. --JDJ-S
 
 (defun basename (pathname)
   (make-pathname :type nil :defaults pathname))
 (defun append-name (pathname suffix)
   (make-pathname :name (concatenate 'string (pathname-name pathname) suffix) :defaults pathname))
 
+(defun parse-bdd/parse-only (path ;; &optional zdd-binate?
+                             )
+  (let ((f (reduce #'node-or
+                   (iter (for line in-file path using #'read-line)
+                     (collect
+                         (reduce #'node-and
+                                 (iter (for c in-vector line)
+                                   (for index from 0)
+                                   (collect
+                                       (ecase c
+                                         (#\0 (node-complement
+                                               (make-var 'bdd-node :index index)))
+                                         (#\1 (make-var 'bdd-node :index index)))))
+                                 :initial-value (one-node 'bdd-node))))
+                   :initial-value (zero-node 'bdd-node))))
+    (declare (bdd-node f))
+    f))
+
+
 (defun parse-bdd (path &optional zdd-binate?)
   (fresh-line)
   (with-manager ()
     (let ((f
-           (reduce #'node-or
-                   (iter (for line in-file path using #'read-line)
-                         (collect
+            (reduce #'node-or
+                    (iter (for line in-file path using #'read-line)
+                      (collect
                           (reduce #'node-and
                                   (iter (for c in-vector line)
-                                        (for index from 0)
-                                        (collect
-                                         (ecase c
-                                           (#\0 (node-complement
-                                                 (make-var 'bdd-node :index index)))
-                                           (#\1 (make-var 'bdd-node :index index)))))
+                                    (for index from 0)
+                                    (collect
+                                        (ecase c
+                                          (#\0 (node-complement
+                                                (make-var 'bdd-node :index index)))
+                                          (#\1 (make-var 'bdd-node :index index)))))
                                   :initial-value (one-node 'bdd-node))))
-                   :initial-value (zero-node 'bdd-node))))
+                    :initial-value (zero-node 'bdd-node))))
       (pass "constructed DD")
       (finishes (print f))
       (finishes (print (dag-size f)))
       (finishes (print (multiple-value-list (reordering-status))))
       (finishes
-       (plot (append-name path "-BDD") f))
+        (plot (append-name path "-BDD") f))
       ;; since BDDs may contain complemented edges, it is slightly hard to understand.
       ;; Usually converting it into ADDs will improve the output
       (finishes
-       (plot (append-name path "-BDD-as-ADD") (bdd->add f)))
+        (plot (append-name path "-BDD-as-ADD") (bdd->add f)))
       (finishes
-       (if zdd-binate?
-           (plot (append-name path "-BDD-as-ZDD-cover") (bdd->zdd-cover f))
-           (plot (append-name path "-BDD-as-ZDD-simple") (bdd->zdd-simple f)))))))
+        (if zdd-binate?
+            (plot (append-name path "-BDD-as-ZDD-cover") (bdd->zdd-cover f))
+            (plot (append-name path "-BDD-as-ZDD-simple") (bdd->zdd-simple f)))))))
 
 (test bdd
   (dolist (m (append (models "gates") (models "modest")))
@@ -64,19 +85,19 @@
   (fresh-line)
   (with-manager ()
     (let ((f
-           (reduce #'node-or
-                   (iter (for line in-file path using #'read-line)
-                         (collect
-                             (reduce #'node-and
-                                     (iter (for c in-vector line)
-                                           (for index from 0)
-                                           (collect
-                                               (ecase c
-                                                 (#\0 (node-complement
-                                                       (make-var 'add-node :index index)))
-                                                 (#\1 (make-var 'add-node :index index)))))
-                                     :initial-value (one-node 'add-node))))
-                   :initial-value (zero-node 'add-node))))
+            (reduce #'node-or
+                    (iter (for line in-file path using #'read-line)
+                      (collect
+                          (reduce #'node-and
+                                  (iter (for c in-vector line)
+                                    (for index from 0)
+                                    (collect
+                                        (ecase c
+                                          (#\0 (node-complement
+                                                (make-var 'add-node :index index)))
+                                          (#\1 (make-var 'add-node :index index)))))
+                                  :initial-value (one-node 'add-node))))
+                    :initial-value (zero-node 'add-node))))
       (pass "constructed DD")
       (finishes
         (print f))
@@ -84,7 +105,7 @@
         (print (dag-size f)))
       (finishes (print (multiple-value-list (reordering-status))))
       (finishes
-       (plot (append-name path "-ADD") f)))))
+        (plot (append-name path "-ADD") f)))))
 
 (test add
   (with-manager ()
@@ -114,15 +135,15 @@
   (let* ((all "abc"))
     (with-manager ()
       (let* ((f
-              (reduce #'zdd-union
-                      (iter (for line in-file path using #'read-line)
-                            (collect
-                                (iter (for c in-vector line)
-                                      (with f = (zdd-set-of-emptyset)) ; {{}} --- does not contain anything
-                                      ;; (break "~@{~a~}" c all (position c all))
-                                      (setf f (zdd-change f (position c all))) ; add c to {{}} --> {{c}}
-                                      (finally (return f)))))
-                      :initial-value (zdd-emptyset))))
+               (reduce #'zdd-union
+                       (iter (for line in-file path using #'read-line)
+                         (collect
+                             (iter (for c in-vector line)
+                               (with f = (zdd-set-of-emptyset)) ; {{}} --- does not contain anything
+                               ;; (break "~@{~a~}" c all (position c all))
+                               (setf f (zdd-change f (position c all))) ; add c to {{}} --> {{c}}
+                               (finally (return f)))))
+                       :initial-value (zdd-emptyset))))
         (pass "constructed DD")
         (finishes
           (print f))
@@ -130,7 +151,7 @@
           (print (dag-size f)))
         (finishes (print (multiple-value-list (zdd-reordering-status))))
         (finishes
-         (plot (append-name path "-ZDD") f))))))
+          (plot (append-name path "-ZDD") f))))))
 
 (test zdd
   (dolist (m (models "sets-of-subsets"))

@@ -470,3 +470,20 @@ Follow the then-branch when 1, else-branch otherwise."
         (declare (fixnum live))
         (assert (>= live 0))
         live))))
+
+(defun bdd-transfer (bdd &key (src *manager*) dest)
+  "Note that the argument order isn't the same as C.
+  * TODO: What's the right argument for the 'ref' parameter of (wrap-and-finalize)?
+  * TODO: What if SRC ≡ DEST?
+"
+  (declare (bdd-node bdd)
+           (manager src)
+           (manager dest))
+  (if (eql src dest)
+      (not-implemented-error 'vacuous-bdd-transfer "'src' and 'dest' args to (bdd-transfer) must be different.")
+      (let ((*manager* dest))
+        (with-cudd-critical-section (:manager dest)
+          ;; (not-implemented-error 'bdd-transfer)
+          (let ((bdd-ptr (cudd-bdd-transfer (manager-pointer src) (manager-pointer dest) (node-pointer bdd))))
+            (declare (type node-pointer bdd-ptr))
+            (the bdd-node (wrap-and-finalize bdd-ptr 'bdd-node)))))))
