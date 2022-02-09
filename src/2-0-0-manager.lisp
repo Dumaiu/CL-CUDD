@@ -256,6 +256,7 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
   values for the maximum size of the cache and for the limit for fast
   unique table growth based on the available memory.
 
+* TODO [2022-02-09 Wed]: ':copy' keyword.  Copy the initvals from an existing manager.  Also, perhaps, the autoreorder configuration.
 "
 
   (declare (ignorable initial-num-vars
