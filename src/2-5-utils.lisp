@@ -138,11 +138,18 @@
 
 
 (defmacro with-C-file-pointer ((ptr pathname &key direction) &body body)
-  "Utility for C file I/O.  Adapted from def. of 'dump-dot'."
-  (declare (symbol ptr))
+  "Utility for C file I/O.  Adapted from def. of 'dump-dot'.
+  * TODO: ':if-exists', ':if-does-not-exist', as far as C can be relied upon
+"
+  (declare (symbol ptr)
+           (type (member :input :output) direction))
+  (check-type direction (member :input :output))
+
   (let ((dir (ecase direction
                (:input "r")
                (:output "w"))))
+    (when (eq pathname '*stdout*)
+      (not-implemented-error 'with-C-file-pointer/stdout "Don't know how to output to ~S.  Need to get a real `pathname'." '*stdout*))
     `(locally
          (declare (pathname-designator ,pathname))
        (let* ((filename (namestring (pathname ,pathname)))

@@ -37,6 +37,7 @@
                 #:+log-level-symbols+
                 #:expand-log-with-level)
   (:export
+   #:with-C-file-pointer
    #:*stderr*
    #:log-error
    #:log-msg
@@ -610,6 +611,7 @@
     (:documentation "High-level interface")
   (:mix
    :cl-cudd.swig-macros :cl-cudd.baseapi
+   :cl-cudd.internal-utils
    :alexandria :uiop) ; TODO: Combine with :use
   (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi
    :trivia :iterate :let-plus
@@ -626,12 +628,12 @@
            #:cudd-T
            #:cudd-E
            #:print-info)
-  (:intern
-   #:with-C-file-pointer ; helper
-   )
-  (:import-from :cl-cudd.internal-utils
-                #:mutex
-                #:manager-mutex)
+  ;; (:intern
+  ;;  #:with-C-file-pointer ; helper
+  ;;  )
+  ;; (:import-from :cl-cudd.internal-utils
+  ;;               #:mutex
+  ;;               #:manager-mutex)
   (:export
    #:+AGREEMENT+
    #:+AND+
