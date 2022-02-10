@@ -267,13 +267,6 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
   `(let ((*manager* (manager-init ,@keys)))
      ,@body))
 
-(defun info (&optional (manager *manager*))
-  (declare (type manager manager))
-  (with-temporary-file (:stream s :pathname path)
-    (print-info manager path)
-    (slurp-stream-string s)))
-
-
 (defun manager-quit (&optional (manager *manager*))
   "Shut down the CUDD manager MANAGER:
   After dismantling the hashtable, run a full Lisp garbage collection to hopefully reclaim the nodes' memory.  Then acquire the CUDD mutex and call `Cudd_Quit()`.

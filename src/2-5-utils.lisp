@@ -320,8 +320,11 @@
 (cl-cudd.baseapi:print-info manager pathname)))
 |#
 
-(deftype generalized-bit ()
-  '(or boolean (member 0 1)))
+(defun info (&optional (manager *manager*))
+  (declare (type manager manager))
+  (with-temporary-file (:stream s :pathname path)
+    (print-info manager path)
+    (slurp-stream-string s)))
 
 (defgeneric eval (dd inputs &optional manager)
   (:documentation "TODO: Other DD types.")

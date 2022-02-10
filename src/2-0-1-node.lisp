@@ -340,6 +340,8 @@ only if their pointers are the same."
 (deftype node-type ()
   `(member bdd-node add-node zdd-node))
 
+(deftype generalized-bit ()
+  '(or boolean (member 0 1)))
 
 (assert (not (eq 'cudd-T 'cl-cudd.baseapi:cudd-T)))
 (defun cudd-T (node)
