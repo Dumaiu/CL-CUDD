@@ -58,7 +58,10 @@
                  internal/manager-mutex))
 (defstruct (manager
             (:conc-name internal/manager-))
-  "A boxed CUDD manager class"
+  "A boxed CUDD manager class.
+
+  - [2022-02-10 Thu] Note: The :conc-name for the struct is not 'manager-'; this is so I can extend the slot access functions with guards.
+"
   (pointer (error "MANAGER needs to wrap a pointer")
    :type foreign-pointer)
 
@@ -101,6 +104,7 @@
              pointer)))))
     ('otherwise ; alias (manager-pointer) -> (internal/manager-pointer)
      `(setf (fdefinition 'manager-pointer) #'internal/manager-pointer)))
+
 ;; Alias (setf (manager-pointer)) -> (setf (internal/manager-pointer)):
 (setf (fdefinition '(setf manager-pointer))
       #'(setf internal/manager-pointer))
