@@ -97,6 +97,13 @@ Secondary value returns the current reordering method.
             (the zdd-reordering-method
                  (mem-ref method-ptr 'cudd-reordering-type)))))
 
+(define-condition cudd-reordering-error (cudd-error) ()
+  (:report (lambda (_cond stream)
+             (declare (ignore _cond))
+             (format stream "(cudd-reduce-heap) failed")))
+  (:documentation "Indicates that (cudd:reduce-heap) failed.
+  * TODO: Implement `cudd-error-type'.
+  * TODO: Relocate to '1-0-1-conditions.lisp'? "))
 
 (defun reduce-heap (&optional (method :cudd-reorder-same) (minsize 33000000))
   "Initiates variable reordering explicitly (for bdd/add).
@@ -111,7 +118,7 @@ Default value is 33000000. In CUDD each node consumes 3 words, so this threshold
   (with-cudd-critical-section
     (let ((result (cudd-reduce-heap %mp% method minsize)))
       (or (= 1 result)
-          (error "(cudd-reduce-heap) failed")))))
+          (error 'cudd-reordering-error)))))
 
 (defun zdd-reduce-heap (&optional (method :cudd-reorder-same) (minsize 33000000))
   "Initiates variable reordering explicitly (for zdd).

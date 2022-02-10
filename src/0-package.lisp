@@ -604,6 +604,9 @@
            :cudd-cache-resize
    :cudd-cache-flush
            :new-cached-operator)
+  (:export
+   #:cudd-condition
+   #:cudd-error)
   ;; other exports done by swig
   ); cl-cudd.baseapi
 
@@ -808,5 +811,9 @@
            #:bdd-transfer
            #:*manager*
            #:*cudd-mutex*
+           #:dump-factored-form
+           #:cudd-condition
+           #:cudd-error
+           #:cudd-reordering-error
            )
   ); cl-cudd
