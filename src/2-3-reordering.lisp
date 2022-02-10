@@ -105,6 +105,7 @@ Number of nodes should be larger than this value.
 Default value is 33000000. In CUDD each node consumes 3 words, so this threshold corresponds to 100MB.
   * [2022-02-01 Tue] TODO: ':manager' kwarg.
   * TODO: Factor out MINSIZE.
+  * TODO: Factor out MANAGER.
 "
   (declare (bdd-reordering-method method))
   (with-cudd-critical-section
