@@ -8,46 +8,66 @@
    "Package containing utility functions for SWIG cffi interface generation")
   (:export #:lispify))
 
-(define-package cl-cudd.internal-utils
-    (:mix
-     :log4cl
-     #+thread-support :bordeaux-threads
-     :trivia
-     :alexandria
-     :cl)
-  #+thread-support (:reexport :bordeaux-threads)
-  #-thread-support (:shadow
-                    #:with-lock-held
-                    #:make-lock)
-  (:reexport
-   :trivia
-   :log4cl
-   :alexandria)
-  (:intern #:mutex)
-  (:shadow
-   #:*cudd-mutex*
-   #:manager-mutex
-   #:log-error
-   #:log-msg
-   #:log-keyword-to-level
-   #:with-cudd-critical-section)
-  (:import-from :uiop
-                #:*stderr*)
-  (:import-from :log4cl-impl
-                #:+log-level-symbols+
-                #:expand-log-with-level)
-  (:export
-   #:with-C-file-pointer
-   #:*stderr*
-   #:log-error
-   #:log-msg
-   #:*cudd-mutex*
-   #:manager-mutex
-   #:with-lock-held
-   #:make-lock
-   #:with-cudd-critical-section))
+
+#.(let ((all-packages-but-cl
+          '(:log4cl
+            :iter
+            #+thread-support :bordeaux-threads
+            :trivial-garbage
+            :trivia
+            :net.bardcode.folio2.series
+            :folio2
+            :series
+            :alexandria
+            :let-plus
+            :cl)))
+    `(define-package cl-cudd.internal-utils
+         (:mix
+          ,@all-packages-but-cl
+          :cl)
+       #-thread-support (:shadow
+                         #:with-lock-held
+                         #:make-lock)
+       (:reexport ,@ all-packages-but-cl)
+       (:intern #:mutex)
+       (:shadow
+        #:sequence
+        #:series
+        #:alist ; TODO: resolve collision b/t folio2:alist and trivia:alist
+        #:*cudd-mutex*
+        #:manager-mutex
+        #:log-error
+        #:log-msg
+        #:log-keyword-to-level
+        #:with-cudd-critical-section)
+       (:import-from :uiop
+                     #:*stderr*)
+       (:import-from :log4cl-impl
+                     #:+log-level-symbols+
+                     #:expand-log-with-level)
+       (:export
+        #:with-C-file-pointer
+        #:*stderr*
+        #:log-error
+        #:log-msg
+        #:*cudd-mutex*
+        #:manager-mutex
+        #:with-lock-held
+        #:make-lock
+        #:with-cudd-critical-section)))
 
 (in-package cl-cudd.internal-utils)
+
+;; Aliases:
+(setf (find-class 'sequence) (find-class 'cl:sequence))
+(deftype sequence ()
+  'cl:sequence)
+(setf (symbol-function 'sequence) (symbol-function 'folio2:sequence))
+
+(deftype series () 'series:series)
+(setf (symbol-function 'series)
+      (symbol-function 'net.bardcode.folio2.series:series))
+;; TODO: alist
 
 (deftype manager-mutex ()
   'lock)
@@ -85,9 +105,13 @@
 
 (define-package cl-cudd.baseapi
     (:documentation "Low-level interface")
-  (:use :cl :cffi :cl-cudd.swig-macros :alexandria :trivia :trivia.cffi
-        :cl-cudd.internal-utils
-   :trivial-garbage)
+  (:mix
+   :cl-cudd.swig-macros
+   :cl-cudd.internal-utils
+   :trivia.cffi
+   :trivial-garbage
+   :cffi
+   :cl)
   (:shadow #:pi)
   ;; constants/variables/enums
   (:export :+CUDD-MAXINDEX+
@@ -613,14 +637,18 @@
 (define-package cl-cudd
     (:documentation "High-level interface")
   (:mix
-   :cl-cudd.swig-macros :cl-cudd.baseapi
+   :cl-cudd.swig-macros
+   :cl-cudd.baseapi
    :cl-cudd.internal-utils
-   :alexandria :uiop) ; TODO: Combine with :use
-  (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi
-   :trivia :iterate :let-plus
-   :cl-cudd.internal-utils
-   :trivial-garbage
-   :asdf :uiop)
+   :cffi
+   :alexandria
+   :uiop
+   :cl)
+  ;; (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi
+  ;;  :trivia :iterate :let-plus
+  ;;       :cl-cudd.internal-utils
+  ;;  :trivial-garbage
+  ;;       :asdf :uiop)
   (:nicknames :cudd)
   ;; 2021:
   (:shadow eval

@@ -13,6 +13,7 @@
                ;; TODO :cl-cudd.build
                :trivia.cffi
                :log4cl
+               :folio2
                :iterate
                :series)
   :serial t

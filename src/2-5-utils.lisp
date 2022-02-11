@@ -6,7 +6,8 @@
   (shadowing-import* 'iterate :cudd)
   (shadowing-import* 'collect :cudd)
   (shadowing-import* 'until :cudd)
-  (use-package :series)
+  ;; (use-package :series)
+  ;; (use-package :folio2)
   (export '(support-index-int-series
             ;; basic-series
             series)))
@@ -76,7 +77,7 @@
 "
   (declare ;(node-pointer f-ptr)
    (foreign-pointer ptr-array)
-   (sequence bdds)
+   (type cl:sequence bdds)
    (manager-pointer manager-ptr))
 
   (let ((n (cudd-read-size manager-ptr)))
