@@ -30,6 +30,9 @@
                          #:make-lock)
        (:reexport ,@ all-packages-but-cl)
        (:intern #:mutex)
+       (:shadowing-import-from :cl
+                               #:values ; FIXME: cf. folio2:values
+                               )
        (:shadow
         #:sequence
         #:series
