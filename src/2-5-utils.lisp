@@ -500,3 +500,29 @@ Follow the then-branch when 1, else-branch otherwise."
           (let ((bdd-ptr (cudd-bdd-transfer (manager-pointer src) (manager-pointer dest) (node-pointer bdd))))
             (declare (type node-pointer bdd-ptr))
             (the bdd-node (wrap-and-finalize bdd-ptr 'bdd-node)))))))
+
+
+(defun dump-factored-form (nodes &key
+                                   (fp *stdout*)
+                                   (manager *manager*)
+                                   ((:n max-nodes) (sharing-size nodes))
+                                   (inames nil)
+                                   (onames nil))
+  "If the underlying CUDD call fails, raises an exception.
+  By default, writes to *STDOUT*.
+  - Note: Use (with-C-file-pointer) to get an arg for FP."
+  (declare (sequence nodes)
+           (manager manager)
+           (fixnum max-nodes)
+           ;; XXX (foreign-pointer fp)
+           )
+  (let ((errcode (cudd-dump-factored-form (manager-pointer manager)
+                                      max-nodes
+                                      goddamn-array ; FIXME--convert to C array
+                                      (if inames (not-implemented-error 'inames) (null-pointer))
+                                      (if onames (not-implemented-error 'onames) (null-pointer))
+                                      fp)))
+    (declare (type (member 0 1) errcode))
+    (ecase errcode
+      (1 t)
+      (0 (error "Cudd_DumpFactoredForm() failed.  TODO: args passed to (dump-factored-form).")))))
