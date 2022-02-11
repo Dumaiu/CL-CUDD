@@ -167,3 +167,49 @@
   ;; dynamic reordering
   )
 
+
+(test bdd-transfer
+
+  (let* ((gates (models "gates"))
+         (1st (first gates)))
+    (declare (pathname 1st))
+
+    (with-manager ()
+      (progn ;; let ((old-bdd (parse-bdd/parse-only 1st)))
+       ;;  (declare (bdd-node old-bdd))
+
+        ;; (info)
+        ;; (print *manager*)
+        ;; (print *cudd-mutex*)
+        ;; (break "~S" old-bdd)
+
+        (let ((old-manager *manager*))
+          (declare (manager old-manager))
+
+          (with-manager ()
+            (let ((new-manager *manager*))
+              (declare (manager old-manager))
+              (assert (not (eql old-manager new-manager)))
+
+              ;; (print *manager*)
+              ;; (print *cudd-mutex*)
+
+              ;; (info)
+              ;; (break "Before transfer")
+
+              (let ((old-bdd (parse-bdd/parse-only 1st)))
+                (declare (bdd-node old-bdd))
+
+                (let ((new-bdd (bdd-transfer old-bdd
+                                             :src new-manager
+                                             :dest old-manager)))
+                 (declare (bdd-node new-bdd))
+
+                  ;; (info)
+                  ;; (break "After transfer")
+                  )))))
+
+        ;; (info)
+        ;; (break "Back in original")
+        )))
+  )
