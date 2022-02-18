@@ -2,16 +2,44 @@
 
 (define-package cl-cudd.test
     (:mix
+     :cl-cudd.internal-utils
      :cl-cudd :cl-cudd.baseapi
      :fiveam :iterate :trivia :arrow-macros
      :asdf :uiop
      :cl)
+  (:shadowing-import-from :series ;:cl-cudd.baseapi
+                          #:collect)
   (:shadow :next :<>))
 
 (in-package cl-cudd.test)
 
 (def-suite :cl-cudd)
 (in-suite :cl-cudd)
+
+;; (defstruct lazy-vector
+;;   (contents  :type (vector * (or boolean function))))
+
+(defclass lazy-vector ()
+  ((contents :initform #()
+             :type (vector ;; (or boolean function)
+                    function)
+             :initarg :contents))
+  (:metaclass structure-class))
+
+(shadowing-import '(generic-cl.lazy-seq::thunk))
+
+(defmethod initialize-instance ((vec lazy-vector) &key source n)
+  (declare (sequence source)
+           (type (integer 0) n))
+  (iter
+    (for i from 0 below n)
+    (collecting (thunk-fn )(thunk `(with-slots (contents) ,source
+                    (the boolean (not (zerop (aref contents ,i)) ))))
+      into contents result-type vector)
+
+    (finally
+     (return (call-next-method vec :contents contents))))
+  )
 
 (defun models (kind)
   "Helper for ':cl-cudd.test': look up a list of *.test files from one of the test/ subdirectories."
@@ -29,11 +57,11 @@
                              )
   (let ((f (reduce #'node-or
                    (iter (for line in-file path using #'read-line)
-                     (collect
+                     (collecting
                          (reduce #'node-and
                                  (iter (for c in-vector line)
                                    (for index from 0)
-                                   (collect
+                                   (collecting
                                        (ecase c
                                          (#\0 (node-complement
                                                (make-var 'bdd-node :index index)))
@@ -50,11 +78,11 @@
     (let ((f
             (reduce #'node-or
                     (iter (for line in-file path using #'read-line)
-                      (collect
+                      (collecting
                           (reduce #'node-and
                                   (iter (for c in-vector line)
                                     (for index from 0)
-                                    (collect
+                                    (collecting
                                         (ecase c
                                           (#\0 (node-complement
                                                 (make-var 'bdd-node :index index)))
@@ -87,11 +115,11 @@
     (let ((f
             (reduce #'node-or
                     (iter (for line in-file path using #'read-line)
-                      (collect
+                      (collecting
                           (reduce #'node-and
                                   (iter (for c in-vector line)
                                     (for index from 0)
-                                    (collect
+                                    (collecting
                                         (ecase c
                                           (#\0 (node-complement
                                                 (make-var 'add-node :index index)))
@@ -137,7 +165,7 @@
       (let* ((f
                (reduce #'zdd-union
                        (iter (for line in-file path using #'read-line)
-                         (collect
+                         (collecting
                              (iter (for c in-vector line)
                                (with f = (zdd-set-of-emptyset)) ; {{}} --- does not contain anything
                                ;; (break "~@{~a~}" c all (position c all))
@@ -176,7 +204,7 @@
 
     (with-manager ()
       (progn ;; let ((old-bdd (parse-bdd/parse-only 1st)))
-       ;;  (declare (bdd-node old-bdd))
+        ;;  (declare (bdd-node old-bdd))
 
         ;; (info)
         ;; (print *manager*)
@@ -203,7 +231,7 @@
                 (let ((new-bdd (bdd-transfer old-bdd
                                              :src new-manager
                                              :dest old-manager)))
-                 (declare (bdd-node new-bdd))
+                  (declare (bdd-node new-bdd))
 
                   ;; (info)
                   ;; (break "After transfer")
@@ -213,3 +241,84 @@
         ;; (break "Back in original")
         )))
   )
+
+
+(test support-series
+
+  (let* ((gates (models "gates"))
+         (1st (first gates)))
+    (declare (pathname 1st))
+
+    (with-manager ()
+      (let ((test-bdd (parse-bdd/parse-only 1st)))
+        (declare (bdd-node test-bdd))
+
+        (assert;; is
+         (= 2 (support-size test-bdd)))
+
+        (assert (= 2 (length (support-index test-bdd))))
+        ;; (break "~A" (support-index test-bdd))
+
+
+        ;; (break "~A"(cudd-support-index %mp%
+        ;;                      (node-pointer test-bdd)))
+
+        ;; (break "~A" (support-index test-bdd))
+
+        ;; TODO: make (collect) point to iter:collect
+        ;; (assert (= 2 (length (collect (support-index-int-series test-bdd)))))
+        ;; (break "~A" (support-index-int-series test-bdd))
+
+        ;; (assert (= 1 (collect-nth 0 (support-index-int-series test-bdd))))
+        ;; (assert (= 1 (collect-nth 1 (support-index-int-series test-bdd))))
+        (assert (null (collect-nth 2 (support-index-int-series test-bdd))))
+        ;; TODO: Benchmark this
+
+
+        ;; TODO: Silence 'freeing a cudd manager' msg.
+        ))))
+
+
+(let-1 vec #(0 1 2 3 4 5 6)
+  (let-1 series (series:scan '(vector * integer) vec)
+    (declare (type (series:series integer) series))
+    (let-1 map-series (map-fn 'integer (lambda (i)
+                                         (print i)
+                                         (the integer i))
+                              series)
+      (declare (type (series:series integer) map-series))
+      ;; (series:mapping )
+      (collect-nth 2 map-series))
+    ))
+
+
+(let-1 vec #(0 1 2 3 4 5 6)
+  (print "Start.")
+  (let-1 series (series:scan `(vector integer ,(length vec)) vec)
+    (declare (type (series:series integer) series))
+
+    (let-1 map-series (map-fn 'integer (lambda (i)
+                                         (print i)
+                                         (the integer i))
+                              series)
+      (declare (type (series:series integer) map-series))
+      ;; (series:mapping )
+      (collect 'bag (choose (mask (series 2)) map-series)))
+    ))
+
+
+(let-1 vec #(0 1 2 3 4 5 6)
+  (print "Starting.")
+  (collect 'bag (choose (mask (series 2))
+                        (map-fn 'integer (lambda (i)
+                                           (print i)
+                                           (the integer i))
+                                (series:scan `(vector ,(length vec) integer) vec)))))
+
+
+(let-1 vec #(0 1 2 3 4 5 6)
+  (print "Starting.")
+  (collect 'bag (map-fn 'integer (lambda (i)
+                                   (print i)
+                                   (the integer i))
+                        (series:scan `(vector ,(length vec) integer) vec))))

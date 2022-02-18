@@ -10,6 +10,7 @@
   ;; (use-package :folio2)
   (export '(support-index-int-series
             ;; basic-series
+            cudd-logger
             series)))
 
 (declaim (ftype function fopen
@@ -269,13 +270,17 @@
                      (declare (fixnum i))
                      (let ((b_i (mem-aref int-array-ptr C-array-element i)))
                        (declare (fixnum b_i))
+                       ;; (log-sexp "In (support-index-int-series): " b_i)
+                       (log:info "In (support-index-int-series): elem ~D" i)
                        ;; (the boolean (= b_i 1))
                        b_i))
-                   (scan-range :from 0 :upto total-num-vars))))
+                   (scan-range :from 0 :below total-num-vars))))
       (declare (series res))
       res)))
 
-(defun support-index (node &optional (manager *manager*))
+
+
+(defun support-index-series (node &optional (manager *manager*))
   "Returns a series whose length is Cudd_ReadSize().  Each element is T iff the variable with that index is in the support of NODE.
   * TODO: Perhaps inline (support-index-int-series)?
 "
@@ -304,6 +309,27 @@
   ;;     (setf (aref bitv i) (= b_i 1))
   ;;     (finally (return bitv))))
   ); support-index
+
+(defun support-index (node &optional (manager *manager*)
+                      &aux (C-array-element :int))
+  "Returns a bit-vector whose length is Cudd_ReadSize().  Each element is T iff the variable with that index is in the support of NODE."
+  (declare (manager manager))
+  (declare (node node))
+  (let* ((manager-ptr (manager-pointer manager))
+         (total-num-vars (cudd-read-size manager-ptr))
+         (int-array-ptr (cudd-support-index manager-ptr (node-pointer node))))
+    (declare (foreign-pointer manager-ptr int-array-ptr)
+             (type (and fixnum (integer 0)) total-num-vars))
+    (iter
+      (with bitv = (make-array total-num-vars :element-type 'boolean :initial-element nil :adjustable nil))
+      (for i below total-num-vars)
+      (declare (fixnum i))
+      (for b_i = (mem-aref int-array-ptr C-array-element i))
+      (declare (fixnum b_i))
+      (assert (member b_i '(0 1) :test #'=))
+      (setf (aref bitv i) (= b_i 1))
+      (finally (return bitv)))))
+
 
 (defun support-size (node &optional (manager *manager*))
   "See Cudd_SupportSize()."
