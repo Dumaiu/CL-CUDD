@@ -111,72 +111,6 @@
 
 (define-symbol-macro %mp% (manager-pointer *manager*))
 
-(defun manager-init #.`(&key ,@+manager-initarg-defaults+)
-  "Construct and return a new `manager' instance, loading CUDD backend to go with it."
-  (let* ((p (cudd-init initial-num-vars
-                       initial-num-vars-z
-                       initial-num-slots
-                       cache-size
-                       max-memory))
-         (m (make-manager :pointer p)))
-    ;; (break "~A" m)
-    (with-cudd-critical-section (:manager m)
-      ;; see 2-4-hook.lisp
-      (cudd-add-hook p (callback before-gc-hook) :cudd-pre-gc-hook)
-      (cudd-add-hook p (callback after-gc-hook) :cudd-post-gc-hook)
-      (cudd-add-hook p (callback before-gc-hook) :cudd-pre-reordering-hook)
-      (cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
-      (finalize m (lambda ()
-                    (with-cudd-critical-section
-                      (format *error-output* "~&freeing a cudd manager at ~a~%" p)
-                      (log-msg :debug :logger cudd-logger "Freeing CUDD manager at ~A." p)
-                      (let ((undead-node-count (cudd-check-zero-ref p)))
-                        (declare (fixnum undead-node-count)) ; TODO: Better type
-                        (assert (zerop undead-node-count) (p undead-node-count)
-                                "Assert failed in finalizer of manager ~A, with ~D unrecovered nodes (should be 0)."
-                                p undead-node-count))
-                      (assert (not (null-pointer-p p)))
-                      (cudd-quit p)
-                      (setf p (null-pointer)))
-                    t)))
-
-    (log-msg :debug :logger cudd-logger "Initialized new CUDD manager ~A." m)
-    m))
-
-(defmacro manager-initf (&optional (manager-form '*manager*)
-                         &key force)
-  "Like (manager-init), but expects a SETFable form.
-  - MANAGER-FORM must be evaluable.
-  - A truthy MANAGER-FORM is an error, unless FORCE=T as well, in which case the old manager will be killed.
-  * TODO: Support a more flexible mix of &optional|&key args.
-  * TODO: (define-modify-macro)?
-"
-  ;; (break "~A" manager-form)
-  (once-only (force
-              (manager manager-form))
-    `(progn
-       (check-type ,force boolean)
-       (check-type ,manager (or null manager))
-       (cond
-         ((or (null ,manager)
-              ,force)
-          (unless (null ,manager)
-            (manager-quit ,manager))
-          (setf ,manager-form (manager-init)))
-         (t (error "'~A' already denotes a live ~S.  ~&Use '~S' to override."
-                   ',manager-form
-                   'manager
-                   '(manager-initf ,manager-form :force t)
-                   ))))))
-
-(defvar *manager* nil "The current manager.
-
-Every function in this package works with this manager.
-
-Bound to a global manager by default.")
-(declaim (type (or manager null) *manager*))
-
-
 #+thread-support
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (define-symbol-macro *cudd-mutex* (manager-mutex *manager*))
@@ -237,6 +171,73 @@ Bound to a global manager by default.")
          ((&plist-r/o (manager :manager) (body :body)) parsed-body))
     `(with-recursive-lock-held ((manager-mutex ,manager))
        ,@body)))
+
+(defun manager-init #.`(&key ,@+manager-initarg-defaults+)
+  "Construct and return a new `manager' instance, loading CUDD backend to go with it."
+  (let* ((p (cudd-init initial-num-vars
+                       initial-num-vars-z
+                       initial-num-slots
+                       cache-size
+                       max-memory))
+         (m (make-manager :pointer p)))
+    ;; (break "~A" m)
+    (with-cudd-critical-section (:manager m)
+      ;; see 2-4-hook.lisp
+      (cudd-add-hook p (callback before-gc-hook) :cudd-pre-gc-hook)
+      (cudd-add-hook p (callback after-gc-hook) :cudd-post-gc-hook)
+      (cudd-add-hook p (callback before-gc-hook) :cudd-pre-reordering-hook)
+      (cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
+      (finalize m (lambda ()
+                    (with-cudd-critical-section
+                      (format *error-output* "~&freeing a cudd manager at ~a~%" p)
+                      (log-msg :debug :logger cudd-logger "Freeing CUDD manager at ~A." p)
+                      (let ((undead-node-count (cudd-check-zero-ref p)))
+                        (declare (fixnum undead-node-count)) ; TODO: Better type
+                        (assert (zerop undead-node-count) (p undead-node-count)
+                                "Assert failed in finalizer of manager ~A, with ~D unrecovered nodes (should be 0)."
+                                p undead-node-count))
+                      (assert (not (null-pointer-p p)))
+                      (cudd-quit p)
+                      (setf p (null-pointer)))
+                    t)))
+
+    (log-msg :debug :logger cudd-logger "Initialized new CUDD manager ~A." m)
+    m))
+
+
+(defmacro manager-initf (&optional (manager-form '*manager*)
+                         &key force)
+  "Like (manager-init), but expects a SETFable form.
+  - MANAGER-FORM must be evaluable.
+  - A truthy MANAGER-FORM is an error, unless FORCE=T as well, in which case the old manager will be killed.
+  * TODO: Support a more flexible mix of &optional|&key args.
+  * TODO: (define-modify-macro)?
+"
+  ;; (break "~A" manager-form)
+  (once-only (force
+              (manager manager-form))
+    `(progn
+       (check-type ,force boolean)
+       (check-type ,manager (or null manager))
+       (cond
+         ((or (null ,manager)
+              ,force)
+          (unless (null ,manager)
+            (manager-quit ,manager))
+          (setf ,manager-form (manager-init)))
+         (t (error "'~A' already denotes a live ~S.  ~&Use '~S' to override."
+                   ',manager-form
+                   'manager
+                   '(manager-initf ,manager-form :force t)
+                   ))))))
+
+(defvar *manager* nil "The current manager.
+
+Every function in this package works with this manager.
+
+Bound to a global manager by default.")
+(declaim (type (or manager null) *manager*))
+
 
 
 
