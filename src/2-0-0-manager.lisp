@@ -94,7 +94,7 @@
         ,(format nil "Slot access with ptr validation test.  To disable, set ~S=NIL and rebuild :cl-cudd."
                  'config/guard-pointer-access)
         (declare (manager manager))
-        ;; TODO: Should we alaso do a nullity test in here?
+        ;; TODO: Should we also do a nullity test in here?
         (with-slots (pointer) manager
           (cond
             ((null-pointer-p pointer)
@@ -286,7 +286,7 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
     (gc :full t))
 
   (with-cudd-critical-section
-    ;; Re-read pointer, in it got changed elsewhere (like in the hashtable's finalizer):
+    ;; Re-read pointer, in case it got changed elsewhere (like in the hashtable's finalizer):
     (with-slots (node-table pointer) manager
       (unless (null-pointer-p pointer)
         (cudd-quit pointer)
