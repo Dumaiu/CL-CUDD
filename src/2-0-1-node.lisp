@@ -14,10 +14,39 @@
 
 (defun required ()
   (error "Required slot"))
-;;; Wrapped CUDD node
-(defstruct node
+
+#|
+(defstruct (managerless-node
+            (:constructor nil)
+            (:conc-name node-))
   "A boxed CUDD node class. Top class of all CUDD nodes."
-  (pointer (required) :type cffi:foreign-pointer))
+  (pointer (required) :type node-pointer))
+
+;;; Wrapped CUDD node
+(defstruct (managed-node
+            (:constructor make-node)
+            (:conc-name node-)
+            (:include managerless-node))
+  (manager-pointer (required) :type manager-pointer))
+
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (setf (find-class 'node) (find-class 'managed-node)))
+|#
+
+(defstruct (node
+            ;; (:constructor make-node)
+            ;; (:conc-name node-)
+            ;; (:include managerless-node)
+            )
+  "A boxed CUDD node class. Top class of all CUDD nodes."
+  (pointer (required) :type node-pointer)
+  (manager-pointer (required) :type manager-pointer))
+
+(assert (fboundp 'make-node))
+(assert (fboundp 'node-pointer))
+(assert (fboundp 'node-manager-pointer))
+(assert (find-class 'node))
 
 (defmacro wrap-and-finalize (pointer type &optional (ref t))
   "Wrap the given pointer in a node of type TYPE.
@@ -74,10 +103,11 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                            pointer
                            initial-ref-count)))|#))
 
-          (let ((node (ecase type
-                        (bdd-node (make-bdd-node :pointer pointer))
-                        (add-node (make-add-node :pointer pointer))
-                        (zdd-node (make-zdd-node :pointer pointer)))))
+          (let ((node #.(let ((ctor-args '(:pointer pointer :manager-pointer (manager-pointer *manager*))))
+                       `(ecase type
+                         (bdd-node (make-bdd-node ,@ctor-args))
+                         (add-node (make-add-node ,@ctor-args))
+                         (zdd-node (make-zdd-node ,@ctor-args))))))
 
             ;; Construct finalizer for NODE:
             (when config/enable-gc
