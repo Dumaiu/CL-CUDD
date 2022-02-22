@@ -15,7 +15,6 @@
 (defun required ()
   (error "Required slot"))
 
-#|
 (defstruct (managerless-node
             (:constructor nil)
             (:conc-name node-))
@@ -32,16 +31,15 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (setf (find-class 'node) (find-class 'managed-node)))
-|#
 
-(defstruct (node
-            ;; (:constructor make-node)
-            ;; (:conc-name node-)
-            ;; (:include managerless-node)
-            )
-  "A boxed CUDD node class. Top class of all CUDD nodes."
-  (pointer (required) :type node-pointer)
-  (manager-pointer (required) :type manager-pointer))
+;; (defstruct (node
+;;             ;; (:constructor make-node)
+;;             ;; (:conc-name node-)
+;;             ;; (:include managerless-node)
+;;             )
+;;   "A boxed CUDD node class. Top class of all CUDD nodes."
+;;   (pointer (required) :type node-pointer)
+;;   (manager-pointer (required) :type manager-pointer))
 
 (assert (fboundp 'make-node))
 (assert (fboundp 'node-pointer))
@@ -86,8 +84,8 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
              (cudd-ref pointer)
 
              (log-msg :debu7 :logger cudd-logger "- After (cudd-ref ~A), REFs = ~D."
-                        pointer
-                        (cudd-node-ref-count pointer)))
+                      pointer
+                      (cudd-node-ref-count pointer)))
 
             ('otherwise ; ref=nil
              (log-msg :debu6 :logger cudd-logger "NON-INCREMENTING wrapper for ~A being constructed (REFs = ~D).
@@ -96,18 +94,18 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                       (cudd-node-ref-count pointer))
 
              #|(let ((initial-ref-count (cudd-node-ref-count pointer)))
-               (declare (fixnum initial-ref-count))
-               (assert (>= initial-ref-count 1))
-               (unless (= 1 initial-ref-count)
-                 (log-msg :warn :logger cudd-logger "Ref count of literal node ~A is ~D, which is > 1"
-                           pointer
-                           initial-ref-count)))|#))
+             (declare (fixnum initial-ref-count))
+             (assert (>= initial-ref-count 1))
+             (unless (= 1 initial-ref-count)
+             (log-msg :warn :logger cudd-logger "Ref count of literal node ~A is ~D, which is > 1"
+             pointer
+             initial-ref-count)))|#))
 
           (let ((node #.(let ((ctor-args '(:pointer pointer :manager-pointer (manager-pointer *manager*))))
-                       `(ecase type
-                         (bdd-node (make-bdd-node ,@ctor-args))
-                         (add-node (make-add-node ,@ctor-args))
-                         (zdd-node (make-zdd-node ,@ctor-args))))))
+                          `(ecase type
+                             (bdd-node (make-bdd-node ,@ctor-args))
+                             (add-node (make-add-node ,@ctor-args))
+                             (zdd-node (make-zdd-node ,@ctor-args))))))
 
             ;; Construct finalizer for NODE:
             (when config/enable-gc
