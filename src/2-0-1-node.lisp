@@ -154,12 +154,14 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                         (when config/debug-consistency-checks
                           (with-cudd-critical-section
                             (let ((mp (manager-pointer *manager*)))
-                              (unless (zerop (cudd-check-keys mp))
-                                (log-error :logger cudd-logger "Assert 5 failed: during (wrap-and-finalize): ~A" '(zerop (cudd-check-keys mp))))
-                              (unless (zerop (cudd-debug-check mp))
-                                (log-error :logger cudd-logger "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"
-                                           '(zerop (cudd-debug-check mp))
-                                           mp)))))
+
+                              #.(let ((test-5 '(zerop (cudd-check-keys mp))))
+                                  `(unless ,test-5
+                                     (log-error :logger cudd-logger "Assert 5 failed: during (wrap-and-finalize): ~A" ',test-5)))
+
+                              #.(let ((test-6 '(zerop (cudd-debug-check mp))))
+                                  `(unless ,test-6
+                                     (log-error :logger cudd-logger "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"  ',test-6  mp))))))
                         t))
               node)))))))
 
