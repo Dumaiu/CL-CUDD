@@ -213,8 +213,10 @@
       (cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
       (finalize m (lambda ()
                     (with-cudd-critical-section
-                      (format *error-output* "~&freeing a cudd manager at ~a~%" p)
-                      (log-msg :debug :logger cudd-logger "Freeing CUDD manager at ~A." p)
+                      #.(let ((fmt '("~&freeing a cudd manager at ~a~%" p)))
+                          `(progn
+                          (format *error-output* ,@fmt)
+                          (log-msg :debug :logger cudd-logger ,@fmt)))
                       (let ((undead-node-count (cudd-check-zero-ref p)))
                         (declare (fixnum undead-node-count)) ; TODO: Better type
                         (assert (zerop undead-node-count) (p undead-node-count)
