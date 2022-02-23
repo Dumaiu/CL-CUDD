@@ -28,6 +28,8 @@
 (deftype variable ()
   '(integer 0))
 
+
+
 (assert (not (eq 'variable 'cl:variable)))
 (defmethod documentation (object (_ (eql 'variable)))
   "Recurse.  Cause for this overload is the shadowing of 'cl:variable'."
@@ -98,8 +100,10 @@
         (with-slots (pointer) manager
           (cond
             ((null-pointer-p pointer)
-             (error 'cudd-null-pointer-error "Call to (manager-pointer) of `manager' object, ~A, with null pointer"
-                    manager))
+             #.(let ((msg '("Call to (manager-pointer) of `manager' object, ~A, with null pointer" manager)))
+                 `(progn
+                    (log-msg :error :logger cudd-logger ,@msg)
+                    (error 'cudd-null-pointer-error ,@msg))))
             ('otherwise
              pointer)))))
     ('otherwise ; alias (manager-pointer) -> (internal/manager-pointer)
@@ -130,46 +134,66 @@
 (assert (fboundp 'with-lock-held))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun keyword-plist? (x)
+    "Cheap property-list check.  TODO: Move to somewhere else."
+    (and (consp x)
+         (keywordp (car x))))
+
   (defun helper/with-cudd-critical-section/parse-body (body)
     (declare (list body))
-    (match body
-      ((list* (list* :manager manager  *other) body_)
-       ;; (list* (guard options
-       ;;               (and (listp options)
-       ;;                    (match options
-       ;;                      ((list* (type keyword) _ _) t))))
-       ;;        body*)
-       ;; (list :options options
-       ;;       :body body*)
-       (when *other (not-implemented-error 'with-cudd-critical-section/other-options
-                                           "Only ':manager' is accepted, for now.") )
-       (list :manager manager
-             :body body_))
-      (_
-       ;; (list :options nil
-       ;;       :body body)
-       (list :manager '*manager*
-             :body body))))
+
+    (flet ((parse-mutex-kwarg (&key (manager '*manager* manager-provided?)
+                                 (mutex `(manager-mutex ,manager) mutex-provided?))
+             "Helper lambda.  Parses keyword arg list."
+             ;; (when *other (not-implemented-error 'with-cudd-critical-section/other-options
+             ;;                                     "Only ':manager' is accepted, for now.") )
+
+             (when (and manager-provided? mutex-provided?)
+               (error "Only use one of :mutex or :manager as a parameter."))
+
+             (list :mutex mutex)))
+
+      (match body
+        ((list* (guard kwargs
+                       (keyword-plist? kwargs))
+                body_)
+         (nconc (apply #'parse-mutex-kwarg kwargs)
+                (list :body body_)))
+        (_
+         (list :mutex '(manager-mutex *manager*)
+               :body body)))))
 
   ;; Some quick testing:
   (assert (equal
-           (helper/with-cudd-critical-section/parse-body
-            '(foo bar baz))
-           '(:manager *manager*
+           (helper/with-cudd-critical-section/parse-body '(foo bar baz))
+           '(:mutex (manager-mutex *manager*)
              :body (foo bar baz))))
 
   (assert (equal
-           (helper/with-cudd-critical-section/parse-body
-            '((:manager m)
-              foo bar baz))
-           '(:manager m
-             :body (foo bar baz)))))
+           (helper/with-cudd-critical-section/parse-body '((:manager m)
+                                                           foo bar baz))
+           '(:mutex (manager-mutex m)
+             :body (foo bar baz))))
+
+  (assert (equal (helper/with-cudd-critical-section/parse-body '(#|with-cudd-critical-section|# (:mutex mut)
+                                                                 foo bar baz))
+                 '(:mutex mut :body (foo bar baz)))))
 
 (defmacro with-cudd-critical-section (&body body)
-  "Acquire lock around the CUDD API while executing BODY."
+  "Acquire lock around the CUDD API while executing BODY.
+
+  The first sexp in BODY is allowed to be a keyword plist.  For example::
+
+    (with-cudd-critical-section (:manager «manager-form») ...)
+
+  - ':manager «manager-form»': «manager-form» is evaluated to find the mutex for the critical section.  NB: Don't use this option in a node finalizer!
+  - ':mutex «mutex-form»': In lieu of ':manager', you can pass a mutex directly.  *Do* use this in a node finalizer.
+"
   (let+ ((parsed-body (helper/with-cudd-critical-section/parse-body body))
-         ((&plist-r/o (manager :manager) (body :body)) parsed-body))
-    `(with-recursive-lock-held ((manager-mutex ,manager))
+         ((&plist-r/o (mutex-form :mutex) (body :body)) parsed-body))
+    (declare (type (not null) mutex-form)
+             (list body))
+    `(with-recursive-lock-held (,mutex-form)
        ,@body)))
 
 (defun manager-init #.`(&key ,@+manager-initarg-defaults+)
