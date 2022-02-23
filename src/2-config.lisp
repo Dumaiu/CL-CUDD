@@ -12,7 +12,7 @@
 (defvar config/debug-memory-errors t)
 
 (defvar config/debug-consistency-checks nil
-  "TODO: Disable by default if assertions are turned off.")
+  "TODO: Disable by default on max speed.")
 
 (declaim (boolean
           config/guard-pointer-access
