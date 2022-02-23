@@ -78,8 +78,8 @@
            (boolean ref)
            (manager manager))
 
-  (let ((address (pointer-address pointer)))
-    (declare (ignorable address))
+  (progn;; let ((address (pointer-address pointer)))
+   ;;  (declare (ignorable address))
 
     (with-cudd-critical-section (:manager manager)
 
