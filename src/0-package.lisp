@@ -45,9 +45,28 @@
    #:manager-mutex
    #:with-lock-held
    #:make-lock
-   #:with-cudd-critical-section))
+   #:with-cudd-critical-section
+   #:handler-bind-case))
 
 (in-package cl-cudd.internal-utils)
+
+(defmacro handler-bind-case (form &rest *cases)
+  "Semantics of (handler-bind), syntax of (handler-case)."
+  (flet ((parse-case (case)
+           (match case
+             ((list* name (list (and varname (type symbol))) *rest)
+              (let ((varname* (or varname (gensym "_xc")))
+                    (varname-provided? (and varname t)))
+                (declare (type (and (not null) symbol) varname*)
+                         (boolean varname-provided?))
+                `(,name (lambda (,varname*)
+                          ,@(unless varname-provided? `((declare (ignore ,varname*))))
+                          ,@*rest)))))))
+    (let ((lambdas (mapcar #'parse-case *cases)))
+      `(handler-bind
+           ,lambdas
+         ,form))))
+
 
 (deftype manager-mutex ()
   'lock)
