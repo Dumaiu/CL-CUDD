@@ -72,19 +72,16 @@
                     ;; suppress error
                     )))))))
 
-(defun helper/construct-node (pointer type ref ;; mutex
-                              )
+(defun helper/construct-node (pointer type ref manager)
   "Used by (wrap-and-finalize)."
   (declare (node-pointer pointer)
            (boolean ref)
-           ;; (type manager-mutex mutex)
-           )
+           (manager manager))
 
   (let ((address (pointer-address pointer)))
     (declare (ignorable address))
 
-    ;; TODO: This crit-section may be redundant, as (wrap-and-finalize) already establishes one in the enclosing scope:
-    (with-cudd-critical-section ; (:mutex mutex)
+    (with-cudd-critical-section (:manager manager)
 
       ;; If ref=T, increment the CUDD ref count
       (cond
@@ -124,7 +121,7 @@
         ;; Construct finalizer for NODE:
         (when config/enable-gc
           (when ref
-            (let ((manager *manager*))
+            (let ((manager manager #|née *manager*|#))
               ;; NOTE: ^^^ This holds the reference from the __finalizer function__ to
               ;; the manager (along with avoiding problems related to dynamic binding).
               ;; Without it, the finalizer may be called after the manager is finalized
@@ -140,19 +137,17 @@
                  (helper/destruct-node pointer type manager))))))
 
         ;; After constructing the finalizer:
-        (assert (progn
-                  (when config/debug-consistency-checks
-                    (with-cudd-critical-section
-                      (let ((mp (manager-pointer *manager*)))
+        (when config/debug-consistency-checks
+          (with-cudd-critical-section (:manager manager)
+            (let ((mp (manager-pointer manager)))
 
-                        #.(let ((test-5 '(zerop (cudd-check-keys mp))))
-                            `(unless ,test-5
-                               (log-error :logger cudd-logger "Assert 5 failed: during (wrap-and-finalize): ~A" ',test-5)))
+              #.(let ((test-5 '(zerop (cudd-check-keys mp))))
+                  `(unless ,test-5
+                     (log-error :logger cudd-logger "Assert 5 failed: during (wrap-and-finalize): ~A" ',test-5)))
 
-                        #.(let ((test-6 '(zerop (cudd-debug-check mp))))
-                            `(unless ,test-6
-                               (log-error :logger cudd-logger "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"  ',test-6  mp))))))
-                  t))
+              #.(let ((test-6 '(zerop (cudd-debug-check mp))))
+                  `(unless ,test-6
+                     (log-error :logger cudd-logger "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"  ',test-6  mp))))))
         node))))
 
 (defmacro wrap-and-finalize (pointer type &optional (ref t))
@@ -171,26 +166,18 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
   `(let* ((pointer ,pointer)
           (type ,type)
           (ref ,ref)
-          (address (pointer-address pointer)))
+          (address (pointer-address pointer))
+          (manager *manager*))
      (declare
       (foreign-pointer pointer)
       (type (member bdd-node add-node zdd-node) type)
       (boolean ref))
 
-     (with-cudd-critical-section
-       (let* ((manager *manager*)
-              ;; (mutex (manager-mutex manager))
-              )
-         (declare (manager manager)
-                  ;; (type manager-mutex mutex)
-                  )
-
-         (ensure-gethash
-          address
-          (manager-node-hash manager)
-          ;; This form executes iff ADDRESS isn't already present in the hashtable:
-          (helper/construct-node pointer type ref ;; mutex
-                                 ))))))
+     (ensure-gethash
+      address
+      (manager-node-hash manager)
+      ;; This form executes iff ADDRESS isn't already present in the hashtable:
+      (helper/construct-node pointer type ref manager))))
 
 ;; (declaim (inline wrap-and-finalize))
 ;; (defun wrap-and-finalize (pointer type &optional (ref t))
