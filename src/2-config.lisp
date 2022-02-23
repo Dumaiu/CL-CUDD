@@ -11,7 +11,7 @@
 
 (defvar config/debug-memory-errors t)
 
-(defvar config/debug-consistency-checks nil
+(defvar config/debug-consistency-checks t
   "TODO: Disable by default on max speed.")
 
 (declaim (boolean
