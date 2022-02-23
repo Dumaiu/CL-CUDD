@@ -19,6 +19,7 @@
 * Similarly--to accommodate existing CUDD source and build directories, the groveller (`src/1-1-1-grovel.lisp`) now looks for directories 'cudd/' and 'build-cudd/' within the 'cl-cudd3/** dir.  These can be symlinks.
 
 
+* [2022-02-22 Tue] `cl-cudd:config/guard-pointer-access`: When T, the `(manager-pointer)` function raises an exception if the `manager` being queried has a null CUDD pointer.  When NIL, this check is skipped.
 
 * [2021-12-08 Wed] 
     * Initialization of `*manager*` is now guarded.
