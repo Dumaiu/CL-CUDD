@@ -105,7 +105,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                          (assert (eql address cur-address))
 
                          (with-cudd-critical-section
-                           (handler-case ; for sb-sys:memory-fault-error
+                           (handler-case ; for sb-sys:memory-fault-error ;; TODO: Use (handler-bind) instead?
                                (let ((mp (manager-pointer manager)))
 
                                  (log-msg :debu6 :logger cudd-logger
@@ -144,7 +144,8 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                                         (config/debug-memory-errors
                                          (log-error :logger cudd-logger "* Memory-fault caught: '~A'
  Re-throwing." xc)
-                                         (error xc))
+                                         (cerror "Ignore and hope for the best"
+                                                 xc))
                                         (t
                                          ;; suppress error
                                          ))))))))))); finalizer
