@@ -46,9 +46,16 @@
    #:with-lock-held
    #:make-lock
    #:with-cudd-critical-section
-   #:handler-bind-case))
+   #:handler-bind-case
+   #:assert*))
 
 (in-package cl-cudd.internal-utils)
+
+(defmacro assert* (&rest args)
+  "Wrapper for (cl:assert).
+  * TODO: On high optimization, this gets compiled out.
+"
+  `(assert ,@args))
 
 (defmacro handler-bind-case (form &rest *cases)
   "Semantics of (handler-bind), syntax of (handler-case)."
