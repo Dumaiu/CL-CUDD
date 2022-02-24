@@ -208,6 +208,8 @@
     (declare (manager m)
              (manager-mutex mutex))
 
+    (assert* (not (null-pointer-p p)))
+
     ;; (break "~A" m)
     (with-cudd-critical-section (:manager m)
       ;; see 2-4-hook.lisp
@@ -216,20 +218,26 @@
       (cudd-add-hook p (callback before-gc-hook) :cudd-pre-reordering-hook)
       (cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
       (finalize m (lambda ()
+                    "Manager callback finalizer"
                     (with-cudd-critical-section (:mutex mutex)
+                      (assert* (not (null-pointer-p p)))
+
                       ;; NB: We want to close over the `manager-mutex' MUTEX, *not* the containing `manager', in this finalizer.  See Masataro Asai's NOTE on the finalizer for `node'.
                       #.(let ((fmt '("~&freeing a cudd manager at ~a~%" p)))
                           `(progn
                              (format *error-output* ,@fmt)
                              (log-msg :debug :logger cudd-logger ,@fmt)))
+
                       (let ((undead-node-count (cudd-check-zero-ref p)))
                         (declare (fixnum undead-node-count)) ; TODO: Better type
                         (assert* (zerop undead-node-count) (p undead-node-count)
                                  "Assert failed in finalizer of manager ~A, with ~D unrecovered nodes (should be 0)."
                                  p undead-node-count))
-                      (assert* (not (null-pointer-p p)))
-                      (cudd-quit p)
-                      (setf p (null-pointer)))
+
+                      (cudd-quit p) ; *Side-effect*
+
+                      ;; (setf p (null-pointer)) ; pointless
+                      )
                     t)))
 
     (log-msg :debug :logger cudd-logger "Initialized new CUDD manager ~A." m)
@@ -320,7 +328,7 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
       (gc :full t)
 
       (with-cudd-critical-section (:manager manager)
-        ;; NOTE: Re-read pointer, in case it got changed asynchronously (in the hashtable's finalizer):
+        ;; NOTE: Re-read pointer, in case it got changed asynchronously (e.g., if (manager-quit) got called from another thread):
         (with-accessors ((pointer manager-pointer)) manager
           (declare (manager-pointer pointer))
           (unless (null-pointer-p pointer)
