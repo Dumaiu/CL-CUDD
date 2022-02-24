@@ -9,7 +9,9 @@
 (defvar config/enable-gc t
   "When true, new nodes get equipped with finalizers.")
 
-(defvar config/debug-memory-errors t)
+(defvar config/signal-memory-errors :error)
+(declaim (type (member :error :log nil)
+          config/signal-memory-errors ))
 
 (defvar config/debug-consistency-checks t
   "TODO: Disable by default on max speed.")
@@ -17,13 +19,13 @@
 (declaim (boolean
           config/guard-pointer-access
           config/enable-gc
-          config/debug-memory-errors
+          ;; config/signal-memory-errors
           config/debug-consistency-checks))
 
 (export '(
           config/guard-pointer-access
           config/enable-gc
           cudd-logger
-          config/debug-memory-errors
+          config/signal-memory-errors
           config/debug-consistency-checks
           ))

@@ -26,9 +26,11 @@
         * TODO: A command to easily force reinitialization.
 
 * [2021-12-07 Tue]
-    * `config/debug-memory-errors`: When true, an error message is logged every time a node finalizer has to deal with a `sb-sys:memory-fault-error`.
-        * Default: `T`.  Be careful disabling this, as the `sb-sys:memory-fault-error` will be silently squelched!
-            * FIXME: Avoid the SBCL dependency `sb-sys:memory-fault-error` present in `2-0-1-node.lisp`.
+    * `config/signal-memory-errors`: one of `(:error :log NIL)`.  Default: `:error`.
+        * `:error | :log`: an error message is logged every time a node finalizer has to deal with a `sb-sys:memory-fault-error`.
+        * `:error`: In addition to the `log4cl` message evoked with `:log`, re-throws the exception.  Note that SBCL traps and converts it to a warning.
+        * `NIL`:  Be careful disabling this, as the `sb-sys:memory-fault-error` will be silently squelched!
+        * FIXME: Avoid the SBCL dependency `sb-sys:memory-fault-error` present in `2-0-1-node.lisp`.
     * `config/debug-consistency-checks`: When true, calls `(cudd-check-keys)` and `(cudd-debug-check)` when creating and running finalizers.
         * Default: `nil`.
         * NB: Will substantially affect performance when `T`, constantly spamming `stdout`.
