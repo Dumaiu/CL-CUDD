@@ -31,10 +31,8 @@
         * `:error`: In addition to the `log4cl` message evoked with `:log`, re-throws the exception.  Note that SBCL traps and converts it to a warning.
         * `NIL`:  Be careful disabling this, as the `sb-sys:memory-fault-error` will be silently squelched!
         * FIXME: Avoid the SBCL dependency `sb-sys:memory-fault-error` present in `2-0-1-node.lisp`.
-    * `config/debug-consistency-checks`: When true, calls `(cudd-check-keys)` and `(cudd-debug-check)` when creating and running finalizers.
-        * Default: `nil`.
-        * NB: Will substantially affect performance when `T`, constantly spamming `stdout`.
-        * NB: There is also a correlation to a large number of `memory-fault-error`s being thrown; see `config/debug-memory-errors`.
+    * `config/debug-consistency-checks`: See docstring.
+        * NOTE: There is also a correlation to a large number of `memory-fault-error`s being thrown; see `config/signal-memory-errors`.
 
 * [2021-11-30 Tue] Removed the  `update-asdf` instructions from 'cl-cudd.asd':
 
