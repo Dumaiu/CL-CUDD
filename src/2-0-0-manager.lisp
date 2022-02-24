@@ -308,17 +308,22 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
   After dismantling the hashtable, run a full Lisp garbage collection to hopefully reclaim the nodes' memory.  Then acquire the CUDD mutex and call `Cudd_Quit()`.
 "
   (declare (manager manager))
-  ;; We don't need to hold the CUDD mutex for this part:
-  (with-slots (node-table pointer) manager
-    (log-msg :debug :logger cudd-logger "Closing CUDD manager ~A." manager)
-    (clrhash node-table)
-    (setf node-table (make-manager-hash-table))
-    ;; This should call the finalizers:
-    (gc :full t))
 
-  (with-cudd-critical-section
-    ;; Re-read pointer, in case it got changed elsewhere (like in the hashtable's finalizer):
-    (with-slots (node-table pointer) manager
-      (unless (null-pointer-p pointer)
-        (cudd-quit pointer)
-        (setf pointer (null-pointer))))))
+  ;; We don't need to hold the CUDD mutex for this part:
+  (with-slots (node-table) manager
+    (unless (null-pointer-p (manager-pointer manager))
+      (log-msg :debug :logger cudd-logger "Closing CUDD manager ~A." manager)
+      (clrhash node-table)
+      ;; (setf node-table (make-manager-hash-table))
+
+      ;; This should call the finalizers:
+      (gc :full t)
+
+      (with-cudd-critical-section (:manager manager)
+        ;; NOTE: Re-read pointer, in case it got changed asynchronously (in the hashtable's finalizer):
+        (with-accessors ((pointer manager-pointer)) manager
+          (declare (manager-pointer pointer))
+          (unless (null-pointer-p pointer)
+            (cudd-quit pointer)
+            (setf pointer (null-pointer)))))))
+  manager)
