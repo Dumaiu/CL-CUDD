@@ -54,14 +54,14 @@
            (when config/debug-consistency-checks
              (when keys-check?
                (unless (zerop (cudd-check-keys mp))
-                 (log-error :logger cudd-logger "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
+                 (log-error :logger cudd-logger "~&Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
 in manager ~A"
                             node-type
                             node-pointer
                             manager)))
              (when debug-check?
                (unless (zerop (cudd-debug-check mp))
-                 (log-error :logger cudd-logger "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
+                 (log-error :logger cudd-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
 in manager ~A"
                             node-type
                             node-pointer
@@ -83,7 +83,7 @@ in manager ~A"
 
              (when keys-check?
                (unless (zerop (cudd-check-keys mp))
-                 (log-error :logger cudd-logger "Assert 3: ~&~T~A ~&failed at end of finalizer for
+                 (log-error :logger cudd-logger "~&Assert 3: ~&~T~A ~&failed at end of finalizer for
  ~T~A
  in ~A"
                             '(zerop (cudd-check-keys mp))
@@ -91,7 +91,7 @@ in manager ~A"
                             mp)))
              (when debug-check?
                (unless (zerop (cudd-debug-check mp))
-                 (log-error :logger cudd-logger "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp)))))))
+                 (log-error :logger cudd-logger "~&Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp)))))))
 
          ;; TODO: Remove reliance on #+sbcl :
          #+sbcl (sb-sys:memory-fault-error (xc)
@@ -187,12 +187,12 @@ In manager ~A.
                 (when keys-check?
                   #.(let ((test-5 '(zerop (cudd-check-keys mp))))
                       `(unless ,test-5
-                         (log-error :logger cudd-logger "Assert 5 failed: during (wrap-and-finalize): ~A" ',test-5))))
+                         (log-error :logger cudd-logger "~&Assert 5 failed: during (wrap-and-finalize): ~A" ',test-5))))
 
                 (when debug-check?
                   #.(let ((test-6 '(zerop (cudd-debug-check mp))))
                       `(unless ,test-6
-                         (log-error :logger cudd-logger "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"  ',test-6  mp)))))))
+                         (log-error :logger cudd-logger "~&Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"  ',test-6  mp)))))))
           node)))))
 
 (defmacro wrap-and-finalize (pointer type &optional (ref t))
