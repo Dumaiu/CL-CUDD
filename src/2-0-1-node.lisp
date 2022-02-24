@@ -19,80 +19,88 @@
   "A boxed CUDD node class. Top class of all CUDD nodes."
   (pointer (required) :type cffi:foreign-pointer))
 
+(defun debug-check-keys? ()
+  (or (eq t config/debug-consistency-checks)
+      ;; (member :check-keys config/debug-consistency-checks :test #'eq)
+      (eq :check-keys config/debug-consistency-checks)))
+(declaim (inline debug-check-keys?))
+
 (defun helper/destruct-node (node-pointer node-type manager)
   "NB: We *do* want to maintain a reference to the MANAGER from within a node's finalizer."
   (declare (node-pointer node-pointer)
            (manager manager))
-  (progn
-    ;; let ((cur-address (pointer-address node-pointer)))
-    ;;  (assert (eql address cur-address))
+  (let ((debug-check-keys? (debug-check-keys?)))
+    (progn
+      ;; let ((cur-address (pointer-address node-pointer)))
+      ;;  (assert (eql address cur-address))
 
-    (with-cudd-critical-section (:manager manager)
-      (handler-bind-case ; for sb-sys:memory-fault-error
-       (let ((mp (manager-pointer manager)))
+      (with-cudd-critical-section (:manager manager)
+        (handler-bind-case ; for sb-sys:memory-fault-error
+         (let ((mp (manager-pointer manager)))
 
-         (log-msg :debu6 :logger cudd-logger
-                  "Destructing node for ~A.  REFs: ~D"
-                  node-pointer ;;cur-address
-                  (cudd-node-ref-count node-pointer))
-
-         (when config/debug-consistency-checks
-           (unless (zerop (cudd-check-keys mp))
-             (log-error :logger cudd-logger "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
-in manager ~A"
-                        node-type
-                        node-pointer
-                        manager))
-           (unless (zerop (cudd-debug-check mp))
-             (log-error :logger cudd-logger "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
-in manager ~A"
-                        node-type
-                        node-pointer
-                        manager)))
-
-         (when (zerop (cudd-node-ref-count node-pointer))
-           ;; TODO: Hopefully releases the mutex?:
-           (error "Tried to decrease reference count of node that already has refcount zero"))
-
-         (ecase node-type
-           (bdd-node (cudd-recursive-deref mp node-pointer))
-           (add-node (cudd-recursive-deref mp node-pointer))
-           (zdd-node (cudd-recursive-deref-zdd mp node-pointer)))
-
-         (log:debu7 :logger cudd-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
-                    node-pointer
+           (log-msg :debu6 :logger cudd-logger
+                    "Destructing node for ~A.  REFs: ~D"
+                    node-pointer ;;cur-address
                     (cudd-node-ref-count node-pointer))
 
-         (when config/debug-consistency-checks
-           (unless (zerop (cudd-check-keys mp))
-             (log-error :logger cudd-logger "Assert 3: ~&~T~A ~&failed at end of finalizer for
+           (when config/debug-consistency-checks
+             (unless (zerop (cudd-check-keys mp))
+               (log-error :logger cudd-logger "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
+in manager ~A"
+                          node-type
+                          node-pointer
+                          manager))
+             (when debug-check-keys?
+               (unless (zerop (cudd-debug-check mp))
+                 (log-error :logger cudd-logger "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
+in manager ~A"
+                            node-type
+                            node-pointer
+                            manager))))
+
+           (when (zerop (cudd-node-ref-count node-pointer))
+             (error "Tried to decrease reference count of node that already has refcount zero"))
+
+           (ecase node-type
+             (bdd-node (cudd-recursive-deref mp node-pointer))
+             (add-node (cudd-recursive-deref mp node-pointer))
+             (zdd-node (cudd-recursive-deref-zdd mp node-pointer)))
+
+           (log:debu7 :logger cudd-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
+                      node-pointer
+                      (cudd-node-ref-count node-pointer))
+
+           (when config/debug-consistency-checks
+             (unless (zerop (cudd-check-keys mp))
+               (log-error :logger cudd-logger "Assert 3: ~&~T~A ~&failed at end of finalizer for
  ~T~A
  in ~A"
-                        '(zerop (cudd-check-keys mp))
-                        node-pointer
-                        mp))
-           (unless (zerop (cudd-debug-check mp))
-             (log-error :logger cudd-logger "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))))
+                          '(zerop (cudd-check-keys mp))
+                          node-pointer
+                          mp))
+             (when debug-check-keys?
+               (unless (zerop (cudd-debug-check mp))
+                 (log-error :logger cudd-logger "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp)))))))
 
-       ;; TODO: Remove reliance on #+sbcl :
-       #+sbcl (sb-sys:memory-fault-error (xc)
-                                         (ecase config/signal-memory-errors
-                                           ((:error :log)
-                                            (log-error :logger cudd-logger "* Memory-fault caught while destructing ~A ~A:
+         ;; TODO: Remove reliance on #+sbcl :
+         #+sbcl (sb-sys:memory-fault-error (xc)
+                                           (ecase config/signal-memory-errors
+                                             ((:error :log)
+                                              (log-error :logger cudd-logger "* Memory-fault caught while destructing ~A ~A:
  ~&~T~A
 In manager ~A.
  Re-throwing? ~A"
-                                                       node-type
-                                                       node-pointer
-                                                       xc
-                                                       manager
-                                                       (eq :error config/signal-memory-errors))
+                                                         node-type
+                                                         node-pointer
+                                                         xc
+                                                         manager
+                                                         (eq :error config/signal-memory-errors))
 
-                                            (when (eq :error config/signal-memory-errors)
-                                              (cerror "Ignore and hope for the best" xc)))
+                                              (when (eq :error config/signal-memory-errors)
+                                                (cerror "Ignore and hope for the best" xc)))
 
-                                           ((nil) ;; silently suppress error
-                                            )))))))
+                                             ((nil) ;; silently suppress error
+                                              ))))))))
 
 (defun helper/construct-node (pointer type ref manager)
   "Used by (wrap-and-finalize)."
@@ -100,77 +108,78 @@ In manager ~A.
            (boolean ref)
            (manager manager))
 
-  (progn;; let ((address (pointer-address pointer)))
-    ;;  (declare (ignorable address))
+  (let ((debug-check-keys? (debug-check-keys?)))
+    (progn;; let ((address (pointer-address pointer)))
+      ;;  (declare (ignorable address))
 
-    (with-cudd-critical-section (:manager manager)
+      (with-cudd-critical-section (:manager manager)
+        ;; If ref=T, increment the CUDD ref count
+        (cond
+          (ref
+           (log-msg :debu6 :logger cudd-logger
+                    "Constructing wrapper node for ~A.  Before incrementing, REFs = ~D."
+                    pointer
+                    (cudd-node-ref-count pointer))
 
-      ;; If ref=T, increment the CUDD ref count
-      (cond
-        (ref
-         (log-msg :debu6 :logger cudd-logger
-                  "Constructing wrapper node for ~A.  Before incrementing, REFs = ~D."
-                  pointer
-                  (cudd-node-ref-count pointer))
+           ;; *Side-effect*:
+           (cudd-ref pointer)
 
-         ;; *Side-effect*:
-         (cudd-ref pointer)
+           (log-msg :debu7 :logger cudd-logger "- After (cudd-ref ~A), REFs = ~D."
+                    pointer
+                    (cudd-node-ref-count pointer)))
 
-         (log-msg :debu7 :logger cudd-logger "- After (cudd-ref ~A), REFs = ~D."
-                  pointer
-                  (cudd-node-ref-count pointer)))
-
-        ('otherwise  ; ref=nil
-         (log-msg :debu6 :logger cudd-logger "NON-INCREMENTING wrapper for ~A being constructed (REFs = ~D).
+          ('otherwise  ; ref=nil
+           (log-msg :debu6 :logger cudd-logger "NON-INCREMENTING wrapper for ~A being constructed (REFs = ~D).
  This should happen only for literals."
-                  pointer
-                  (cudd-node-ref-count pointer))
+                    pointer
+                    (cudd-node-ref-count pointer))
 
-         #|(let ((initial-ref-count (cudd-node-ref-count pointer)))
-         (declare (fixnum initial-ref-count)) ;
-         (assert (>= initial-ref-count 1)) ;
-         (unless (= 1 initial-ref-count) ;
-         (log-msg :warn :logger cudd-logger "Ref count of literal node ~A is ~D, which is > 1" ;
-         pointer     ;
-         initial-ref-count)))|#))
+           #|(let ((initial-ref-count (cudd-node-ref-count pointer)))
+           (declare (fixnum initial-ref-count)) ;
+           (assert (>= initial-ref-count 1)) ;
+           (unless (= 1 initial-ref-count) ;
+           (log-msg :warn :logger cudd-logger "Ref count of literal node ~A is ~D, which is > 1" ;
+           pointer     ;
+           initial-ref-count)))|#))
 
-      (let ((node #.(let ((ctor-args '(:pointer pointer)))
-                      `(ecase type
-                         (bdd-node (make-bdd-node ,@ctor-args))
-                         (add-node (make-add-node ,@ctor-args))
-                         (zdd-node (make-zdd-node ,@ctor-args))))))
+        (let ((node #.(let ((ctor-args '(:pointer pointer)))
+                        `(ecase type
+                           (bdd-node (make-bdd-node ,@ctor-args))
+                           (add-node (make-add-node ,@ctor-args))
+                           (zdd-node (make-zdd-node ,@ctor-args))))))
 
-        ;; Construct finalizer for NODE:
-        (when config/enable-gc
-          (when ref
-            (let ((manager manager #|née *manager*|#))
-              ;; NOTE: ^^^ This holds the reference from the __finalizer function__ to
-              ;; the manager (along with avoiding problems related to dynamic binding).
-              ;; Without it, the finalizer may be called after the manager is finalized
-              ;; (i.e. cudd-quit is called), invalidating the pointer to the node.
-              ;; It is insufficient to reference a manager from a node, since the order
-              ;; to call finalizers is unspecified. If a manager and a node is freed in
-              ;; the same gc, it could be possible that cudd-quit is called
-              ;; first. Manager object should be referenced until the node finalizer
-              ;; is called.
-              (finalize
-               node
-               (lambda ()
-                 (helper/destruct-node pointer type manager))))))
+          ;; Construct finalizer for NODE:
+          (when config/enable-gc
+            (when ref
+              (let ((manager manager #|née *manager*|#))
+                ;; NOTE: ^^^ This holds the reference from the __finalizer function__ to
+                ;; the manager (along with avoiding problems related to dynamic binding).
+                ;; Without it, the finalizer may be called after the manager is finalized
+                ;; (i.e. cudd-quit is called), invalidating the pointer to the node.
+                ;; It is insufficient to reference a manager from a node, since the order
+                ;; to call finalizers is unspecified. If a manager and a node is freed in
+                ;; the same gc, it could be possible that cudd-quit is called
+                ;; first. Manager object should be referenced until the node finalizer
+                ;; is called.
+                (finalize
+                 node
+                 (lambda ()
+                   (helper/destruct-node pointer type manager))))))
 
-        ;; After constructing the finalizer:
-        (when config/debug-consistency-checks
-          (with-cudd-critical-section (:manager manager)
-            (let ((mp (manager-pointer manager)))
+          ;; After constructing the finalizer:
+          (when config/debug-consistency-checks
+            (with-cudd-critical-section (:manager manager)
+              (let ((mp (manager-pointer manager)))
 
-              #.(let ((test-5 '(zerop (cudd-check-keys mp))))
-                  `(unless ,test-5
-                     (log-error :logger cudd-logger "Assert 5 failed: during (wrap-and-finalize): ~A" ',test-5)))
+                #.(let ((test-5 '(zerop (cudd-check-keys mp))))
+                    `(unless ,test-5
+                       (log-error :logger cudd-logger "Assert 5 failed: during (wrap-and-finalize): ~A" ',test-5)))
 
-              #.(let ((test-6 '(zerop (cudd-debug-check mp))))
-                  `(unless ,test-6
-                     (log-error :logger cudd-logger "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"  ',test-6  mp))))))
-        node))))
+                (when debug-check-keys?
+                  #.(let ((test-6 '(zerop (cudd-debug-check mp))))
+                      `(unless ,test-6
+                         (log-error :logger cudd-logger "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"  ',test-6  mp)))))))
+          node)))))
 
 (defmacro wrap-and-finalize (pointer type &optional (ref t))
   "Wrap the given pointer in a node of type TYPE.
