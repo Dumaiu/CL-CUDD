@@ -19,17 +19,25 @@
   "A boxed CUDD node class. Top class of all CUDD nodes."
   (pointer (required) :type cffi:foreign-pointer))
 
-(defun debug-check-keys? ()
+(declaim (inline keys-check?
+                 debug-check?))
+(defun keys-check? ()
+  (or (eq t config/debug-consistency-checks)
+      (eq :keys config/debug-consistency-checks)))
+(defun debug-check? ()
   (or (eq t config/debug-consistency-checks)
       ;; (member :check-keys config/debug-consistency-checks :test #'eq)
-      (eq :check-keys config/debug-consistency-checks)))
-(declaim (inline debug-check-keys?))
+      (eq :debug config/debug-consistency-checks)))
 
 (defun helper/destruct-node (node-pointer node-type manager)
   "NB: We *do* want to maintain a reference to the MANAGER from within a node's finalizer."
   (declare (node-pointer node-pointer)
            (manager manager))
-  (let ((debug-check-keys? (debug-check-keys?)))
+
+  (let ((keys-check? (keys-check?))
+        (debug-check? (debug-check?)))
+    (declare (boolean keys-check? debug-check?))
+
     (progn
       ;; let ((cur-address (pointer-address node-pointer)))
       ;;  (assert (eql address cur-address))
@@ -44,13 +52,14 @@
                     (cudd-node-ref-count node-pointer))
 
            (when config/debug-consistency-checks
-             (unless (zerop (cudd-check-keys mp))
-               (log-error :logger cudd-logger "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
+             (when keys-check?
+               (unless (zerop (cudd-check-keys mp))
+                 (log-error :logger cudd-logger "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
 in manager ~A"
-                          node-type
-                          node-pointer
-                          manager))
-             (when debug-check-keys?
+                            node-type
+                            node-pointer
+                            manager)))
+             (when debug-check?
                (unless (zerop (cudd-debug-check mp))
                  (log-error :logger cudd-logger "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
 in manager ~A"
@@ -71,14 +80,16 @@ in manager ~A"
                       (cudd-node-ref-count node-pointer))
 
            (when config/debug-consistency-checks
-             (unless (zerop (cudd-check-keys mp))
-               (log-error :logger cudd-logger "Assert 3: ~&~T~A ~&failed at end of finalizer for
+
+             (when keys-check?
+               (unless (zerop (cudd-check-keys mp))
+                 (log-error :logger cudd-logger "Assert 3: ~&~T~A ~&failed at end of finalizer for
  ~T~A
  in ~A"
-                          '(zerop (cudd-check-keys mp))
-                          node-pointer
-                          mp))
-             (when debug-check-keys?
+                            '(zerop (cudd-check-keys mp))
+                            node-pointer
+                            mp)))
+             (when debug-check?
                (unless (zerop (cudd-debug-check mp))
                  (log-error :logger cudd-logger "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp)))))))
 
@@ -108,7 +119,9 @@ In manager ~A.
            (boolean ref)
            (manager manager))
 
-  (let ((debug-check-keys? (debug-check-keys?)))
+  (let ((keys-check? (keys-check?))
+        (debug-check? (debug-check?)))
+    (declare (boolean keys-check? debug-check?))
     (progn;; let ((address (pointer-address pointer)))
       ;;  (declare (ignorable address))
 
@@ -171,11 +184,12 @@ In manager ~A.
             (with-cudd-critical-section (:manager manager)
               (let ((mp (manager-pointer manager)))
 
-                #.(let ((test-5 '(zerop (cudd-check-keys mp))))
-                    `(unless ,test-5
-                       (log-error :logger cudd-logger "Assert 5 failed: during (wrap-and-finalize): ~A" ',test-5)))
+                (when keys-check?
+                  #.(let ((test-5 '(zerop (cudd-check-keys mp))))
+                      `(unless ,test-5
+                         (log-error :logger cudd-logger "Assert 5 failed: during (wrap-and-finalize): ~A" ',test-5))))
 
-                (when debug-check-keys?
+                (when debug-check?
                   #.(let ((test-6 '(zerop (cudd-debug-check mp))))
                       `(unless ,test-6
                          (log-error :logger cudd-logger "Assert 6 failed: during (wrap-and-finalize): ~A with MP=~A"  ',test-6  mp)))))))

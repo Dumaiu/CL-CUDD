@@ -18,10 +18,11 @@
   "When truthy, make calls to CUDD's reflective funcs whenever a :cl-cudd node is created or finalized.  NOTE: These write to `uiop:*stdout*' and cause immense lag.
   Possible values:
     - `NIL': No checks
-    - `:check-keys': Call (cudd-check-keys)
-    - `T': All checks
+    - `:keys': Call (cudd-check-keys)
+    - `:debug': (cudd-debug-check)
+    - `T': Both
   * TODO [optimization]: Disable by default on max speed.")
-(declaim (type (member NIL T :check-keys)
+(declaim (type (member NIL T :keys :debug)
                config/debug-consistency-checks))
 
 (declaim (boolean
