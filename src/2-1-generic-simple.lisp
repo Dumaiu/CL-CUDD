@@ -121,12 +121,16 @@ When index = 2 and N = 4, the resulting ZDD looks as follows:
 
 |#
 
-(defun zero-node (type)
+;; TODO: Enable `manager' param.  Need to pass to (wrap-and-finalize).
+(defun zero-node (type ;; &optional (manager *manager*)
+                         )
   "Return the zero node for the correspoinding type.
 BDD: the logical zero node (boolean 0).
 ADD: the arithmetic zero node (0.0d0).
 ZDD: the arithmetic zero node (0.0d0). (Same as ADD)"
-  (declare (node-type type))
+  (declare (node-type type)
+           ;; (manager manager)
+		   )
   (wrap-and-finalize
    (ecase type
      (bdd-node (cudd-read-logic-zero %mp%))
@@ -136,10 +140,14 @@ ZDD: the arithmetic zero node (0.0d0). (Same as ADD)"
    ;; because these nodes are predefined constants.
    nil))
 
-(defun one-node (type)
+(defun one-node (type ;; &optional (manager *manager*)
+                        )
   "return the constant one node."
-  (declare (node-type type))
-  (wrap-and-finalize (cudd-read-one %mp%)
+  (declare (node-type type)
+           ;; (manager manager)
+		   )
+  (wrap-and-finalize (cudd-read-one %mp% ;; (manager-pointer manager)
+									)
                      type
                      ;; because these nodes are predefined constants.
                      nil))

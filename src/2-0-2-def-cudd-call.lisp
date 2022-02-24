@@ -16,6 +16,7 @@
 
 (defun node-function (generic-name arguments native-function node-type
                       dont-wrap-result)
+  "TODO: Add `manager' param"
   (labels ((convert-arguments (arguments)
              (mapcar (lambda-match
                        ((list var :node)
