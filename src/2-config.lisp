@@ -14,12 +14,12 @@
 (declaim (type (member :error :log nil)
                config/signal-memory-errors ))
 
-(defvar config/debug-consistency-checks :check-keys
-  "When truthy, make calls to CUDD's reflective funcs whenever a :cl-cudd node is created or finalized.  NOTE: These write to `uiop:*stdout*' and cause immense lag.
+(defvar config/debug-consistency-checks :debug
+  "When truthy, make calls to CUDD's reflective funcs whenever a :cl-cudd node is created or finalized.  NOTE: These cause immense lag.
   Possible values:
     - `NIL': No checks
-    - `:keys': Call (cudd-check-keys)
-    - `:debug': (cudd-debug-check)
+    - `:keys': Call (cudd-check-keys)--writes to `uiop:*stdout*' constantly
+    - `:debug': (cudd-debug-check)--still slow, but only writes to `*stdout*' on failure
     - `T': Both
   * TODO [optimization]: Disable by default on max speed.")
 (declaim (type (member NIL T :keys :debug)
