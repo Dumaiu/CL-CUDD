@@ -20,6 +20,7 @@
   (pointer (required) :type cffi:foreign-pointer))
 
 (defun helper/destruct-node (node-pointer node-type manager)
+  "NB: We *do* want to maintain a reference to the MANAGER from within a node's finalizer."
   (declare (node-pointer node-pointer)
            (manager manager))
   (progn
@@ -37,9 +38,17 @@
 
          (when config/debug-consistency-checks
            (unless (zerop (cudd-check-keys mp))
-             (log-error :logger cudd-logger "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer"))
+             (log-error :logger cudd-logger "Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
+in manager ~A"
+                        node-type
+                        node-pointer
+                        manager))
            (unless (zerop (cudd-debug-check mp))
-             (log-error :logger cudd-logger "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer")))
+             (log-error :logger cudd-logger "Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
+in manager ~A"
+                        node-type
+                        node-pointer
+                        manager)))
 
          (when (zerop (cudd-node-ref-count node-pointer))
            ;; TODO: Hopefully releases the mutex?:
@@ -56,20 +65,33 @@
 
          (when config/debug-consistency-checks
            (unless (zerop (cudd-check-keys mp))
-             (log-error :logger cudd-logger "Assert 3 failed at end of finalizer: ~A" '(zerop (cudd-check-keys mp))))
+             (log-error :logger cudd-logger "Assert 3: ~&~T~A ~&failed at end of finalizer for
+ ~T~A
+ in ~A"
+                        '(zerop (cudd-check-keys mp))
+                        node-pointer
+                        mp))
            (unless (zerop (cudd-debug-check mp))
              (log-error :logger cudd-logger "Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))))
 
        ;; TODO: Remove reliance on #+sbcl :
        #+sbcl (sb-sys:memory-fault-error (xc)
-                                         (cond
-                                           (config/debug-memory-errors
-                                            (log-error :logger cudd-logger "* Memory-fault caught: '~A'
- Re-throwing." xc)
-                                            (cerror "Ignore and hope for the best"
-                                                    xc))
-                                           (t
-                                            ;; suppress error
+                                         (ecase config/signal-memory-errors
+                                           ((:error :log)
+                                            (log-error :logger cudd-logger "* Memory-fault caught while destructing ~A ~A:
+ ~&~T~A
+In manager ~A.
+ Re-throwing? ~A"
+                                                       node-type
+                                                       node-pointer
+                                                       xc
+                                                       manager
+                                                       (eq :error config/signal-memory-errors))
+
+                                            (when (eq :error config/signal-memory-errors)
+                                              (cerror "Ignore and hope for the best" xc)))
+
+                                           ((nil) ;; silently suppress error
                                             )))))))
 
 (defun helper/construct-node (pointer type ref manager)
@@ -290,7 +312,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
 ;;                           ;; TODO: Remove reliance on #+sbcl :
 ;;                           #+sbcl (sb-sys:memory-fault-error (xc)
 ;;                                    (cond
-;;                                      (config/debug-memory-errors
+;;                                      (config/signal-memory-errors
 ;;                                       (log-error :logger cudd-logger "* Memory-fault caught: '~A'
 ;;  Re-throwing." xc
 ;;  #|(slot-value xc 'sb-kernel::address)
