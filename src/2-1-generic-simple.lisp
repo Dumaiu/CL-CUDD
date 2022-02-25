@@ -142,9 +142,8 @@ ZDD: the arithmetic zero node (0.0d0). (Same as ADD)"
 (defun one-node (type ;; &optional (manager *manager*)
                         )
   "return the constant one node."
-  (declare (node-type type)
-           (manager manager))
-  (wrap-and-finalize (cudd-read-one (manager-pointer manager))
+  (declare (node-type type))
+  (wrap-and-finalize (cudd-read-one %mp%)
                      type
                      ;; because these nodes are predefined constants.
                      nil))

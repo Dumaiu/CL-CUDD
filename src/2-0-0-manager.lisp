@@ -1,7 +1,9 @@
 ;;; base class definitions and macros for defining APIs
 (in-package :cudd)
 
-;;; Manager
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (import* 'sb-sys:without-gcing *package*))
 
 (export '(manager-init
           manager-initf
@@ -188,12 +190,15 @@
 
   - ':manager «manager-form»': «manager-form» is evaluated to find the mutex for the critical section.  NB: Don't use this option in a node finalizer!
   - ':mutex «mutex-form»': In lieu of ':manager', you can pass a mutex directly.  *Do* use this in a node finalizer.
+  - [2022-02-25 Fri] XXX Disabling mutex; using (without-gcing)
 "
   (let+ ((parsed-body (helper/with-cudd-critical-section/parse-body body))
          ((&plist-r/o (mutex-form :mutex) (body :body)) parsed-body))
+    (declare (ignore mutex-form))
     (declare (type (not null) mutex-form)
              (list body))
-    `(with-recursive-lock-held (,mutex-form)
+    `(without-gcing
+       ;;with-recursive-lock-held (,mutex-form)
        ,@body)))
 
 (defun manager-init #.`(&key ,@+manager-initarg-defaults+)
