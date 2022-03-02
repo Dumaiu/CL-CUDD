@@ -20,19 +20,23 @@
   (pointer (required) :type cffi:foreign-pointer))
 
 (declaim (inline keys-check?
-                 debug-check?))
+				 debug-check?))
 (defun keys-check? ()
   (or (eq t config/debug-consistency-checks)
-      (eq :keys config/debug-consistency-checks)))
+	  (eq :keys config/debug-consistency-checks)))
 (defun debug-check? ()
   (or (eq t config/debug-consistency-checks)
-      ;; (member :check-keys config/debug-consistency-checks :test #'eq)
-      (eq :debug config/debug-consistency-checks)))
+	  ;; (member :check-keys config/debug-consistency-checks :test #'eq)
+	  (eq :debug config/debug-consistency-checks)))
 
-(defun helper/destruct-node (node-pointer node-type manager)
-  "NB: We *do* want to maintain a reference to the MANAGER from within a node's finalizer."
+(defun helper/destruct-node (node-pointer node-type manager ref)
+  "NB: We *do* want to maintain a reference to the MANAGER from within a node's finalizer.
+  MANAGER: Maintain a reference from the node's finalizer to its manager so there is no chance of dangling-pointer errors.  See M. Asai's note in (wrap-and-finalize).
+  REF: When T, decrement CUDD ref.  Passed along from (wrap-and-finalize): if we didn't increment during construction, we don't decrement here.
+"
   (declare (node-pointer node-pointer)
-           (manager manager))
+		   (manager manager)
+		   (boolean ref))
 
   (let ((keys-check? (keys-check?))
         (debug-check? (debug-check?)))
