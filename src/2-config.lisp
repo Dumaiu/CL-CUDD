@@ -14,7 +14,8 @@
 (declaim (type (member :error :log nil)
                config/signal-memory-errors ))
 
-(defvar config/debug-consistency-checks :debug
+(defvar config/debug-consistency-checks nil
+  ;; :debug
   "When truthy, make calls to CUDD's reflective funcs whenever a :cl-cudd node is created or finalized.  NOTE: These cause immense lag.
   Possible values:
     - `NIL': No checks
