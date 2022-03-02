@@ -18,6 +18,16 @@
 * NB: In order to use a precompiled CUDD library, I've removed :cl-cudd.build from the dependency list for :cl-cudd
 * Similarly--to accommodate existing CUDD source and build directories, the groveller (`src/1-1-1-grovel.lisp`) now looks for directories 'cudd/' and 'build-cudd/' within the 'cl-cudd3/** dir.  These can be symlinks.
 
+* [2022-03-02 Wed] A procedure for testing finalizers: 
+```lisp 
+(make :cl-cudd)
+(setf cudd:config/debug-consistency-checks t)
+(log:config cudd:cudd-logger :trace)
+(test-system :cl-cudd)
+
+(trivial-garbage:gc :full t :verbose t)
+```
+
 
 * [2022-02-22 Tue] `cl-cudd:config/guard-pointer-access`: When T, the `(manager-pointer)` function raises an exception if the `manager` being queried has a null CUDD pointer.  When NIL, this check is skipped.
 
