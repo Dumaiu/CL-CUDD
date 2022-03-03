@@ -841,5 +841,17 @@
            #:cudd-condition
            #:cudd-error
            #:cudd-reordering-error
+		   #:cudd-logger
            )
   ); cl-cudd
+
+(in-package :cudd)
+
+
+;; (defparameter +finalizer-log-level+ :debu6
+;;   "Unused.")
+
+(with-package-log-hierarchy
+  (defvar cudd-logger (make-logger)
+	":log4cl logger created at the root of ':cl-cudd'."))
+
