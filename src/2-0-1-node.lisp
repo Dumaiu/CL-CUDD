@@ -181,6 +181,7 @@ In manager ~A.
                 (finalize
                  node
                  (lambda ()
+				   "Closure for finalizing a cudd-node."
                    (helper/destruct-node pointer type manager))))))
 
           ;; After constructing the finalizer:
