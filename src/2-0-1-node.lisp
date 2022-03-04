@@ -58,18 +58,20 @@
 		   (when config/debug-consistency-checks
 			 (when keys-check?
 			   (unless (zerop (cudd-check-keys mp))
-				 (log-error :logger cudd-logger "~&Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
+				 (let ((manager-string (princ-to-string manager)))
+					 (log-error :logger cudd-logger "~&Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
 in manager ~A"
-							node-type
-							node-pointer
-							manager)))
+							 node-type
+							 node-pointer
+							 manager-string))))
 			 (when debug-check?
 			   (unless (zerop (cudd-debug-check mp))
-				 (log-error :logger cudd-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
+				 (let ((manager-string (princ-to-string manager)))
+				  (log-error :logger cudd-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
 in manager ~A"
-							node-type
-							node-pointer
-							manager))))
+							 node-type
+							 node-pointer
+							 manager-string)))))
 
 		   (when ref
 			 (when (zerop (cudd-node-ref-count node-pointer))
@@ -101,15 +103,16 @@ in manager ~A"
 		 #+sbcl (sb-sys:memory-fault-error (xc)
 										   (ecase config/signal-memory-errors
 											 ((:error :log)
-											  (log-error :logger cudd-logger "* Memory-fault caught while destructing ~A ~A:
+											  (let ((manager-string (princ-to-string manager)))
+											   (log-error :logger cudd-logger "* Memory-fault caught while destructing ~A ~A:
  ~&~T~A
 In manager ~A.
  Re-throwing? ~A"
-														 node-type
-														 node-pointer
-														 xc
-														 manager
-														 (eq :error config/signal-memory-errors))
+														  node-type
+														  node-pointer
+														  xc
+														  manager-string
+														  (eq :error config/signal-memory-errors)))
 
 											  (when (eq :error config/signal-memory-errors)
 												(cerror "Ignore and hope for the best" xc)))
