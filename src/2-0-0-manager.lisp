@@ -5,7 +5,8 @@
 
 (export '(manager-init
 		  manager-initf
-		  cudd-logger))
+		  cudd-logger
+		  *managers*))
 
 ;; (assert (find-class 'manager-mutex))
 
@@ -190,6 +191,19 @@
 	`(with-recursive-lock-held (,mutex-form)
 	   ,@body)))
 
+(defvar *manager-counter* 0
+  "Number of managers created.
+  * TODO: Secure with a mutex if it needs to be used by multiple threads. ")
+(declaim (type (and fixnum (integer 0)) *manager-counter*))
+
+(defvar *managers* #.`(make-weak-hash-table
+					   ,@(when (featurep :sb-thread)
+						   '(:synchronized t))
+					   :weakness :value
+					   :weakness-matters t)
+		"Managers currently active.")
+
+
 (defun manager-init #.`(&key ,@+manager-initarg-defaults+)
   "Construct and return a new `manager' instance, loading CUDD backend to go with it."
   (let* ((p (cudd-init initial-num-vars
@@ -205,37 +219,48 @@
 	(assert* (not (null-pointer-p p)))
 
 	;; (break "~A" m)
-	(with-cudd-critical-section (:manager m)
-	  ;; see 2-4-hook.lisp
-	  (cudd-add-hook p (callback before-gc-hook) :cudd-pre-gc-hook)
-	  (cudd-add-hook p (callback after-gc-hook) :cudd-post-gc-hook)
-	  (cudd-add-hook p (callback before-gc-hook) :cudd-pre-reordering-hook)
-	  (cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
-	  (finalize m (lambda ()
-					"Manager callback finalizer"
-					(with-cudd-critical-section (:mutex mutex)
-					  (assert* (not (null-pointer-p p)))
+	(let ((manager-index *manager-counter*))
+	  (incf *manager-counter*); *Side-effect*
+	  ;; TODO: Decrement if the stack gets unwound during construction
 
-					  ;; NB: We want to close over the `manager-mutex' MUTEX, *not* the containing `manager', in this finalizer.  See Masataro Asai's NOTE on the finalizer for `node'.
-					  #.(let ((fmt '("~&freeing a cudd manager at ~a~%" p)))
-						  `(progn
-							 (format *error-output* ,@fmt)
-							 (log-msg :debug :logger cudd-logger ,@fmt)))
+	  (with-cudd-critical-section (:manager m)
+		;; see 2-4-hook.lisp
+		(cudd-add-hook p (callback before-gc-hook) :cudd-pre-gc-hook)
+		(cudd-add-hook p (callback after-gc-hook) :cudd-post-gc-hook)
+		(cudd-add-hook p (callback before-gc-hook) :cudd-pre-reordering-hook)
+		(cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
 
-					  (let ((undead-node-count (cudd-check-zero-ref p)))
-						(declare (fixnum undead-node-count)) ; TODO: Better type
-						(assert* (zerop undead-node-count) (p undead-node-count)
-								 "Assert failed in finalizer of manager ~A, with ~D unrecovered nodes (should be 0)."
-								 p undead-node-count))
+		(finalize m (lambda ()
+					  "Manager callback finalizer"
+					  (assert* (null (gethash manager-index *managers*)))
 
-					  (cudd-quit p) ; *Side-effect*
+					  (with-cudd-critical-section (:mutex mutex)
+						(assert* (not (null-pointer-p p)))
 
-					  ;; (setf p (null-pointer)) ; pointless
-					  )
-					t)))
+						;; NB: We want to close over the `manager-mutex' MUTEX, *not* the containing `manager', in this finalizer.  See Masataro Asai's NOTE on the finalizer for `node'.
+						#.(let ((fmt '("~&freeing CUDD manager #~D at ~a~%" manager-index p)))
+							`(progn
+							   (format *error-output* ,@fmt)
+							   (log-msg :debug :logger cudd-logger ,@fmt)))
 
-	(let ((manager-string (princ-to-string m)))
-	  (log-msg :debug :logger cudd-logger "Initialized new CUDD manager ~A." manager-string))
+						(let ((undead-node-count (cudd-check-zero-ref p)))
+						  (declare (fixnum undead-node-count)) ; TODO: Better type
+						  (assert* (zerop undead-node-count) (p undead-node-count)
+								   "Assert failed in finalizer of manager #~D ~A, with ~D unrecovered nodes (should be 0)."
+								   manager-index p undead-node-count))
+
+						(cudd-quit p) ; *Side-effect*
+
+						;; (setf p (null-pointer)) ; pointless
+						)
+					  t)))
+
+	  ;; *Side-effect*:
+	  (assert* (null (gethash manager-index *managers*)))
+	  (setf (gethash manager-index *managers*) m)
+
+	  (let ((manager-string (princ-to-string m)))
+		(log-msg :debug :logger cudd-logger "Initialized new CUDD manager ~A." manager-string)))
 	m))
 
 
@@ -309,6 +334,8 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
 (defun manager-quit (&optional (manager *manager*))
   "Shut down the CUDD manager MANAGER:
   After dismantling the hashtable, run a full Lisp garbage collection to hopefully reclaim the nodes' memory.  Then acquire the CUDD mutex and call `Cudd_Quit()`.
+
+  * TODO: Remove MANAGER from `*managers*'.
 "
   (declare (manager manager))
 
