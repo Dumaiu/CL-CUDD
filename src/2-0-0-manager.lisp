@@ -6,6 +6,7 @@
 (export '(manager-init
 		  manager-initf
 		  cudd-logger
+		  manager-index
 		  *managers*))
 
 ;; (assert (find-class 'manager-mutex))
@@ -21,6 +22,19 @@
 
 (deftype variable ()
   '(integer 0))
+
+(defvar *manager-counter* 0
+  "Number of managers created.
+  * TODO: Secure with a mutex if it needs to be used by multiple threads. ")
+(declaim (type uint *manager-counter*))
+
+(defvar *managers* #.`(make-weak-hash-table
+					   ,@(when (featurep :sb-thread)
+						   '(:synchronized t))
+					   :weakness :value
+					   :weakness-matters t)
+		"Managers currently active.")
+
 
 
 
@@ -58,6 +72,10 @@
 
   - [2022-02-10 Thu] Note: The :conc-name for the struct is not 'manager-'; this is so I can extend the slot access functions with guards.
 "
+  ;; NOTE: Each manager's index should be unique--(manager-init) must increment *manager-counter* post-construction.
+  (index *manager-counter*
+   :type uint
+   :read-only t)
   (pointer (error "MANAGER needs to wrap a pointer")
    :type foreign-pointer)
 
@@ -72,11 +90,13 @@
 					:type manager-mutex
 					:read-only t))
 
-(assert (fboundp 'internal/manager-node-table))
+(assert* (fboundp 'internal/manager-node-table))
 ;; Alias (manager-node-hash):
 (setf (fdefinition 'manager-node-hash) #'internal/manager-node-table)
 (setf (fdefinition '(setf manager-node-hash))
 	  #'(setf internal/manager-node-table))
+(declaim (ftype (function (manager) uint) manager-index))
+(setf (fdefinition 'manager-index) #'internal/manager-index)
 
 ;; Alias (manager-mutex):
 #+thread-support
@@ -191,19 +211,6 @@
 	`(with-recursive-lock-held (,mutex-form)
 	   ,@body)))
 
-(defvar *manager-counter* 0
-  "Number of managers created.
-  * TODO: Secure with a mutex if it needs to be used by multiple threads. ")
-(declaim (type (and fixnum (integer 0)) *manager-counter*))
-
-(defvar *managers* #.`(make-weak-hash-table
-					   ,@(when (featurep :sb-thread)
-						   '(:synchronized t))
-					   :weakness :value
-					   :weakness-matters t)
-		"Managers currently active.")
-
-
 (defun manager-init #.`(&key ,@+manager-initarg-defaults+)
   "Construct and return a new `manager' instance, loading CUDD backend to go with it."
   (let* ((p (cudd-init initial-num-vars
@@ -212,14 +219,17 @@
 					   cache-size
 					   max-memory))
 		 (m (make-manager :pointer p))
-		 (mutex (manager-mutex m)))
+		 ;; (mutex (manager-mutex m))
+		 )
 	(declare (manager m)
-			 (manager-mutex mutex))
+			 ;; (manager-mutex mutex)
+			 )
 
 	(assert* (not (null-pointer-p p)))
 
 	;; (break "~A" m)
-	(let ((manager-index *manager-counter*))
+	(let ((manager-index (manager-index m)))
+	  (assert* (= manager-index *manager-counter*))
 	  (incf *manager-counter*); *Side-effect*
 	  ;; TODO: Decrement if the stack gets unwound during construction
 
@@ -239,7 +249,7 @@
 							 ;;with-cudd-critical-section (:mutex mutex)
 							 (assert* (not (null-pointer-p p)))
 
-							 ;; NB: We want to close over the `manager-mutex' MUTEX, *not* the containing `manager', in this finalizer.  See Masataro Asai's NOTE on the finalizer for `node'.
+							 ;; NB: Don't retain a reference to the containing `manager' in this finalizer.  See Masataro Asai's NOTE on the finalizer for `node'.
 							 #.(let ((fmt '("~&freeing CUDD manager #~D at ~a~%" manager-index p)))
 								 `(progn
 									(format *error-output* ,@fmt)
