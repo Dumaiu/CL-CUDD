@@ -244,22 +244,21 @@
 					  "Manager callback finalizer"
 					  (assert* (null (gethash manager-index *managers*)))
 
-					  (unwind-protect
-						   (progn
-							 ;;with-cudd-critical-section (:mutex mutex)
-							 (assert* (not (null-pointer-p p)))
+					  (unwind-protect (progn
+										;;with-cudd-critical-section (:mutex mutex)
+										(assert* (not (null-pointer-p p)))
 
-							 ;; NB: Don't retain a reference to the containing `manager' in this finalizer.  See Masataro Asai's NOTE on the finalizer for `node'.
-							 #.(let ((fmt '("~&freeing CUDD manager #~D at ~a~%" manager-index p)))
-								 `(progn
-									(format *error-output* ,@fmt)
-									(log-msg :debug :logger cudd-logger ,@fmt)))
+										;; NB: Don't retain a reference to the containing `manager' in this finalizer.  See Masataro Asai's NOTE on the finalizer for `node'.
+										#.(let ((fmt '("~&Freeing CUDD manager #~D at ~a~%" manager-index p)))
+											`(progn
+											   (format *error-output* ,@fmt)
+											   (log-msg :debug :logger cudd-logger ,@fmt)))
 
-							 (let ((undead-node-count (cudd-check-zero-ref p)))
-							   (declare (fixnum undead-node-count)) ; TODO: Better type
-							   (assert* (zerop undead-node-count) (p undead-node-count)
-										"Assert failed in finalizer of manager #~D ~A, with ~D unrecovered nodes (should be 0)."
-										manager-index p undead-node-count)))
+										(let ((undead-node-count (cudd-check-zero-ref p)))
+										  (declare (uint undead-node-count))
+										  (assert* (zerop undead-node-count) (p undead-node-count)
+												   "Assert failed in finalizer of manager #~D ~A, with ~D unrecovered nodes (should be 0)."
+												   manager-index p undead-node-count)))
 
 						;; Cleanup:
 						(cudd-quit p) ; *Side-effect*
