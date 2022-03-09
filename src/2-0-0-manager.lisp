@@ -230,8 +230,14 @@
 	;; (break "~A" m)
 	(let ((manager-index (manager-index m)))
 	  (assert* (= manager-index *manager-counter*))
-	  (incf *manager-counter*); *Side-effect*
+	  ;; *Side-effect*
+	  (incf *manager-counter*)
 	  ;; TODO: Decrement if the stack gets unwound during construction
+
+	  #.(let ((fmt '("~&Constructing CUDD manager #~D at ~a~%" manager-index p)))
+		  `(progn
+			 (format *stderr* ,@fmt)
+			 (log-msg :debug :logger cudd-logger ,@fmt)))
 
 	  (with-cudd-critical-section (:manager m)
 		;; see 2-4-hook.lisp
