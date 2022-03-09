@@ -251,7 +251,7 @@
 										;; NB: Don't retain a reference to the containing `manager' in this finalizer.  See Masataro Asai's NOTE on the finalizer for `node'.
 										#.(let ((fmt '("~&Freeing CUDD manager #~D at ~a~%" manager-index p)))
 											`(progn
-											   (format *error-output* ,@fmt)
+											   (format *stderr* ,@fmt)
 											   (log-msg :debug :logger cudd-logger ,@fmt)))
 
 										(let ((undead-node-count (cudd-check-zero-ref p)))
@@ -270,8 +270,10 @@
 		(assert* (null (gethash manager-index *managers*)))
 		(setf (gethash manager-index *managers*) m))
 
-	  (let ((manager-string (princ-to-string m)))
-		(log-msg :debug :logger cudd-logger "Initialized new CUDD manager ~A." manager-string)))
+	  ;; TODO:
+	  ;; (let ((manager-string (princ-to-string m)))
+	  ;; 	(log-msg :debug :logger cudd-logger "Initialized new CUDD manager ~A." manager-string))
+	  (log-msg :debug :logger cudd-logger "Initialized CUDD manager #~D." manager-index))
 	m))
 
 
