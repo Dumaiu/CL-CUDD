@@ -242,6 +242,7 @@
 
 		(finalize m (lambda ()
 					  "Manager callback finalizer"
+					  (declare (optimize safety))
 					  (assert* (null (gethash manager-index *managers*)))
 
 					  (unwind-protect (progn
@@ -254,11 +255,20 @@
 											   (format *stderr* ,@fmt)
 											   (log-msg :debug :logger cudd-logger ,@fmt)))
 
-										(let ((undead-node-count (cudd-check-zero-ref p)))
-										  (declare (uint undead-node-count))
-										  (assert* (zerop undead-node-count) (p undead-node-count)
-												   "Assert failed in finalizer of manager #~D ~A, with ~D unrecovered nodes (should be 0)."
-												   manager-index p undead-node-count)))
+										(when config/check-zero-ref-when-manager-finalized
+										  (let ((undead-node-count (cudd-check-zero-ref p)))
+											(declare (uint undead-node-count))
+											(unless (zerop undead-node-count)
+											  (ecase  config/check-zero-ref-when-manager-finalized
+												(:log
+												 (log-error :logger cudd-logger
+															"In finalizer, manager #~D ~A was left with ~D unrecovered nodes (should be 0)."
+															manager-index p undead-node-count))
+												(:error
+												 (not-implemented-error 'error-arg)
+												 (assert* (zerop undead-node-count) (p undead-node-count)
+														  "Assert failed in finalizer of manager #~D ~A, with ~D unrecovered nodes (should be 0)."
+														  manager-index p undead-node-count)))))))
 
 						;; Cleanup:
 						(cudd-quit p) ; *Side-effect*
