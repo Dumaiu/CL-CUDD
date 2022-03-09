@@ -507,6 +507,7 @@ Follow the then-branch when 1, else-branch otherwise."
   (:method :around (thing &key (src *manager*) dest)
 	"TODO: Handle case where SRC=DEST."
 	(declare (manager src dest))
+	(assert* (not (eq src dest)))
 	(call-next-method thing :src src :dest dest))
   (:method ((bdd bdd-node) &key src dest)
 	(declare (manager src dest))

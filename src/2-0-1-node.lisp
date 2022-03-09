@@ -49,6 +49,7 @@
 	  (with-cudd-critical-section (:manager manager)
 		(handler-bind-case ; for sb-sys:memory-fault-error
 		 (let ((mp (manager-pointer manager)))
+		   (declare (manager-pointer mp))
 
 		   (log-msg :debu6 :logger cudd-logger
 					"Destructing node for ~A.  REFs: ~D"
