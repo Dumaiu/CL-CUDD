@@ -234,7 +234,8 @@
 	  (incf *manager-counter*)
 	  ;; TODO: Decrement if the stack gets unwound during construction
 
-	  #.(let ((fmt '("~&Constructing CUDD manager #~D at ~a~%" manager-index p)))
+	  #.(let ((fmt '("~&Constructing CUDD manager #~D ~%" manager-index ;; p
+					 )))
 		  `(progn
 			 (format *stderr* ,@fmt)
 			 (log-msg :debug :logger cudd-logger ,@fmt)))
@@ -256,7 +257,8 @@
 										(assert* (not (null-pointer-p p)))
 
 										;; NB: Don't retain a reference to the containing `manager' in this finalizer.  See Masataro Asai's NOTE on the finalizer for `node'.
-										#.(let ((fmt '("~&Freeing CUDD manager #~D at ~a~%" manager-index p)))
+										#.(let ((fmt '("~&Freeing CUDD manager #~D~%" manager-index ;; p
+													   )))
 											`(progn
 											   (format *stderr* ,@fmt)
 											   (log-msg :debug :logger cudd-logger ,@fmt)))
@@ -371,8 +373,14 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
   ;; We don't need to hold the CUDD mutex for this part:
   (with-slots (node-table) manager
 	(unless (null-pointer-p (manager-pointer manager))
-	  (let ((manager-string (princ-to-string manager)))
-		(log-msg :debug :logger cudd-logger "Closing CUDD manager ~A." manager-string))
+	  (let+ (((&accessors-r/o manager-index) manager))
+		(declare (type uint manager-index))
+		(log-msg :debug :logger cudd-logger "Closing CUDD manager #~D." manager-index)
+	  ;; (let ((manager-string (princ-to-string manager)))
+	  ;; 	(log-msg :debug :logger cudd-logger "Closing CUDD manager ~A." manager-string))
+		)
+
+	  ;; *Side-effect*:
 	  (clrhash node-table)
 	  ;; (setf node-table (make-manager-hash-table))
 
