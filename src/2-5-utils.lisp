@@ -8,6 +8,8 @@
   #-sbcl (deftype pathname-designator ()
            '(or string pathname synonym-stream file-stream)))
 
+(export 'transfer)
+
 (defmacro with-pointers (pointers &body body)
   "Copied from `e9bf9fe:cudd.lisp' (https://github.com/rpgoldman/CL-CUDD/blob/master/cudd.lisp).
   --------------------------------------------------------------
@@ -500,6 +502,16 @@ Follow the then-branch when 1, else-branch otherwise."
           (let ((bdd-ptr (cudd-bdd-transfer (manager-pointer src) (manager-pointer dest) (node-pointer bdd))))
             (declare (type node-pointer bdd-ptr))
             (the bdd-node (wrap-and-finalize bdd-ptr 'bdd-node)))))))
+
+(defgeneric transfer (thing &key)
+  (:method :around (thing &key (src *manager*) dest)
+	"TODO: Handle case where SRC=DEST."
+	(declare (manager src dest))
+	(assert* (not (eq src dest)))
+	(call-next-method thing :src src :dest dest))
+  (:method ((bdd bdd-node) &key src dest)
+	(declare (manager src dest))
+	(bdd-transfer bdd :src src :dest dest)))
 
 
 (defun dump-factored-form (nodes &key
