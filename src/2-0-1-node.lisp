@@ -42,6 +42,7 @@
   MANAGER: Maintain a reference from the node's finalizer to its manager so there is no chance of dangling-pointer errors.  See M. Asai's note in (wrap-and-finalize).
   REF: When T, decrement CUDD ref.  Passed along from (wrap-and-finalize): if we didn't increment during construction, we don't decrement here.
 "
+  (declare (optimize safety)) ; TODO: remove
   (declare (node-pointer node-pointer)
 		   (manager manager)
 		   (boolean ref))
