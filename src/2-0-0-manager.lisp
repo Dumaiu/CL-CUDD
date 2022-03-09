@@ -270,8 +270,10 @@
 		(assert* (null (gethash manager-index *managers*)))
 		(setf (gethash manager-index *managers*) m))
 
-	  (let ((manager-string (princ-to-string m)))
-		(log-msg :debug :logger cudd-logger "Initialized new CUDD manager ~A." manager-string)))
+	  ;; TODO:
+	  ;; (let ((manager-string (princ-to-string m)))
+	  ;; 	(log-msg :debug :logger cudd-logger "Initialized new CUDD manager ~A." manager-string))
+	  (log-msg :debug :logger cudd-logger "Initialized CUDD manager #~D." manager-index))
 	m))
 
 
