@@ -270,12 +270,12 @@
 											  (ecase  config/check-zero-ref-when-manager-finalized
 												(:log
 												 (log-error :logger cudd-logger
-															"In finalizer, manager #~D ~A was left with ~D unrecovered nodes (should be 0)."
+															"* ERROR: In finalizer, manager #~D ~A was left with ~D unrecovered node~:P (should be 0)."
 															manager-index p undead-node-count))
 												(:error
 												 (not-implemented-error 'error-arg)
 												 (assert* (zerop undead-node-count) (p undead-node-count)
-														  "Assert failed in finalizer of manager #~D ~A, with ~D unrecovered nodes (should be 0)."
+														  "Assert failed in finalizer of manager #~D ~A, with ~D unrecovered node~:P (should be 0)."
 														  manager-index p undead-node-count)))))))
 
 						;; Cleanup:
