@@ -276,7 +276,13 @@
 												 (not-implemented-error 'error-arg)
 												 (assert* (zerop undead-node-count) (p undead-node-count)
 														  "Assert failed in finalizer of manager #~D ~A, with ~D unrecovered node~:P (should be 0)."
-														  manager-index p undead-node-count)))))))
+														  manager-index p undead-node-count))))))
+										(when t ; FIXME config/check-...
+										  (unless (zerop (cudd-check-keys p))
+											(log-error :logger cudd-logger "* Error: (cudd-check-keys) failed in finalizer of manager #~D" manager-index))
+
+										  (unless (zerop (cudd-debug-check p))
+											(log-error :logger cudd-logger "* Error: (cudd-debug-check) failed in finalizer of manager #~D" manager-index))))
 
 						;; Cleanup:
 						(cudd-quit p) ; *Side-effect*
