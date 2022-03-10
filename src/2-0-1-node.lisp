@@ -1,16 +1,24 @@
 ;;; base class definitions and macros for defining APIs
 (in-package :cudd)
 
-#|
-(progn
-(shadowing-import 'cudd:cudd-logger)
-(assert (bound? 'cudd:cudd-logger))
-(log:config cudd:cudd-logger :debu6))
-|#
 
 (assert (fboundp 'with-cudd-critical-section))
 (assert (fboundp 'log-error))
 (assert (boundp '*stderr*))
+
+(with-package-log-hierarchy
+  (defvar cudd-node-logger (make-logger)
+	":log4cl logger created in '2-0-1-node.lisp'.
+
+  - Independent of `cudd-logger'.
+	* TODO: Make this a child of `cudd-logger'?  How do I specify that?
+
+  - NOTE: Setting this to :trace or higher will slow CUDD way down by logging all `bdd-node' construction|finalization funcalls.
+"))
+
+;; (log4cl:hierarchy-index (find-package :cudd))
+;; (log4cl:hierarchy-index cudd:cudd-logger )
+
 
 (defun required ()
   (error "Required slot"))
@@ -52,7 +60,7 @@
 		 (let ((mp (manager-pointer manager)))
 		   (declare (manager-pointer mp))
 
-		   (log-msg :debu6 :logger cudd-logger
+		   (log-msg :trace :logger cudd-node-logger
 					"Destructing node for ~A.  REFs: ~D"
 					node-pointer ;;cur-address
 					(cudd-node-ref-count node-pointer))
@@ -61,7 +69,7 @@
 			 (when keys-check?
 			   (unless (zerop (cudd-check-keys mp))
 				 (let ((manager-string (princ-to-string manager)))
-					 (log-error :logger cudd-logger "~&Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
+					 (log-error :logger cudd-node-logger "~&Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
 in manager ~A"
 							 node-type
 							 node-pointer
@@ -69,7 +77,7 @@ in manager ~A"
 			 (when debug-check?
 			   (unless (zerop (cudd-debug-check mp))
 				 (let ((manager-string (princ-to-string manager)))
-				  (log-error :logger cudd-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
+				  (log-error :logger cudd-node-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
 in manager ~A"
 							 node-type
 							 node-pointer
@@ -84,14 +92,14 @@ in manager ~A"
 			   (add-node (cudd-recursive-deref mp node-pointer))
 			   (zdd-node (cudd-recursive-deref-zdd mp node-pointer)))
 
-			 (log:debu7 :logger cudd-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
+			 (log:debu7 :logger cudd-node-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
 						node-pointer
 						(cudd-node-ref-count node-pointer)))
 
 		   (when config/debug-consistency-checks
 			 (when keys-check?
 			   (unless (zerop (cudd-check-keys mp))
-				 (log-error :logger cudd-logger "~&Assert 3: ~&~T~A ~&failed at end of finalizer for
+				 (log-error :logger cudd-node-logger "~&Assert 3: ~&~T~A ~&failed at end of finalizer for
  ~T~A
  in ~A"
 							'(zerop (cudd-check-keys mp))
@@ -99,14 +107,14 @@ in manager ~A"
 							mp)))
 			 (when debug-check?
 			   (unless (zerop (cudd-debug-check mp))
-				 (log-error :logger cudd-logger "~&Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp)))))))
+				 (log-error :logger cudd-node-logger "~&Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp)))))))
 
 		 ;; TODO: Remove reliance on '#+sbcl':
 		 #+sbcl (sb-sys:memory-fault-error (xc)
 										   (ecase config/signal-memory-errors
 											 ((:error :log)
 											  (let ((manager-string (princ-to-string manager)))
-											   (log-error :logger cudd-logger "* Memory-fault caught while destructing ~A ~A:
+											   (log-error :logger cudd-node-logger "* Memory-fault caught while destructing ~A ~A:
  ~&~T~A
 In manager ~A.
  Re-throwing? ~A"
@@ -138,7 +146,7 @@ In manager ~A.
 		;; If ref=T, increment the CUDD ref count
 		(cond
 		  (ref
-		   (log-msg :debu6 :logger cudd-logger
+		   (log-msg :trace :logger cudd-node-logger
 					"Constructing wrapper node for ~A.  Before incrementing, REFs = ~D."
 					pointer
 					(cudd-node-ref-count pointer))
@@ -146,12 +154,12 @@ In manager ~A.
 		   ;; *Side-effect*:
 		   (cudd-ref pointer)
 
-		   (log-msg :debu7 :logger cudd-logger "- After (cudd-ref ~A), REFs = ~D."
+		   (log-msg :debu6 :logger cudd-node-logger "- After (cudd-ref ~A), REFs = ~D."
 					pointer
 					(cudd-node-ref-count pointer)))
 
 		  ('otherwise  ; ref=nil
-		   (log-msg :debu6 :logger cudd-logger "NON-INCREMENTING wrapper for ~A being constructed (REFs = ~D).
+		   (log-msg :trace :logger cudd-node-logger "NON-INCREMENTING wrapper for ~A being constructed (REFs = ~D).
  This should happen only for literals."
                     pointer
                     (cudd-node-ref-count pointer))
@@ -160,7 +168,7 @@ In manager ~A.
 		   (declare (fixnum initial-ref-count)) ;
 		   (assert (>= initial-ref-count 1)) ;
 		   (unless (= 1 initial-ref-count) ;
-		   (log-msg :warn :logger cudd-logger "Ref count of literal node ~A is ~D, which is > 1" ;
+		   (log-msg :warn :logger cudd-node-logger "Ref count of literal node ~A is ~D, which is > 1" ;
 		   pointer     ;
 		   initial-ref-count)))|#))
 
@@ -196,12 +204,12 @@ In manager ~A.
 				(when keys-check?
 				  #.(let ((test-5 '(zerop (cudd-check-keys mp))))
 					  `(unless ,test-5
-						 (log-error :logger cudd-logger "~&Assert 5 failed: during (helper/construct-node): ~A" ',test-5))))
+						 (log-error :logger cudd-node-logger "~&Assert 5 failed: during (helper/construct-node): ~A" ',test-5))))
 
 				(when debug-check?
 				  #.(let ((test-6 '(zerop (cudd-debug-check mp))))
 					  `(unless ,test-6
-						 (log-error :logger cudd-logger "~&Assert 6 failed: during (helper/construct-node): ~A with MP=~A"  ',test-6  mp)))))))
+						 (log-error :logger cudd-node-logger "~&Assert 6 failed: during (helper/construct-node): ~A with MP=~A"  ',test-6  mp)))))))
 		  node)))))
 
 (defmacro wrap-and-finalize (pointer type &optional (ref t))

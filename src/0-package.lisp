@@ -842,6 +842,7 @@
            #:cudd-error
            #:cudd-reordering-error
 		   #:cudd-logger
+		   #:cudd-node-logger
            )
   ); cl-cudd
 
