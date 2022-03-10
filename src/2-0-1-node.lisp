@@ -107,14 +107,15 @@ in manager ~A"
 							mp)))
 			 (when debug-check?
 			   (unless (zerop (cudd-debug-check mp))
-				 (log-error :logger cudd-node-logger "~&Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp)))))))
+				 (log-error :logger cudd-node-logger "~&Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))))
+		   ); protected form
 
 		 ;; TODO: Remove reliance on '#+sbcl':
 		 #+sbcl (sb-sys:memory-fault-error (xc)
 										   (ecase config/signal-memory-errors
 											 ((:error :log)
 											  (let ((manager-string (princ-to-string manager)))
-											   (log-error :logger cudd-node-logger "* Memory-fault caught while destructing ~A ~A:
+											   (log-error :logger cudd-node-logger "* Error: memory-fault detected in Lisp while destructing ~A ~A:
  ~&~T~A
 In manager ~A.
  Re-throwing? ~A"
