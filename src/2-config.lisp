@@ -10,7 +10,7 @@
 (defvar config/enable-gc t
   "When true, new nodes get equipped with finalizers.")
 
-(defvar config/signal-memory-errors :error
+(defvar config/signal-memory-errors :log
   "Whether to propagate memory errors from `cudd-node' finalizers.")
 (declaim (type (member :error :log nil)
 			   config/signal-memory-errors ))
