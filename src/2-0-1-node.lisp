@@ -48,7 +48,9 @@
 		   (boolean ref))
 
   (macrolet ((with-mem-fault-protection (&body body)
-			   "Establish a block to handle a memory fault.  Optionally resume execution, depending on `config/signal-memory-errors'."
+			   "Establish a block to handle a memory fault.  Optionally resume execution, depending on `config/signal-memory-errors'.
+  * TODO: Rewrite with (handler-case)?
+"
 			   `(catch 'mem-fault-suppress
 				 (handler-bind-case ; for sb-sys:memory-fault-error
 				  (progn ,@body)
@@ -57,15 +59,19 @@
 				  #+sbcl (sb-sys:memory-fault-error (xc)
 													(ecase config/signal-memory-errors
 													  ((:error :log)
-													   (let ((manager-string (princ-to-string manager)))
-														 (log-error :logger cudd-node-logger "* Error: memory-fault detected in Lisp while destructing ~A ~A:
- ~&~T~A
-In manager ~A.
- Re-throwing? ~A"
+													   (let+ (((&accessors-r/o manager-pointer) manager)) ;((manager-string (princ-to-string manager)))
+														 (log-error :logger cudd-node-logger
+																	;; TODO: Give each node an index?
+																	"* Error: memory-fault detected in Lisp:
+ ~&~T~<~A~>
+
+while destructing ~A ~A in manager #~D.
+
+ Re-throwing? ~A~%"
 																	node-type
 																	node-pointer
 																	xc
-																	manager-string
+																	manager-pointer ;manager-string
 																	(eq :error config/signal-memory-errors)))
 
 													   (if (eq :error config/signal-memory-errors)
@@ -95,7 +101,7 @@ In manager ~A.
 				  (unless (zerop (cudd-check-keys mp))
 					(let ((manager-string (princ-to-string manager)))
 					  (log-error :logger cudd-node-logger "~&Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
-in manager ~A"
+in manager ~A~%"
 								 node-type
 								 node-pointer
 								 manager-string)))))
@@ -104,7 +110,7 @@ in manager ~A"
 				  (unless (zerop (cudd-debug-check mp))
 					(let ((manager-string (princ-to-string manager)))
 					  (log-error :logger cudd-node-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
-in manager ~A"
+in manager ~A~%"
 								 node-type
 								 node-pointer
 								 manager-string))))))
@@ -139,7 +145,7 @@ in manager ~A"
 				  (unless (zerop (cudd-check-keys mp))
 					(log-error :logger cudd-node-logger "~&Assert 3: ~&~T~A ~&failed at end of finalizer for
  ~T~A
- in ~A"
+ in ~A~%"
 							   '(zerop (cudd-check-keys mp))
 							   node-pointer
 							   mp))))
