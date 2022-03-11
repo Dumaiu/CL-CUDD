@@ -61,7 +61,8 @@
 		   (declare (manager-pointer mp))
 
 		   (log-msg :trace :logger cudd-node-logger
-					"Destructing node for ~A.  REFs: ~D"
+					"Finalizer for ~A ~A.  REFs: ~D"
+					node-type
 					node-pointer ;;cur-address
 					(cudd-node-ref-count node-pointer))
 
@@ -69,32 +70,43 @@
 			 (when keys-check?
 			   (unless (zerop (cudd-check-keys mp))
 				 (let ((manager-string (princ-to-string manager)))
-					 (log-error :logger cudd-node-logger "~&Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
+				   (log-error :logger cudd-node-logger "~&Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
 in manager ~A"
-							 node-type
-							 node-pointer
-							 manager-string))))
+							  node-type
+							  node-pointer
+							  manager-string))))
 			 (when debug-check?
 			   (unless (zerop (cudd-debug-check mp))
 				 (let ((manager-string (princ-to-string manager)))
-				  (log-error :logger cudd-node-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
+				   (log-error :logger cudd-node-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
 in manager ~A"
-							 node-type
-							 node-pointer
-							 manager-string)))))
+							  node-type
+							  node-pointer
+							  manager-string)))))
 
-		   (when ref
-			 (when (zerop (cudd-node-ref-count node-pointer))
-			   (error "Tried to decrease reference count of node that already has refcount zero"))
 
-			 (ecase node-type
-			   (bdd-node (cudd-recursive-deref mp node-pointer))
-			   (add-node (cudd-recursive-deref mp node-pointer))
-			   (zdd-node (cudd-recursive-deref-zdd mp node-pointer)))
+		   (cond
+			 (ref
+			  (log-msg :debu8 :logger cudd-node-logger
+					   "Reached the deref segment in finalizer for ~A ~A." node-type node-pointer)
 
-			 (log:debu7 :logger cudd-node-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
-						node-pointer
-						(cudd-node-ref-count node-pointer)))
+			  (when (zerop (cudd-node-ref-count node-pointer))
+				(error "Tried to decrease reference count of node that already has refcount zero"))
+
+			  (ecase node-type
+				(bdd-node (cudd-recursive-deref mp node-pointer))
+				(add-node (cudd-recursive-deref mp node-pointer))
+				(zdd-node (cudd-recursive-deref-zdd mp node-pointer)))
+
+			  (log-msg :debu7 :logger cudd-node-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
+					   node-pointer
+					   (cudd-node-ref-count node-pointer))
+
+			  (log-msg :debu8 :logger cudd-node-logger
+					   "Past the deref segment in finalizer for ~A ~A." node-type node-pointer))
+			 (t ; ref=nil
+			  (log-msg :debu8 :logger cudd-node-logger
+					   "Skipping the deref segment in finalizer for ~A ~A." node-type node-pointer)))
 
 		   (when config/debug-consistency-checks
 			 (when keys-check?
@@ -108,6 +120,8 @@ in manager ~A"
 			 (when debug-check?
 			   (unless (zerop (cudd-debug-check mp))
 				 (log-error :logger cudd-node-logger "~&Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))))
+
+		   (log-msg :debu8 :logger cudd-node-logger "Reached the end of finalizer for ~A ~A." node-type node-pointer)
 		   ); protected form
 
 		 ;; TODO: Remove reliance on '#+sbcl':
@@ -115,15 +129,15 @@ in manager ~A"
 										   (ecase config/signal-memory-errors
 											 ((:error :log)
 											  (let ((manager-string (princ-to-string manager)))
-											   (log-error :logger cudd-node-logger "* Error: memory-fault detected in Lisp while destructing ~A ~A:
+												(log-error :logger cudd-node-logger "* Error: memory-fault detected in Lisp while destructing ~A ~A:
  ~&~T~A
 In manager ~A.
  Re-throwing? ~A"
-														  node-type
-														  node-pointer
-														  xc
-														  manager-string
-														  (eq :error config/signal-memory-errors)))
+														   node-type
+														   node-pointer
+														   xc
+														   manager-string
+														   (eq :error config/signal-memory-errors)))
 
 											  (when (eq :error config/signal-memory-errors)
 												(cerror "Ignore and hope for the best" xc)))
@@ -162,8 +176,8 @@ In manager ~A.
 		  ('otherwise  ; ref=nil
 		   (log-msg :trace :logger cudd-node-logger "NON-INCREMENTING wrapper for ~A being constructed (REFs = ~D).
  This should happen only for literals."
-                    pointer
-                    (cudd-node-ref-count pointer))
+					pointer
+					(cudd-node-ref-count pointer))
 
 		   #|(let ((initial-ref-count (cudd-node-ref-count pointer)))
 		   (declare (fixnum initial-ref-count)) ;
