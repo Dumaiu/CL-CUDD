@@ -49,29 +49,32 @@
 
   (macrolet ((with-mem-fault-protection (&body body)
 			   "Establish a block to handle a memory fault.  Optionally resume execution, depending on `config/signal-memory-errors'."
-			   `(handler-bind-case ; for sb-sys:memory-fault-error
-				 (progn ,@body)
+			   `(catch 'mem-fault-suppress
+				 (handler-bind-case ; for sb-sys:memory-fault-error
+				  (progn ,@body)
 
-				 ;; TODO: Remove reliance on '#+sbcl':
-				 #+sbcl (sb-sys:memory-fault-error (xc)
-												   (ecase config/signal-memory-errors
-													 ((:error :log)
-													  (let ((manager-string (princ-to-string manager)))
-														(log-error :logger cudd-node-logger "* Error: memory-fault detected in Lisp while destructing ~A ~A:
+				  ;; TODO: Remove reliance on '#+sbcl':
+				  #+sbcl (sb-sys:memory-fault-error (xc)
+													(ecase config/signal-memory-errors
+													  ((:error :log)
+													   (let ((manager-string (princ-to-string manager)))
+														 (log-error :logger cudd-node-logger "* Error: memory-fault detected in Lisp while destructing ~A ~A:
  ~&~T~A
 In manager ~A.
  Re-throwing? ~A"
-																   node-type
-																   node-pointer
-																   xc
-																   manager-string
-																   (eq :error config/signal-memory-errors)))
+																	node-type
+																	node-pointer
+																	xc
+																	manager-string
+																	(eq :error config/signal-memory-errors)))
 
-													  (when (eq :error config/signal-memory-errors)
-														(cerror "Ignore and hope for the best" xc)))
+													   (if (eq :error config/signal-memory-errors)
+														   (cerror "Ignore and hope for the best" xc)
+														   (assert* (eq :log config/signal-memory-errors))))
 
-													 ((nil) ;; silently suppress error
-													  ))))))
+													  ((nil) #| Silence |#))
+													;; Continue:
+													(throw 'mem-fault-suppress nil))))))
 	(let ((keys-check? (keys-check?))
 		  (debug-check? (debug-check?)))
 	  (declare (boolean keys-check? debug-check?))
@@ -81,7 +84,7 @@ In manager ~A.
 		  (declare (manager-pointer mp))
 
 		  (log-msg :trace :logger cudd-node-logger
-				   "Finalizer for ~A ~A.  REFs: ~D"
+				   "~2&~T Finalizer for ~A ~A.  REFs: ~D"
 				   node-type
 				   node-pointer ;;cur-address
 				   (cudd-node-ref-count node-pointer))
