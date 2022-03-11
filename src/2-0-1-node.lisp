@@ -51,15 +51,12 @@
 		(debug-check? (debug-check?)))
 	(declare (boolean keys-check? debug-check?))
 
-	(progn
-	  ;; let ((cur-address (pointer-address node-pointer)))
-	  ;;  (assert (eql address cur-address))
+	(with-cudd-critical-section (:manager manager)
+	  (let ((mp (manager-pointer manager)))
+		(declare (manager-pointer mp))
 
-	  (with-cudd-critical-section (:manager manager)
 		(handler-bind-case ; for sb-sys:memory-fault-error
-		 (let ((mp (manager-pointer manager)))
-		   (declare (manager-pointer mp))
-
+		 (progn
 		   (log-msg :trace :logger cudd-node-logger
 					"Finalizer for ~A ~A.  REFs: ~D"
 					node-type
@@ -83,47 +80,7 @@ in manager ~A"
 							  node-type
 							  node-pointer
 							  manager-string)))))
-
-
-		   (cond
-			 (ref
-			  (log-msg :debu8 :logger cudd-node-logger
-					   "Reached the deref segment in finalizer for ~A ~A." node-type node-pointer)
-
-			  (when (zerop (cudd-node-ref-count node-pointer))
-				(error "Tried to decrease reference count of node that already has refcount zero"))
-
-			  (ecase node-type
-				(bdd-node (cudd-recursive-deref mp node-pointer))
-				(add-node (cudd-recursive-deref mp node-pointer))
-				(zdd-node (cudd-recursive-deref-zdd mp node-pointer)))
-
-			  (log-msg :debu7 :logger cudd-node-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
-					   node-pointer
-					   (cudd-node-ref-count node-pointer))
-
-			  (log-msg :debu8 :logger cudd-node-logger
-					   "Past the deref segment in finalizer for ~A ~A." node-type node-pointer))
-			 (t ; ref=nil
-			  (log-msg :debu8 :logger cudd-node-logger
-					   "Skipping the deref segment in finalizer for ~A ~A." node-type node-pointer)))
-
-		   (when config/debug-consistency-checks
-			 (when keys-check?
-			   (unless (zerop (cudd-check-keys mp))
-				 (log-error :logger cudd-node-logger "~&Assert 3: ~&~T~A ~&failed at end of finalizer for
- ~T~A
- in ~A"
-							'(zerop (cudd-check-keys mp))
-							node-pointer
-							mp)))
-			 (when debug-check?
-			   (unless (zerop (cudd-debug-check mp))
-				 (log-error :logger cudd-node-logger "~&Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))))
-
-		   (log-msg :debu8 :logger cudd-node-logger "Reached the end of finalizer for ~A ~A." node-type node-pointer)
 		   ); protected form
-
 		 ;; TODO: Remove reliance on '#+sbcl':
 		 #+sbcl (sb-sys:memory-fault-error (xc)
 										   (ecase config/signal-memory-errors
@@ -143,7 +100,45 @@ In manager ~A.
 												(cerror "Ignore and hope for the best" xc)))
 
 											 ((nil) ;; silently suppress error
-											  ))))))))
+											  )))); handler-bind-case
+	  (cond
+		(ref
+		 (log-msg :debu8 :logger cudd-node-logger
+				  "Reached the deref segment in finalizer for ~A ~A." node-type node-pointer)
+
+		 (when (zerop (cudd-node-ref-count node-pointer))
+		   (error "Tried to decrease reference count of node that already has refcount zero"))
+
+		 (ecase node-type
+		   (bdd-node (cudd-recursive-deref mp node-pointer))
+		   (add-node (cudd-recursive-deref mp node-pointer))
+		   (zdd-node (cudd-recursive-deref-zdd mp node-pointer)))
+
+		 (log-msg :debu7 :logger cudd-node-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
+				  node-pointer
+				  (cudd-node-ref-count node-pointer))
+
+		 (log-msg :debu8 :logger cudd-node-logger
+				  "Past the deref segment in finalizer for ~A ~A." node-type node-pointer))
+		(t ; ref=nil
+		 (log-msg :debu8 :logger cudd-node-logger
+				  "Skipping the deref segment in finalizer for ~A ~A." node-type node-pointer)))
+
+	  (when config/debug-consistency-checks
+		(when keys-check?
+		  (unless (zerop (cudd-check-keys mp))
+			(log-error :logger cudd-node-logger "~&Assert 3: ~&~T~A ~&failed at end of finalizer for
+ ~T~A
+ in ~A"
+					   '(zerop (cudd-check-keys mp))
+					   node-pointer
+					   mp)))
+		(when debug-check?
+		  (unless (zerop (cudd-debug-check mp))
+			(log-error :logger cudd-node-logger "~&Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))))))
+
+	(log-msg :debu8 :logger cudd-node-logger "Reached the end of finalizer for ~A ~A." node-type node-pointer)
+	t))
 
 (defun helper/construct-node (pointer type ref manager)
   "Used by (wrap-and-finalize)."
