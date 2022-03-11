@@ -155,7 +155,7 @@ In manager ~A.
 		   ;; *Side-effect*:
 		   (cudd-ref pointer)
 
-		   (log-msg :debu6 :logger cudd-node-logger "- After (cudd-ref ~A), REFs = ~D."
+		   (log-msg :debu7 :logger cudd-node-logger "- After (cudd-ref ~A), REFs = ~D."
 					pointer
 					(cudd-node-ref-count pointer)))
 
