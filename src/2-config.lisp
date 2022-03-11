@@ -10,7 +10,7 @@
 (defvar config/enable-gc t
   "When true, new nodes get equipped with finalizers.")
 
-(defvar config/signal-memory-errors :error
+(defvar config/signal-memory-errors :log
   "Whether to propagate memory errors from `cudd-node' finalizers.")
 (declaim (type (member :error :log nil)
 			   config/signal-memory-errors ))
@@ -18,11 +18,13 @@
 (defvar config/debug-consistency-checks nil
   ;; :debug
   "When truthy, make calls to CUDD's reflective funcs whenever a :cl-cudd node is created or finalized.  NOTE: These cause immense lag.
+
   Possible values:
 	- `NIL': No checks
 	- `:keys': Call (cudd-check-keys)--writes to `uiop:*stdout*' constantly
 	- `:debug': (cudd-debug-check)--still slow, but only writes to `*stdout*' on failure
 	- `T': Both
+
   * TODO [optimization]: Disable by default on max speed.")
 (declaim (type (member NIL T :keys :debug)
 			   config/debug-consistency-checks))
