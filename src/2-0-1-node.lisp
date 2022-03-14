@@ -37,6 +37,53 @@
 	  ;; (member :check-keys config/debug-consistency-checks :test #'eq)
 	  (eq :debug config/debug-consistency-checks)))
 
+
+(defmacro with-mem-fault-protection (&body body)
+  "Establish a block to handle a memory fault.  Optionally resume execution, depending on `config/signal-memory-errors'.
+  * TODO: Rewrite with (handler-case)?
+"
+  (not-implemented-error 'with-mem-fault-protection)
+  `(handler-case ; for sb-sys:memory-fault-error
+	   (progn
+		 ,@body)
+
+	 ;; TODO: Remove reliance on '#+sbcl':
+	 #+sbcl (sb-sys:memory-fault-error (xc)
+			  (ecase config/signal-memory-errors
+				((:error :log)
+				 (let+ (((&accessors-r/o manager-pointer) manager)) ;((manager-string (princ-to-string manager)))
+				   (log-error :logger cudd-node-logger
+							  ;; TODO: Give each node an index?
+							  "* Error: memory-fault detected in Lisp:
+ ~&~T~<~A~>
+
+while destructing ~A ~A in manager #~D.
+
+ Re-throwing? ~A~%"
+							  node-type
+							  node-pointer
+							  xc
+							  manager-pointer ;manager-string
+							  (eq :error config/signal-memory-errors)))
+
+				 (if (eq :error config/signal-memory-errors)
+					 (cerror "Ignore and hope for the best" xc)
+					 (assert* (eq :log config/signal-memory-errors))))
+
+				((nil) #| Silence |#))
+			  ;; Continue.
+			  ;; (throw 'mem-fault-suppress nil)
+			  nil)))
+
+;; (defun cudd-do-integrity-checks-maybe (&key
+;; 										 ((:keys keys-check?) (keys-check?))
+;; 										 ((:debug debug-check?) (debug-check?)))
+;;   (declare (boolean keys-check? debug-check?))
+
+;;   (not-implemented-error 'cudd-do-integrity-checks-maybe))
+
+
+
 (defun helper/destruct-node (node-pointer node-type manager ref)
   "NB: We *do* want to maintain a reference to the MANAGER from within a node's finalizer.
   MANAGER: Maintain a reference from the node's finalizer to its manager so there is no chance of dangling-pointer errors.  See M. Asai's note in (wrap-and-finalize).

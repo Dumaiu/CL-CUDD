@@ -166,7 +166,9 @@
 			 (when (and manager-provided? mutex-provided?)
 			   (error "Only use one of :mutex or :manager as a parameter."))
 
-			 (list :mutex mutex)))
+			 (list* :mutex mutex
+					(when manager-provided?
+					  (list :manager manager)))))
 
 	  (match body
 		((list* (guard kwargs
@@ -176,6 +178,7 @@
 				(list :body body_)))
 		(_
 		 (list :mutex '(manager-mutex *manager*)
+
 			   :body body)))))
 
   ;; Some quick testing:
@@ -209,7 +212,33 @@
 	(declare (type (not null) mutex-form)
 			 (list body))
 	`(with-recursive-lock-held (,mutex-form)
-	   ,@body)))
+	   ,@body
+
+	   (when config/debug-consistency-checks
+		 (with-mem-fault-protection
+		   (when keys-check?
+			 (unless (zerop (cudd-check-keys mp))
+			   (let ((manager-string (princ-to-string manager)))
+				 (log-error :logger cudd-node-logger "~&Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
+in manager ~A~%"
+							node-type
+							node-pointer
+							manager-string)))))
+		 (with-mem-fault-protection
+		   (when debug-check?
+			 (unless (zerop (cudd-debug-check mp))
+			   (let ((manager-string (princ-to-string manager)))
+				 (log-error :logger cudd-node-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
+in manager ~A~%"
+							node-type
+							node-pointer
+							manager-string))))))
+	   (handler-case
+		   (progn
+
+			 ))
+
+	   )))
 
 (defun manager-init #.`(&key ,@+manager-initarg-defaults+)
   "Construct and return a new `manager' instance, loading CUDD backend to go with it."
