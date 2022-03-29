@@ -25,7 +25,7 @@
 ;;; Wrapped CUDD node
 (defstruct node
   "A boxed CUDD node class. Top class of all CUDD nodes."
-  (pointer (required) :type cffi:foreign-pointer))
+  (pointer (required) :type node-pointer))
 
 (declaim (inline keys-check?
                  debug-check?))
