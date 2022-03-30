@@ -6,6 +6,12 @@
 (assert (fboundp 'log-error))
 (assert (boundp '*stderr*))
 
+(export '(bdd-constant-node
+          bdd-variable-node
+          node-pointer
+          node-manager
+          ))
+
 (with-package-log-hierarchy
   (defvar cudd-node-logger (make-logger)
     ":log4cl logger created in '2-0-1-node.lisp'.
@@ -22,10 +28,41 @@
 
 (defun required ()
   (error "Required slot"))
-;;; Wrapped CUDD node
-(defstruct node
-  "A boxed CUDD node class. Top class of all CUDD nodes."
-  (pointer (required) :type node-pointer))
+
+;; (defstruct node
+;;   "A boxed CUDD node class. Top class of all CUDD nodes."
+;;   (pointer (required) :type node-pointer))
+
+;; (declaim (inline node-manager)) ; TODO: Static method
+(defclass node ()
+  ((pointer :initform (required)
+            :initarg :pointer
+            :type node-pointer
+            #|:accessor node-pointer|#)
+   (manager :initform *manager*
+            :initarg :manager
+            :type manager
+            :accessor manager
+            #|:accessor node-manager
+            TODO: My ideal would be something akin to:
+
+            :accessor (manager :inline t)
+
+            |#))
+  (:documentation "Wrapped CUDD node.
+  - [2022-03-30 Wed] Added a `manager' reference.
+  - TODO: Static generic funcs.  (node-pointer) and (node-manager) are already non-generic inlined readers.
+"))
+
+(declaim (inline node-pointer
+                 node-manager))
+(defun node-pointer (node)
+  (declare (node node))
+  (the node-pointer (slot-value node 'pointer)))
+
+(defun node-manager (node)
+  (declare (node node))
+  (the manager (slot-value node 'manager)))
 
 (declaim (inline keys-check?
                  debug-check?))
@@ -306,14 +343,35 @@ only if their pointers are the same."
   (assert (node-constant-p node))
   (cudd-node-value (node-pointer node)))
 
-(defstruct (bdd-node (:include node))
-  "Node of a binary decision diagram (BDD)")
+(declaim (inline make-bdd-node
+                 make-add-node
+                 make-zdd-node))
 
-(defstruct (add-node (:include node))
-  "Node of an algebraic decision diagram (ADD)")
+(defclass bdd-node (node) ()
+  (:documentation "Node of a binary decision diagram (BDD)"))
+;; (defstruct (bdd-node (:include node))
+;;   "Node of a binary decision diagram (BDD)")
 
-(defstruct (zdd-node (:include node))
-  "Node of an zero-suppressed decision diagram (ZDD)")
+(defun make-bdd-node (&rest args)
+  (apply #'make-instance 'bdd-node args))
+
+(defclass bdd-constant-node (bdd-node) ()
+  (:documentation "A 0 or 1 literal."))
+
+(defclass bdd-variable-node (bdd-node) ()
+  (:documentation "A BDD variable literal."))
+
+(defclass add-node (node) ()
+  (:documentation "Node of an algebraic decision diagram (ADD)"))
+
+(defun make-add-node (&rest args)
+  (apply #'make-instance 'add-node args))
+
+(defclass zdd-node (node) ()
+  (:documentation "Node of an zero-suppressed decision diagram (ZDD)"))
+
+(defun make-zdd-node (&rest args)
+  (apply #'make-instance 'zdd-node args))
 
 (deftype node-type ()
   `(member bdd-node add-node zdd-node))
