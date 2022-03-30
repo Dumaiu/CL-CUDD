@@ -21,6 +21,7 @@
 
   - NOTE: Setting this to :trace or higher will slow CUDD way down by logging all `bdd-node' construction|finalization funcalls.
 "))
+(declaim (special cudd-node-logger))
 
 ;; (log4cl:hierarchy-index (find-package :cudd))
 ;; (log4cl:hierarchy-index cudd:cudd-logger )
@@ -277,7 +278,7 @@ in manager ~A~%"
                          (log-error :logger cudd-node-logger "~&Assert 6 failed: during (helper/construct-node): ~A with MP=~A"  ',test-6  mp)))))))
           node)))))
 
-(defmacro wrap-and-finalize (pointer type &optional (ref t))
+(defmacro wrap-and-finalize (pointer type &key (ref t) (manager '*manager*))
   "Wrap the given pointer in a node of type TYPE.
 If a node for the same pointer is already in the lisp image, it is reused.
 Otherwise, a new node object is instantiated.
@@ -290,21 +291,26 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
   * TODO: Kwarg to disable (with-cudd-critical-section)
 "
   ;; (declare (optimize debug))
-  `(let* ((pointer ,pointer)
-          (type ,type)
-          (ref ,ref)
-          (address (pointer-address pointer))
-          (manager *manager*))
-     (declare
-      (foreign-pointer pointer)
-      (type (member bdd-node add-node zdd-node) type)
-      (boolean ref))
 
-     (ensure-gethash
-      address
-      (manager-node-hash manager)
-      ;; This form executes iff ADDRESS isn't already present in the hashtable:
-      (helper/construct-node pointer type ref manager))))
+  ;; NOTE: I can't use (alexandria:once-only) here.  It isn't "`declare'-friendly":
+  `(let ((manager ,manager))
+     (declare (manager manager))
+
+     (with-cudd-critical-section (:manager manager)
+       (let* ((pointer ,pointer)
+              (type ,type)
+              (ref ,ref)
+              (address (pointer-address pointer)))
+         (declare (node-pointer pointer)
+                  (node-type type)
+                  (boolean ref))
+
+         (ensure-gethash
+          address
+          (manager-node-hash manager)
+          ;; This form executes iff ADDRESS isn't already present in the hashtable:
+          (helper/construct-node pointer type ref manager))))))
+
 
 
 (defmethod print-object ((object node) stream)
