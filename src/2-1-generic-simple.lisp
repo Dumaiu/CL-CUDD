@@ -5,40 +5,40 @@
 
 (def-cudd-call node-or ((:add (lambda (mgr f g) (cudd-add-apply mgr +or+ f g))
                          :bdd cudd-bdd-or) (f :node) (g :node))
-  :generic "Disjunction of two 0-1 ADDs or two BDDs."
-  :add     "Disjunction of two 0-1 ADDs."
-  :bdd     "Disjunction of two BDDs.")
+               :generic "Disjunction of two 0-1 ADDs or two BDDs."
+               :add     "Disjunction of two 0-1 ADDs."
+               :bdd     "Disjunction of two BDDs.")
 
 (def-cudd-call node-and ((:add (lambda (mgr f g) (cudd-add-apply mgr +times+ f g))
-                         :bdd cudd-bdd-and) (f :node) (g :node))
-  :generic "Conjunction of two 0-1 ADDs or two BDDs."
-  :add     "Conjunction of two 0-1 ADDs."
-  :bdd     "Conjunction of two BDDs.")
+                          :bdd cudd-bdd-and) (f :node) (g :node))
+               :generic "Conjunction of two 0-1 ADDs or two BDDs."
+               :add     "Conjunction of two 0-1 ADDs."
+               :bdd     "Conjunction of two BDDs.")
 
 (def-cudd-call node-xor ((#|FIXME :add (lambda (mgr f g) (cudd-add-apply mgr +times+ f g))|#
-						  :bdd cudd-bdd-xor) (f :node) (g :node))
-			   :generic "Symmetric difference of two 0-1 ADDs or two BDDs."
-			   :add     "Symmetric difference of two 0-1 ADDs.  (Not yet implemented!)"
-			   :bdd     "Symmetric difference of two BDDs.")
+                          :bdd cudd-bdd-xor) (f :node) (g :node))
+               :generic "Symmetric difference of two 0-1 ADDs or two BDDs."
+               :add     "Symmetric difference of two 0-1 ADDs.  (Not yet implemented!)"
+               :bdd     "Symmetric difference of two BDDs.")
 
 (def-cudd-call node-complement ((:add cudd-add-cmpl :bdd cudd-bdd-not
                                  :zdd cudd-zdd-complement)
                                 (node :node))
-  :generic "Computes the complement of a node a la C language:
+               :generic "Computes the complement of a node a la C language:
 The complement of 0 is 1 and the complement of everything else is 0."
-  :add "Computes the complement of an ADD a la C language:
+               :add "Computes the complement of an ADD a la C language:
 The complement of 0 is 1 and the complement of everything else is 0."
-  :bdd "Complements a DD by flipping the complement attribute of the
+               :bdd "Complements a DD by flipping the complement attribute of the
 pointer (the least significant bit)."
-  :zdd "Complements a unate ZDD.")
+               :zdd "Complements a unate ZDD.")
 
 (def-cudd-call if-then-else ((:add cudd-add-ite :bdd cudd-bdd-ite :zdd cudd-zdd-ite)
                              (f :node) (g :node) (h :node))
-  :generic "Return a new DD-node for with F being the top-node, G being the then-branch
+               :generic "Return a new DD-node for with F being the top-node, G being the then-branch
 and H being the else branch"
-  :add "Implements ITE(f,g,h). This procedure assumes that f is a 0-1 ADD."
-  :bdd "Implements ITE(f,g,h)."
-  :zdd "Implements ITE(f,g,h).")
+               :add "Implements ITE(f,g,h). This procedure assumes that f is a 0-1 ADD."
+               :bdd "Implements ITE(f,g,h)."
+               :zdd "Implements ITE(f,g,h).")
 
 (defun cube (nodes type)
   "
@@ -46,10 +46,10 @@ A cube, or product, is a boolean product of literals.
 Build a cube from a list of nodes. TYPE defines which nodes we have
 in the list of nodes: ADD-NODE or BDD-NODE"
   (wrap-and-finalize
-   (ecase type
-     (bdd-node (cudd-bdd-cube %mp% (map 'list #'node-pointer nodes)))
-     (add-node (cudd-add-cube %mp% (map 'list #'node-pointer nodes))))
-   (or type (type-of (first-elt nodes)))))
+      (ecase type
+        (bdd-node (cudd-bdd-cube %mp% (map 'list #'node-pointer nodes)))
+        (add-node (cudd-add-cube %mp% (map 'list #'node-pointer nodes))))
+      (or type (type-of (first-elt nodes)))))
 
 (defun make-var (type &key level index)
   "Creates a new DD variable (projection function). At most one of index and level may be given.
@@ -94,12 +94,14 @@ When index = 2 and N = 4, the resulting ZDD looks as follows:
   (ecase type
     ;; var is a projection function, and its reference count is always greater
     ;; than 0. Therefore, there is no call to Cudd Ref.
-    (bdd-node (wrap-and-finalize (bdd-var %mp% :index index :level level) type nil))
+    (bdd-node
+     ;; (break "~&Constant? ~A" (cudd-node-is-constant (bdd-var %mp% :index index :level level)))
+     (wrap-and-finalize (bdd-var %mp% :index index :level level) 'bdd-variable-node :ref nil))
     ;; The ADD projection function are not maintained by the manager. It is
     ;; therefore necessary to reference and dereference them.
-    (add-node (wrap-and-finalize (add-var %mp% :index index :level level) type))
+    (add-node (wrap-and-finalize (add-var %mp% :index index :level level) 'add-variable-node))
     ;; The projection functions are referenced, because they are not maintained by the manager.
-    (zdd-node (wrap-and-finalize (zdd-var %mp% :index index :level level) type))))
+    (zdd-node (wrap-and-finalize (zdd-var %mp% :index index :level level) 'zdd-variable-node))))
 
 (defun node-then (type node)
   "Return the then child of an inner node"
@@ -115,40 +117,37 @@ When index = 2 and N = 4, the resulting ZDD looks as follows:
 
 #|
 
- Although the manual says that the constant 1 is same across A/B/ZDDs and
-  constant 0 is obtained by Cudd_ReadZero,
- somehow, CUDD-READ-ZERO and CUDD-READ-ONE did not work for ADDs.
+Although the manual says that the constant 1 is same across A/B/ZDDs and
+constant 0 is obtained by Cudd_ReadZero,
+somehow, CUDD-READ-ZERO and CUDD-READ-ONE did not work for ADDs.
 
 |#
 
-;; TODO: Enable `manager' param.  Need to pass to (wrap-and-finalize).
-(defun zero-node (type ;; &optional (manager *manager*)
-                         )
+(defun zero-node (type &key (manager *manager*))
   "Return the zero node for the correspoinding type.
 BDD: the logical zero node (boolean 0).
 ADD: the arithmetic zero node (0.0d0).
 ZDD: the arithmetic zero node (0.0d0). (Same as ADD)"
   (declare (node-type type)
-           ;; (manager manager)
-		   )
-  (wrap-and-finalize
-   (ecase type
-     (bdd-node (cudd-read-logic-zero %mp%))
-     (add-node (cudd-read-zero %mp%))
-     (zdd-node (cudd-read-zero %mp%)))
-   type
-   ;; because these nodes are predefined constants.
-   nil))
+           (manager manager))
+  (let ((%mp% (manager-pointer manager)))
+   (wrap-and-finalize
+       (ecase type
+         (bdd-node (cudd-read-logic-zero %mp%))
+         (add-node (cudd-read-zero %mp%))
+         (zdd-node (cudd-read-zero %mp%)))
+       type
+       ;; because these nodes are predefined constants.
+       :ref nil
+       :manager manager)))
 
-(defun one-node (type ;; &optional (manager *manager*)
-                        )
+(defun one-node (type &key (manager *manager*))
   "return the constant one node."
   (declare (node-type type)
-           ;; (manager manager)
-		   )
-  (wrap-and-finalize (cudd-read-one %mp% ;; (manager-pointer manager)
-									)
-                     type
-                     ;; because these nodes are predefined constants.
-                     nil))
-
+           (manager manager))
+  (let ((%mp% (manager-pointer manager)))
+   (wrap-and-finalize (cudd-read-one %mp%)
+       type
+       ;; because these nodes are predefined constants.
+       :ref nil
+       :manager manager)))

@@ -6,7 +6,10 @@
 (assert (fboundp 'log-error))
 (assert (boundp '*stderr*))
 
-(export '(bdd-constant-node
+(export '(
+          node-type
+          generalized-bit
+          bdd-constant-node
           bdd-variable-node
           node-pointer
           node-manager
@@ -25,6 +28,16 @@
 
 ;; (log4cl:hierarchy-index (find-package :cudd))
 ;; (log4cl:hierarchy-index cudd:cudd-logger )
+
+(deftype generalized-bit ()
+  '(or boolean (member 0 1)))
+
+(deftype node-type ()
+  "One of the three node types or their subclasses."
+  `(member bdd-node bdd-constant-node bdd-variable-node
+           add-node add-constant-node add-variable-node
+           zdd-node zdd-constant-node zdd-variable-node
+           ))
 
 
 (defun required ()
@@ -54,6 +67,12 @@
   - [2022-03-30 Wed] Added a `manager' reference.
   - TODO: Static generic funcs.  (node-pointer) and (node-manager) are already non-generic inlined readers.
 "))
+
+;; id=ctor
+(defmethod initialize-instance :after ((node node) &key &allow-other-keys)
+  "TODO: Undefine on max [opt] settings."
+  (check-type (slot-value node 'pointer) node-pointer)
+  (check-type (slot-value node 'manager) manager))
 
 (declaim (inline node-pointer
                  node-manager))
@@ -199,6 +218,7 @@ in manager ~A~%"
 (defun helper/construct-node (pointer type ref manager)
   "Used by (wrap-and-finalize)."
   (declare (node-pointer pointer)
+           (node-type type)
            (boolean ref)
            (manager manager))
 
@@ -238,11 +258,12 @@ in manager ~A~%"
            pointer     ;
            initial-ref-count)))|#))
 
-        (let ((node #.(let ((ctor-args '(:pointer pointer)))
-                        `(ecase type
-                           (bdd-node (make-bdd-node ,@ctor-args))
-                           (add-node (make-add-node ,@ctor-args))
-                           (zdd-node (make-zdd-node ,@ctor-args))))))
+        (let-1 node (make-instance type :pointer pointer :manager manager)
+         ;; let ((node #.(let ((ctor-args '(:pointer pointer)))
+         ;;                `(ecase type
+         ;;                   (bdd-node (make-bdd-node ,@ctor-args))
+         ;;                   (add-node (make-add-node ,@ctor-args))
+         ;;                   (zdd-node (make-zdd-node ,@ctor-args))))))
 
           ;; Construct finalizer for NODE:
           (when config/enable-gc
@@ -311,6 +332,12 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
           ;; This form executes iff ADDRESS isn't already present in the hashtable:
           (helper/construct-node pointer type ref manager))))))
 
+(defun node (pointer type &key (ref t) (manager *manager*))
+  (declare (node-pointer pointer)
+           (node-type type)
+           (boolean ref)
+           (manager manager))
+  (wrap-and-finalize pointer type :ref ref :manager manager))
 
 
 (defmethod print-object ((object node) stream)
@@ -349,6 +376,10 @@ only if their pointers are the same."
   (assert (node-constant-p node))
   (cudd-node-value (node-pointer node)))
 
+(defclass constant-node () ())
+
+;; (defclass literal-node () ())
+
 (declaim (inline make-bdd-node
                  make-add-node
                  make-zdd-node))
@@ -361,29 +392,38 @@ only if their pointers are the same."
 (defun make-bdd-node (&rest args)
   (apply #'make-instance 'bdd-node args))
 
-(defclass bdd-constant-node (bdd-node) ()
+(defclass bdd-constant-node (bdd-node constant-node) ()
   (:documentation "A 0 or 1 literal."))
 
-(defclass bdd-variable-node (bdd-node) ()
+(defclass bdd-variable-node (bdd-node)
+  (#|TODO|#)
   (:documentation "A BDD variable literal."))
+
+(defun bdd-node (pointer &key (manager *manager*))
+  (declare (node-pointer pointer))
+  (wrap-and-finalize pointer 'bdd-node
+      ;; :ref (not (cudd-node-is-constant pointer))
+      :manager manager))
 
 (defclass add-node (node) ()
   (:documentation "Node of an algebraic decision diagram (ADD)"))
 
+(defclass add-constant-node (add-node constant-node) ()
+  (:documentation "Unlike with the other ?DD types, users there may be new ADD constants."))
+
 (defun make-add-node (&rest args)
   (apply #'make-instance 'add-node args))
+
+(defun add-node (pointer &key (manager *manager*))
+  (declare (node-pointer pointer))
+  (wrap-and-finalize pointer 'add-node :ref (not (cudd-node-is-constant pointer))
+                     :manager manager))
 
 (defclass zdd-node (node) ()
   (:documentation "Node of an zero-suppressed decision diagram (ZDD)"))
 
 (defun make-zdd-node (&rest args)
   (apply #'make-instance 'zdd-node args))
-
-(deftype node-type ()
-  `(member bdd-node add-node zdd-node))
-
-(deftype generalized-bit ()
-  '(or boolean (member 0 1)))
 
 (assert (not (eq 'cudd-T 'cl-cudd.baseapi:cudd-T)))
 (defun cudd-T (node)
