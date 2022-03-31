@@ -53,8 +53,8 @@
     zdd-node-type))
 
 
-(defun required ()
-  (error "Required slot"))
+(defun required (&optional name)
+  (error "Required slot~[~;: ~S~]" (if name 1 0) name))
 
 ;; (defstruct node
 ;;   "A boxed CUDD node class. Top class of all CUDD nodes."
@@ -62,7 +62,7 @@
 
 ;; (declaim (inline node-manager)) ; TODO: Static method
 (defclass node ()
-  ((pointer :initform (required)
+  ((pointer :initform (required 'pointer)
             :initarg :pointer
             :type node-pointer
             #|:accessor node-pointer|#)
@@ -413,7 +413,7 @@ only if their pointers are the same."
 
 (defclass bdd-variable-node (bdd-node)
   ((index :type non-negative-fixnum
-          :initform (required)
+          :initform (required 'index)
           :initarg :index
           :reader index
           #| TODO :reader (bdd-variable-index :inline t) |#
