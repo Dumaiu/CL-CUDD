@@ -14,6 +14,8 @@
           generalized-bit
           bdd-constant-node
           bdd-variable-node
+          index
+          bdd-variable-index
           node-pointer
           node-manager
           ))
@@ -406,9 +408,22 @@ only if their pointers are the same."
 (defclass bdd-constant-node (bdd-node constant-node) ()
   (:documentation "A 0 or 1 literal."))
 
+;; (deftype nat ()
+;;   'non-negative-fixnum)
+
 (defclass bdd-variable-node (bdd-node)
-  (#|TODO|#)
+  ((index :type non-negative-fixnum
+          :initform (required)
+          :initarg :index
+          :reader index
+          #| TODO :reader (bdd-variable-index :inline t) |#
+          ))
   (:documentation "A BDD variable literal."))
+
+(declaim (inline bdd-variable-index))
+(defun bdd-variable-index (bdd-variable-node)
+  (declare (bdd-variable-node bdd-variable-node))
+  (the non-negative-fixnum (slot-value bdd-variable-node 'index)))
 
 (defun bdd-node (pointer &key (manager *manager*))
   (declare (node-pointer pointer))
@@ -421,6 +436,9 @@ only if their pointers are the same."
 
 (defclass add-constant-node (add-node constant-node) ()
   (:documentation "Unlike with the other ?DD types, users may make new ADD constants."))
+
+(defclass add-variable-node (add-node) ()
+  #|(FIXME)|#)
 
 (defun make-add-node (&rest args)
   (apply #'make-instance 'add-node args))
