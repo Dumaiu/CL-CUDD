@@ -494,24 +494,24 @@ Follow the then-branch when 1, else-branch otherwise."
   (declare (bdd-node bdd)
            (manager src)
            (manager dest))
-  (if (eql src dest)
-      (not-implemented-error 'vacuous-bdd-transfer "'src' and 'dest' args to (bdd-transfer) must be different.")
+  (if (eq src dest)
+      (not-implemented-error 'trivial-bdd-transfer "'src' and 'dest' args to (bdd-transfer) must be different.")
       (let ((*manager* dest))
         (with-cudd-critical-section (:manager dest)
-          ;; (not-implemented-error 'bdd-transfer)
           (let ((bdd-ptr (cudd-bdd-transfer (manager-pointer src) (manager-pointer dest) (node-pointer bdd))))
             (declare (type node-pointer bdd-ptr))
             (the bdd-node (wrap-and-finalize bdd-ptr 'bdd-node)))))))
 
 (defgeneric transfer (thing &key)
-  (:method :around (thing &key (src *manager*) dest)
-	"TODO: Handle case where SRC=DEST."
-	(declare (manager src dest))
-	(assert* (not (eq src dest)))
-	(call-next-method thing :src src :dest dest))
+  (:method :around (thing &key (src (manager thing)) (dest *manager*))
+    "TODO: Handle case where SRC=DEST."
+    (declare (manager src dest))
+    (assert* (not (eq src dest)))
+    (call-next-method thing :src src :dest dest))
   (:method ((bdd bdd-node) &key src dest)
-	(declare (manager src dest))
-	(bdd-transfer bdd :src src :dest dest)))
+    "NOTE: Default kwarg values found in :around spec."
+    (declare (manager src dest))
+    (bdd-transfer bdd :src src :dest dest)))
 
 
 (defun dump-factored-form (nodes &key
