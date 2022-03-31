@@ -5,39 +5,49 @@
 (defun add-negate (node)
   "Computes the additive inverse of an ADD."
   (wrap-and-finalize
-   (etypecase node
-     (add-node (cudd-add-negate %mp% (node-pointer node))))
-   'add-node))
+      (etypecase node
+        (add-node (cudd-add-negate %mp% (node-pointer node))))
+      'add-node))
 
 (defun add-constant (value)
   "Retrieves the ADD for constant c if it already exists, or creates a new ADD."
   (wrap-and-finalize
-   (cudd-add-const %mp% value)
-   'add-node))
+      (cudd-add-const %mp% value)
+      'add-constant-node))
 
-(defun plus-infinity ()
-  "Returns a  node with value infinity."
-  (wrap-and-finalize
-   (cudd-read-plus-infinity %mp%)
-   'add-node
-   ;; because these nodes are predefined constants.
-   nil))
+(defun plus-infinity (&key (manager *manager*))
+  "Returns a node with value infinity."
+  (declare (manager manager))
+  ;; (let ((node (add-node (cudd-read-plus-infinity (manager-pointer manager)) :manager manager)))
+  ;;   (declare (type add-constant-node node))
+  ;;   node)
+  (wrap-and-finalize (cudd-read-plus-infinity (manager-pointer manager)) 'add-constant-node
+                     :manager manager
+                     :ref nil ; because these nodes are predefined constants.
+                     ))
 
-(defun minus-infinity ()
+(defun minus-infinity (&key (manager *manager*))
   "Returns a  node with value -infinity."
-  (wrap-and-finalize
-   (cudd-read-minus-infinity %mp%)
-   'add-node
-   ;; because these nodes are predefined constants.
-   nil))
+  (declare (manager manager))
+  ;; (let ((node (add-node (cudd-read-minus-infinity (manager-pointer manager)) :manager manager)))
+  ;;   (declare (type add-constant-node node))
+  ;;   node)
+  (wrap-and-finalize (cudd-read-minus-infinity (manager-pointer manager)) 'add-constant-node
+                     :manager manager
+                     :ref nil ; because these nodes are predefined constants.
+                     ))
 
-(defun epsilon ()
+(defun epsilon (&key (manager *manager*))
   "Returns a  node with value infinity."
-  (wrap-and-finalize
-   (cudd-read-epsilon %mp%)
-   'add-node
-   ;; because these nodes are predefined constants.
-   nil))
+  (declare (manager manager))
+  ;; (let ((node (add-node (cudd-read-epsilon (manager-pointer manager)) :manager manager)))
+  ;;   (declare (type add-constant-node node))
+  ;;   node)
+  (wrap-and-finalize (cudd-read-epsilon (manager-pointer manager)) 'add-constant-node
+                     :manager manager
+                     :ref nil ; because these nodes are predefined constants.
+                     ))
+
 
 ;;; Functions for add-apply
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -120,8 +130,8 @@ The following operations are supported:
 (defun add-apply (op f g)
   #.*add-apply-doc*
   (wrap-and-finalize
-   (cudd-add-apply %mp%
-                   op
-                   (node-pointer f)
-                   (node-pointer g))
-   'add-node))
+      (cudd-add-apply %mp%
+                      op
+                      (node-pointer f)
+                      (node-pointer g))
+      'add-node))
