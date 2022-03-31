@@ -1,10 +1,19 @@
+* TODO [2022-03-30 Wed] See example in the CUDD manual at 'Basic BDD Manipulation':
+Should we be increasing the ref count for constants?
+  - If so, change the (assert) checks in 2-4-hook.lisp.
+
+* TODO: Binary BDD operations should compare their operands' managers with (eq).
+
+* TODO: Make 2-1-zdd-set-operations.lisp, 2-2-zdd-bdd-bridge.lisp thread-safe
+* DONE: Replace `%mp%` appearances with '(manager node)' calls.
+    * Except for the files named previously.
+
 * [2022-02-02 Wed] TODO: Wrappers for:
     * `cudd-read-keys`
     * `cudd-read-dead`
     * `cudd-dead-are-counted`
     * `cudd-turn-on-count-dead`
 * [2022-01-12 Wed] TODO: Convert a BDD to a `:cl-graph` graph.
-* TODO [2022-01-10 Mon] How should we handle the BDD wrappers for constants?  If they have permanent extent, there's no point in reference counting with them.  The same could be said of variable nodes, which are also literals.
 * TODO: [optimize] (cudd:support-index)
 * TODO: Make (node-add|or|xor) variadic?
 * TODO: Some of my additions have probably not been to the correct file.  I tend to put everything in the 'util' one.

@@ -228,12 +228,13 @@ in manager ~A~%"
         (log-msg :debu8 :logger cudd-node-logger "Reached the end of finalizer for ~A ~A." node-type node-pointer)
         t))))
 
-(defun helper/construct-node (pointer type ref manager)
+(defun helper/construct-node (pointer type ref manager other-initargs)
   "Used by (wrap-and-finalize)."
   (declare (node-pointer pointer)
            (node-type type)
            (boolean ref)
-           (manager manager))
+           (manager manager)
+           (list other-initargs))
 
   (let ((keys-check? (keys-check?))
         (debug-check? (debug-check?)))
@@ -271,12 +272,13 @@ in manager ~A~%"
            pointer     ;
            initial-ref-count)))|#))
 
-        (let-1 node (make-instance type :pointer pointer :manager manager)
-         ;; let ((node #.(let ((ctor-args '(:pointer pointer)))
-         ;;                `(ecase type
-         ;;                   (bdd-node (make-bdd-node ,@ctor-args))
-         ;;                   (add-node (make-add-node ,@ctor-args))
-         ;;                   (zdd-node (make-zdd-node ,@ctor-args))))))
+        (let-1 node (apply #'make-instance type :pointer pointer :manager manager
+                           other-initargs)
+          ;; let ((node #.(let ((ctor-args '(:pointer pointer)))
+          ;;                `(ecase type
+          ;;                   (bdd-node (make-bdd-node ,@ctor-args))
+          ;;                   (add-node (make-add-node ,@ctor-args))
+          ;;                   (zdd-node (make-zdd-node ,@ctor-args))))))
 
           ;; Construct finalizer for NODE:
           (when config/enable-gc
@@ -312,7 +314,10 @@ in manager ~A~%"
                          (log-error :logger cudd-node-logger "~&Assert 6 failed: during (helper/construct-node): ~A with MP=~A"  ',test-6  mp)))))))
           node)))))
 
-(defmacro wrap-and-finalize (pointer type &key (ref t) (manager '*manager*))
+(defmacro wrap-and-finalize (pointer type &rest *other-initargs &key
+                                                                  (ref t)
+                                                                  (manager '*manager*)
+                             &allow-other-keys)
   "Wrap the given pointer in a node of type TYPE.
 If a node for the same pointer is already in the lisp image, it is reused.
 Otherwise, a new node object is instantiated.
@@ -343,7 +348,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
           address
           (manager-node-hash manager)
           ;; This form executes iff ADDRESS isn't already present in the hashtable:
-          (helper/construct-node pointer type ref manager))))))
+          (helper/construct-node pointer type ref manager (list ,@*other-initargs)))))))
 
 (defun node (pointer type &key (ref t) (manager *manager*))
   (declare (node-pointer pointer)
@@ -428,8 +433,8 @@ only if their pointers are the same."
 (defun bdd-node (pointer &key (manager *manager*))
   (declare (node-pointer pointer))
   (wrap-and-finalize pointer 'bdd-node
-      ;; :ref (not (cudd-node-is-constant pointer))
-      :manager manager))
+                     ;; :ref (not (cudd-node-is-constant pointer))
+                     :manager manager))
 
 (defclass add-node (node) ()
   (:documentation "Node of an algebraic decision diagram (ADD)"))
@@ -446,7 +451,7 @@ only if their pointers are the same."
 (defun add-node (pointer &key (manager *manager*))
   (declare (node-pointer pointer))
   (wrap-and-finalize pointer 'add-node :ref (not (cudd-node-is-constant pointer))
-                     :manager manager))
+                                       :manager manager))
 
 (defclass zdd-node (node) ()
   (:documentation "Node of an zero-suppressed decision diagram (ZDD)"))

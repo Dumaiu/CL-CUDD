@@ -3,6 +3,7 @@
 (define-package cl-cudd.test
     (:mix
      :cl-cudd :cl-cudd.baseapi
+     :cl-cudd.internal-utils
      :fiveam :iterate :trivia :arrow-macros
      :asdf :uiop
      :cl)
@@ -76,7 +77,13 @@
             (plot (append-name path "-BDD-as-ZDD-cover") (bdd->zdd-cover f))
             (plot (append-name path "-BDD-as-ZDD-simple") (bdd->zdd-simple f)))))))
 
+;;; id=BDD
 (test bdd
+  (with-manager ()
+    (let-1 bdd-x0 (make-var 'bdd-node :index 3)
+      (is (typep bdd-x0 'bdd-variable-node))
+      (is (eql (manager bdd-x0) *manager*))
+      (is (= (bdd-variable-index bdd-x0) 3))))
   (dolist (m (append (models "gates") (models "modest")))
     (parse-bdd m)
     (parse-bdd m t)))
