@@ -35,11 +35,12 @@
     (with-gensyms (pointer)
       `(defmethod ,generic-name ,(convert-arguments arguments)
          (with-cudd-critical-section
-           ,(if dont-wrap-result
-               (make-funcall native-function arguments)
-               `(let* ((,pointer
-                         ,(make-funcall native-function arguments)))
-                  (wrap-and-finalize ,pointer ',node-type))))))))
+           ,(let-1 funcall-form (make-funcall native-function arguments)
+              (if dont-wrap-result
+                  funcall-form
+                  `(let* ((,pointer ,funcall-form))
+                     (declare (node-pointer ,pointer))
+                     (wrap-and-finalize ,pointer ',node-type)))))))))
 
 (defun add-function (generic-name arguments add-function dont-wrap)
   (node-function generic-name arguments add-function 'add-node dont-wrap))
@@ -114,7 +115,6 @@
               ))
 
        #+nil (loop :for ,e :being :each :element :of ,seq
-          :for ,i  :from 0
-          :do (setf (mem-aref ,array :pointer ,i) (node-pointer ,e)))
+                   :for ,i  :from 0
+                   :do (setf (mem-aref ,array :pointer ,i) (node-pointer ,e)))
        ,@body)))
-

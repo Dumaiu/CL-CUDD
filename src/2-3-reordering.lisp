@@ -60,7 +60,8 @@
     :CUDD-REORDER-SYMM-SIFT
     :CUDD-REORDER-SYMM-SIFT-CONV))
 
-(defun zdd-enable-reordering (&optional (method :cudd-reorder-same))
+(defun zdd-enable-reordering (&optional (method :cudd-reorder-same)
+                                &key ((:manager m) *manager*))
   "Enables automatic dynamic reordering of ZDDs.
 
   Parameter method is used to determine the method used for
@@ -68,32 +69,37 @@
 
   @see Cudd_AutodynDisableZdd Cudd_ReorderingStatusZdd Cudd_AutodynEnable "
   (declare (zdd-reordering-method method))
-  (cudd-autodyn-enable-zdd %mp% method))
+  (declare (manager m))
+  (with-cudd-critical-section (:manager m)
+    (cudd-autodyn-enable-zdd (manager-pointer m) method)))
 
 (define-simple-managed-function zdd-disable-reordering cudd-autodyn-disable-zdd
   "Disables automatic dynamic reordering of ZDDs.
 
   @see Cudd_AutodynEnableZdd Cudd_ReorderingStatusZdd Cudd_AutodynDisable ")
 
-(defun reordering-status ()
+(defun reordering-status (&key ((:manager m) *manager*))
   "Reports the status of automatic dynamic reordering of BDDs and ADDs.
 Return T if automatic reordering is enabled. NIL otherwise.
 Secondary value returns the current reordering method.
 
   @see Cudd_AutodynDisableZdd Cudd_ReorderingStatusZdd Cudd_AutodynEnable"
+  (declare (manager m))
   (with-foreign-object (method-ptr 'cudd-reordering-type)
-    (values (= 1 (cudd-reordering-status %mp% method-ptr))
+    (values (= 1 (cudd-reordering-status (manager-pointer m) method-ptr))
             (the bdd-reordering-method
                  (mem-ref method-ptr 'cudd-reordering-type)))))
 
-(defun zdd-reordering-status ()
+(defun zdd-reordering-status (&key ((:manager m) *manager*))
   "Reports the status of automatic dynamic reordering of ZDDs.
 Return T if automatic reordering is enabled. NIL otherwise.
 Secondary value returns the current reordering method.
 
   @see Cudd_AutodynEnableZdd Cudd_ReorderingStatusZdd Cudd_AutodynDisableZdd"
+
+  (declare (manager m))
   (with-foreign-object (method-ptr 'cudd-reordering-type)
-    (values (= 1 (cudd-reordering-status %mp% method-ptr))
+    (values (= 1 (cudd-reordering-status (manager-pointer m) method-ptr))
             (the zdd-reordering-method
                  (mem-ref method-ptr 'cudd-reordering-type)))))
 
@@ -124,7 +130,10 @@ Default value is 33000000. In CUDD each node consumes 3 words, so this threshold
   "Initiates variable reordering explicitly (for zdd).
 MINSIZE specifies the lower threshold of the number of the (live/referenced) nodes to initiate reordering:
 Number of nodes should be larger than this value.
-Default value is 33000000. In CUDD each node consumes 3 words, so this threshold corresponds to 100MB."
+Default value is 33000000. In CUDD each node consumes 3 words, so this threshold corresponds to 100MB.
+
+  * [2022-02-01 Tue] TODO: ':manager' kwarg.
+"
   (declare (zdd-reordering-method method))
   (assert (= 0 (cudd-zdd-reduce-heap %mp% method minsize))))
 
@@ -156,10 +165,12 @@ currently in use."
   `(member
     ,@(foreign-bitfield-symbol-list 'mtr-flags)))
 
-(defun dump-variable-group-hierarchy ()
-  (dump-mtr-tree (cudd-read-tree %mp%) nil))
-(defun dump-zdd-variable-group-hierarchy ()
-  (dump-mtr-tree (cudd-read-zdd-tree %mp%) nil))
+(defun dump-variable-group-hierarchy (&key ((:manager m) *manager*))
+  (declare (manager m))
+  (dump-mtr-tree (cudd-read-tree (manager-pointer m)) nil))
+(defun dump-zdd-variable-group-hierarchy (&key ((:manager m) *manager*))
+  (declare (manager m))
+  (dump-mtr-tree (cudd-read-zdd-tree (manager-pointer m)) nil))
 
 (defun set-variable-group (type &key from to size)
   "Defines a variable group in the current manager. It calls cudd-make-tree-node (Cudd_MakeTreeNode).

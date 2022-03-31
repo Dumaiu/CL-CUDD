@@ -117,7 +117,7 @@
                                  (let ((res-ptr (cudd-bdd-vector-compose manager-ptr f-ptr ptr-array)))
                                    (declare (node-pointer res-ptr))
                                    res-ptr)))
-              'bdd-node)))
+                             'bdd-node)))
     (declare (bdd-node res))
     res))
 
@@ -371,36 +371,41 @@
   ;;    res))
   )
 
-(defun map-ones (node fn)
+(defun map-ones (node fn &key ((:manager m) (node-manager node)))
   "Runs a DFS on a ZDD. It calls the given callback function when it reaches the 1-node.
 The callback is called with an argument containing a bit vector which stores 1-bit.
 Returns the node."
-  (let ((bv (make-array (zdd-max-variables) :element-type 'bit))
-        (one (cudd-read-one %mp%))
-        (zero (cudd-read-zero %mp%)))
-    (labels ((rec (p)
-               (cond
-                 ((pointer-eq p one)
-                  (funcall fn bv))
-                 ((pointer-eq p zero)
-                  ;; do nothing
-                  )
-                 ((cudd-is-non-constant p)
-                  (let ((index (cudd-node-read-index p)))
-                    (setf (aref bv index) 1)
-                    (rec (cudd-node-then p))
-                    (setf (aref bv index) 0)
-                    (rec (cudd-node-else p)))))))
-      (rec (node-pointer node))))
+  (declare (manager m))
+  (with-cudd-critical-section (:manager m)
+   (let-1 mp (manager-pointer m)
+     (declare (manager-pointer mp))
+     (let ((bv (make-array (zdd-max-variables) :element-type 'bit))
+           (one (cudd-read-one mp))
+           (zero (cudd-read-zero mp)))
+       (labels ((rec (p)
+                  (cond
+                    ((pointer-eq p one)
+                     (funcall fn bv))
+                    ((pointer-eq p zero)
+                     ;; do nothing
+                     )
+                    ((cudd-is-non-constant p)
+                     (let ((index (cudd-node-read-index p)))
+                       (setf (aref bv index) 1)
+                       (rec (cudd-node-then p))
+                       (setf (aref bv index) 0)
+                       (rec (cudd-node-else p)))))))
+         (rec (node-pointer node))))))
   node)
 
-(defmacro do-ones ((var dd) &body body)
+(defmacro do-ones ((var dd &rest *args) &body body)
   "Runs a DFS on a ZDD. BODY is executed for each path in a ZDD to the constant 1-node.
 Entire body is wrapped in a block NIL.
 Symbol VAR is lexically bound to a bit vector which stores 1-bit when a zdd variable is true on the path.
 Returns the node."
   `(block nil
-     (map-ones ,dd (lambda (,var) ,@body))))
+     (map-ones ,dd (lambda (,var) ,@body)
+               ,@*args)))
 
 
 (defun integer->zdd-unate (int)
@@ -486,7 +491,7 @@ Follow the then-branch when 1, else-branch otherwise."
         (assert (>= live 0))
         live))))
 
-(defun bdd-transfer (bdd &key (src *manager*) dest)
+(defun bdd-transfer (bdd &key (src (node-manager bdd)) dest)
   "Note that the argument order isn't the same as C.
   * TODO: What's the right argument for the 'ref' parameter of (wrap-and-finalize)?
   * TODO: What if SRC ≡ DEST?
@@ -494,13 +499,17 @@ Follow the then-branch when 1, else-branch otherwise."
   (declare (bdd-node bdd)
            (manager src)
            (manager dest))
-  (if (eq src dest)
-      (not-implemented-error 'trivial-bdd-transfer "'src' and 'dest' args to (bdd-transfer) must be different.")
-      (let ((*manager* dest))
-        (with-cudd-critical-section (:manager dest)
-          (let ((bdd-ptr (cudd-bdd-transfer (manager-pointer src) (manager-pointer dest) (node-pointer bdd))))
-            (declare (type node-pointer bdd-ptr))
-            (the bdd-node (wrap-and-finalize bdd-ptr 'bdd-node)))))))
+  (cond
+    ((eq src dest)
+     (not-implemented-error 'trivial-bdd-transfer "'src' and 'dest' args to (bdd-transfer) must be different."))
+    ((typep bdd '(or bdd-constant-node bdd-variable-node))
+     (not-implemented-error 'bdd-literal-transfer))
+    (t
+     (let-1 *manager* dest ; NOTE: This should be unnecessary
+       (with-cudd-critical-section (:manager dest)
+         (let ((bdd-ptr (cudd-bdd-transfer (manager-pointer src) (manager-pointer dest) (node-pointer bdd))))
+           (declare (type node-pointer bdd-ptr))
+           (the bdd-node (wrap-and-finalize bdd-ptr 'bdd-node :manager dest))))))))
 
 (defgeneric transfer (thing &key)
   (:method :around (thing &key (src (manager thing)) (dest *manager*))
@@ -529,11 +538,11 @@ Follow the then-branch when 1, else-branch otherwise."
            ;; XXX (foreign-pointer fp)
            )
   (let ((errcode (cudd-dump-factored-form (manager-pointer manager)
-                                      max-nodes
-                                      goddamn-array ; FIXME--convert to C array
-                                      (if inames (not-implemented-error 'inames) (null-pointer))
-                                      (if onames (not-implemented-error 'onames) (null-pointer))
-                                      fp)))
+                                          max-nodes
+                                          goddamn-array ; FIXME--convert to C array
+                                          (if inames (not-implemented-error 'inames) (null-pointer))
+                                          (if onames (not-implemented-error 'onames) (null-pointer))
+                                          fp)))
     (declare (type (member 0 1) errcode))
     (ecase errcode
       (1 t)

@@ -22,7 +22,7 @@ This function is not imported from CFFI because the corresponding implementation
             :do (setf (mem-aref array :pointer i) v))
       (cudd-bdd-compute-cube manager array (null-pointer) n))))
 
-(defun bdd-var (manager &key index level)
+(defun bdd-var (manager-pointer &key index level)
   "Creates a new BDD variable. At most one of INDEX and LEVEL may be given.
 
 If neither INDEX nor LEVEL are given, then the new variable has an index equal
@@ -39,13 +39,14 @@ invokes a signal otherwise.
 
 The returned node is an internal node with both outgoing arcs
 pointing to the constant 1. The else arc is complemented."
-  (declare (foreign-pointer manager))
+  (declare (foreign-pointer manager-pointer))
+  ;; (declare (type manager-pointer manager-pointer))
   (when (and index level)
     (error "BDD-VAR accepts at most one of INDEX and LEVEL"))
   (cond
-    (index (cudd-bdd-ith-var manager index))
-    (level (cudd-bdd-new-var-at-level manager level))
-    (t (cudd-bdd-new-var manager))))
+    (index (cudd-bdd-ith-var manager-pointer index))
+    (level (cudd-bdd-new-var-at-level manager-pointer level))
+    (t (cudd-bdd-new-var manager-pointer))))
 
 
 
