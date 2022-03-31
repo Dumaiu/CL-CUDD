@@ -4,16 +4,21 @@
 
 (defun add-negate (node)
   "Computes the additive inverse of an ADD."
-  (wrap-and-finalize
-      (etypecase node
-        (add-node (cudd-add-negate %mp% (node-pointer node))))
-      'add-node))
+  (let-1 manager (node-manager node)
+      (declare (manager manager))
+    (wrap-and-finalize
+     (etypecase node
+       (add-node (cudd-add-negate (manager-pointer manager) (node-pointer node))))
+     'add-node
+     :manager manager)))
 
-(defun add-constant (value)
+(defun add-constant (value &key (manager *manager*))
   "Retrieves the ADD for constant c if it already exists, or creates a new ADD."
+  (declare (manager manager))
   (wrap-and-finalize
-      (cudd-add-const %mp% value)
-      'add-constant-node))
+   (cudd-add-const (manager-pointer manager) value)
+   'add-constant-node
+   :manager manager))
 
 (defun plus-infinity (&key (manager *manager*))
   "Returns a node with value infinity."
@@ -129,9 +134,13 @@ The following operations are supported:
 
 (defun add-apply (op f g)
   #.*add-apply-doc*
-  (wrap-and-finalize
-      (cudd-add-apply %mp%
-                      op
-                      (node-pointer f)
-                      (node-pointer g))
-      'add-node))
+  (let-1 manager (node-manager f)
+    (declare (manager manager))
+    (assert* (eq manager (node-manager g)))
+    (wrap-and-finalize
+     (cudd-add-apply (manager-pointer manager)
+                     op
+                     (node-pointer f)
+                     (node-pointer g))
+     'add-node
+     :manager manager)))
