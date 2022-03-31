@@ -47,9 +47,14 @@
    #:make-lock
    #:with-cudd-critical-section
    #:handler-bind-case
-   #:assert*))
+   #:assert*
+   #:let-1
+   #:maybe-inline))
 
 (in-package cl-cudd.internal-utils)
+
+;; FIXME: SBCL:
+(declaim (declaration maybe-inline))
 
 (defmacro assert* (&rest args)
   "Wrapper for (cl:assert).
@@ -74,6 +79,10 @@
            ,lambdas
          ,form))))
 
+(defmacro let-1 (name initform &body body)
+  "Syntactic sugar for binding one variable."
+  `(let ((,name ,initform))
+     ,@body))
 
 (deftype manager-mutex ()
   'lock)
