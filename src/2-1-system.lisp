@@ -1,9 +1,15 @@
 (in-package :cudd)
 
-(defmacro define-simple-managed-function (name interface &body doc)
-  "[2021-11-04 Thu]: The generated function will have an &optional 'manager' parameter."
+(defmacro define-simple-managed-function (name interface &body (&whole body &optional doc))
+  " NOTE: INTERFACE should be a unary function from `:cl-cudd.baseapi', taking only a `manager-pointer'.
+  - [2021-11-04 Thu]: The generated function will have an &optional 'manager' parameter.
+  * TODO: Accept &key *or* &optional arg. "
+  (declare (symbol name interface)
+           (type (or null string) doc)
+           (ignorable doc))
   `(defun ,name (&optional (manager *manager*))
-     ,@doc
+     ,@body
+     (declare (type manager manager))
      (,interface
       (manager-pointer manager))))
 
@@ -41,26 +47,31 @@ only if garbage collection has been explicitly disabled.")
 
   This number always includes the two constants 1 and 0. ")
 
-(defun set-background (bck)
+(declaim (inline set-background))
+(defun set-background (bck &key (manager *manager*))
   "Sets the background constant of the manager. It assumes
 that the DdNode pointer bck is already referenced."
-  (cudd-set-background %mp% bck))
+  (declare (node-pointer bck) (manager manager))
+  (cudd-set-background manager bck))
 
+(declaim (maybe-inline count-leaves))
 (defun count-leaves (node)
   "Counts the number of leaves in a DD."
   (cudd-count-leaves (node-pointer node)))
 
+(declaim (maybe-inline count-leaves))
 (defun dag-size (node)
-  "Counts the number of nodes in a DD."
+  "Counts the number of nodes in a DD.
+  NOTE: Does not require knowledge of NODE's `manager'."
+  (declare (type node node))
   (etypecase node
     (zdd-node (cudd-zdd-dag-size (node-pointer node)))
     (add-node (cudd-dag-size (node-pointer node)))
     (bdd-node (cudd-dag-size (node-pointer node)))))
 
-(defun bdd-variables (&optional (manager *manager*))
-  "Return the number of BDD variables"
-  (declare (manager manager))
-  (cudd-bdd-variables (manager-pointer manager)))
+(define-simple-managed-function bdd-variables cudd-bdd-variables
+  "Return the number of BDD variables.")
+
 (define-simple-managed-function zdd-variables cudd-zdd-variables
   "Return the number of ZDD variables")
 (define-simple-managed-function bdd-max-variables cudd-bdd-max-variables
