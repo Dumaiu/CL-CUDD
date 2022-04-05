@@ -130,19 +130,26 @@
                    #+sbcl (sb-sys:memory-fault-error (xc)
                                                      (ecase config/signal-memory-errors
                                                        ((:error :log)
-                                                        (let+ (((&accessors-r/o manager-pointer) manager)) ;((manager-string (princ-to-string manager)))
+                                                        (let+ (((&accessors-r/o ;manager-pointer
+                                                                                manager-index)
+                                                                manager)
+                                                               (node-string (print-node-unreadably node-pointer :type node-type))
+                                                               ) ;((manager-string (princ-to-string manager)))
+                                                          (declare (string node-string))
+
                                                           (log-error :logger cudd-node-logger
                                                                      ;; TODO: Give each node an index?
                                                                      "* Error: memory-fault detected in Lisp:
  ~&~T~<~A~>
 
-while destructing ~A ~A in manager #~D.
+while destructing
+~T~A
+in manager #~D.
 
- Re-throwing? ~A~%"
-                                                                     node-type
-                                                                     node-pointer
+ Re-throwing? ~A"
                                                                      xc
-                                                                     manager-pointer ;manager-string
+                                                                     node-string
+                                                                     manager-index ;manager-string
                                                                      (eq :error config/signal-memory-errors)))
 
                                                         (if (eq :error config/signal-memory-errors)
@@ -247,7 +254,8 @@ in manager ~A~%"
         (cond
           (ref
            (log-msg :trace :logger cudd-node-logger
-                    "Constructing wrapper node for ~A.  Before incrementing, REFs = ~D."
+                    "Constructing wrapper node for ~A ~A.  Before incrementing, REFs = ~D."
+                    type
                     pointer
                     (cudd-node-ref-count pointer))
 
@@ -259,8 +267,9 @@ in manager ~A~%"
                     (cudd-node-ref-count pointer)))
 
           ('otherwise  ; ref=nil
-           (log-msg :trace :logger cudd-node-logger "NON-INCREMENTING wrapper for ~A being constructed (REFs = ~D).
+           (log-msg :trace :logger cudd-node-logger "NON-INCREMENTING wrapper for ~A ~A being constructed (REFs = ~D).
  This should happen only for literals."
+                    type
                     pointer
                     (cudd-node-ref-count pointer))
 
@@ -355,17 +364,37 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
            (node-type type)
            (boolean ref)
            (manager manager))
+  ;; TODO: Adjust value of REF based on TYPE ?
   (wrap-and-finalize pointer type :ref ref :manager manager))
 
 
+(defgeneric print-node-unreadably (node &key type)
+  (:method ((node node) &key &allow-other-keys)
+    "Recurse."
+    (print-node-unreadably (node-pointer node) :type (type-of node)))
+
+  (:method (pointer &key (type 'node))
+    (declare (node-pointer pointer))
+    (with-output-to-string (stream)
+      (print-unreadable-object (pointer stream :type type :identity nil)
+        (format stream "INDEX ~A " (cudd-node-read-index pointer))
+        (if (cudd-node-is-constant pointer)
+            (format stream "LEAF (VALUE ~A)" (cudd-node-value pointer))
+            (format stream "INNER 0x~x" (pointer-address pointer)))
+        (format stream " REF ~d"
+                (cudd-node-ref-count pointer))))))
+
 (defmethod print-object ((object node) stream)
-  (print-unreadable-object (object stream :type (type-of object) :identity nil)
-    (format stream "INDEX ~A " (cudd-node-read-index (node-pointer object)))
-    (if (node-constant-p object)
-        (format stream "LEAF (VALUE ~A)" (node-value object))
-        (format stream "INNER 0x~x" (pointer-address (node-pointer object))))
-    (format stream " REF ~d"
-            (cudd-node-ref-count (node-pointer object)))))
+  (cond
+    (*print-readably* (not-implemented-error 'readable-bdd))
+    (t
+     (print-unreadable-object (object stream :type (type-of object) :identity nil)
+       (format stream "INDEX ~A " (cudd-node-read-index (node-pointer object)))
+       (if (node-constant-p object)
+           (format stream "LEAF (VALUE ~A)" (node-value object))
+           (format stream "INNER 0x~x" (pointer-address (node-pointer object))))
+       (format stream " REF ~d"
+               (cudd-node-ref-count (node-pointer object)))))))
 
 (declaim (inline node-index
                  node-equal
@@ -413,6 +442,12 @@ only if their pointers are the same."
 (defclass bdd-constant-node (bdd-node constant-node) ()
   (:documentation "A 0 or 1 literal."))
 
+;; (defmethod literal ((node bdd-constant-node))
+;;   (let+ ((&slots-r/o pointer) )))
+
+;; (defmethod print-object ((node bdd-constant-node) stream)
+;;   (format stream "#BDD<~A>" (node-value node)))
+
 ;; (deftype nat ()
 ;;   'non-negative-fixnum)
 
@@ -435,6 +470,10 @@ only if their pointers are the same."
   (wrap-and-finalize pointer 'bdd-node
                      ;; :ref (not (cudd-node-is-constant pointer))
                      :manager manager))
+
+;; (defmethod print-object ((node bdd-variable-node) stream)
+;;   (let-1 (index (node-index node))
+;;       (format stream "#BDD<variable ~D>" index)))
 
 (defclass add-node (node) ()
   (:documentation "Node of an algebraic decision diagram (ADD)"))
