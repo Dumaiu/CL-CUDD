@@ -12,6 +12,7 @@
           zdd-node-type
           node-type
           generalized-bit
+          variable-node
           bdd-constant-node
           bdd-variable-node
           index
@@ -273,6 +274,9 @@ in manager ~A~%"
                     pointer
                     (cudd-node-ref-count pointer))
 
+           ;; (break "Non-incrementing type: ~A" type)
+           (assert* (subtypep type 'variable-node))
+
            #|(let ((initial-ref-count (cudd-node-ref-count pointer)))
            (declare (fixnum initial-ref-count)) ;
            (assert (>= initial-ref-count 1)) ;
@@ -303,7 +307,7 @@ in manager ~A~%"
               ;; is called.
               (finalize
                node
-               (lambda ()
+               (lambda () ;; id=finalizer
                  "Closure for finalizing a cudd-node."
                  (helper/destruct-node pointer type manager ref)))))
 
@@ -423,7 +427,10 @@ only if their pointers are the same."
   (assert (node-constant-p node))
   (cudd-node-value (node-pointer node)))
 
-(defclass constant-node () ())
+(defclass constant-node (node) ())
+
+(defclass variable-node (node) ()
+  (:documentation "ABC."))
 
 ;; (defclass literal-node () ())
 
@@ -451,7 +458,7 @@ only if their pointers are the same."
 ;; (deftype nat ()
 ;;   'non-negative-fixnum)
 
-(defclass bdd-variable-node (bdd-node)
+(defclass bdd-variable-node (bdd-node variable-node)
   ((index :type non-negative-fixnum
           :initform (required 'index)
           :initarg :index
@@ -481,7 +488,7 @@ only if their pointers are the same."
 (defclass add-constant-node (add-node constant-node) ()
   (:documentation "Unlike with the other ?DD types, users there may be new ADD constants."))
 
-(defclass add-variable-node (add-node) ()
+(defclass add-variable-node (add-node variable-node) ()
   #|(FIXME)|#)
 
 (defun make-add-node (&rest args)
