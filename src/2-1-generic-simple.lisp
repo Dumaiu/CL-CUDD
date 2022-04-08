@@ -160,8 +160,7 @@ ZDD: the arithmetic zero node (0.0d0). (Same as ADD)"
        (add-node (cudd-read-zero mp))
        (zdd-node (cudd-read-zero mp)))
      type
-     ;; because these nodes are predefined constants.
-     :ref nil
+     :ref t ; NOTE: Changed [2022-04-07 Thu]
      :manager manager)))
 
 (defun one-node (type &key (manager *manager*))
@@ -172,6 +171,5 @@ ZDD: the arithmetic zero node (0.0d0). (Same as ADD)"
     (declare (manager-pointer mp))
     (wrap-and-finalize (cudd-read-one mp)
                        type
-                       ;; because these nodes are predefined constants.
-                       :ref nil
+                       :ref t ; NOTE: Changed [2022-04-07 Thu]
                        :manager manager)))
