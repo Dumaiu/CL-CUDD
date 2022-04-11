@@ -132,7 +132,7 @@
                                                      (ecase config/signal-memory-errors
                                                        ((:error :log)
                                                         (let+ (((&accessors-r/o ;manager-pointer
-                                                                                manager-index)
+                                                                 manager-index)
                                                                 manager)
                                                                (node-string (print-node-unreadably node-pointer :type node-type))
                                                                ) ;((manager-string (princ-to-string manager)))
@@ -145,9 +145,9 @@
 
 while destructing
 ~T~A
-in manager #~D.
+in manager #~A.
 
- Re-throwing? ~A"
+ Re-throwing? ~A~%"
                                                                      xc
                                                                      node-string
                                                                      manager-index ;manager-string
@@ -371,35 +371,6 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
   ;; TODO: Adjust value of REF based on TYPE ?
   (wrap-and-finalize pointer type :ref ref :manager manager))
 
-
-(defgeneric print-node-unreadably (node &key type)
-  (:method ((node node) &key &allow-other-keys)
-    "Recurse."
-    (print-node-unreadably (node-pointer node) :type (type-of node)))
-
-  (:method (pointer &key (type 'node))
-    (declare (node-pointer pointer))
-    (with-output-to-string (stream)
-      (print-unreadable-object (pointer stream :type type :identity nil)
-        (format stream "INDEX ~A " (cudd-node-read-index pointer))
-        (if (cudd-node-is-constant pointer)
-            (format stream "LEAF (VALUE ~A)" (cudd-node-value pointer))
-            (format stream "INNER 0x~x" (pointer-address pointer)))
-        (format stream " REF ~d"
-                (cudd-node-ref-count pointer))))))
-
-(defmethod print-object ((object node) stream)
-  (cond
-    (*print-readably* (not-implemented-error 'readable-bdd))
-    (t
-     (print-unreadable-object (object stream :type (type-of object) :identity nil)
-       (format stream "INDEX ~A " (cudd-node-read-index (node-pointer object)))
-       (if (node-constant-p object)
-           (format stream "LEAF (VALUE ~A)" (node-value object))
-           (format stream "INNER 0x~x" (pointer-address (node-pointer object))))
-       (format stream " REF ~d"
-               (cudd-node-ref-count (node-pointer object)))))))
-
 (declaim (inline node-index
                  node-equal
                  node-constant-p
@@ -446,7 +417,10 @@ only if their pointers are the same."
 (defun make-bdd-node (&rest args)
   (apply #'make-instance 'bdd-node args))
 
-(defclass bdd-constant-node (bdd-node constant-node) ()
+(defclass bdd-constant-node (bdd-node constant-node)
+  ((constant :type boolean :initform (required ':constant)
+             :reader constant
+             :initarg :constant))
   (:documentation "A 0 or 1 literal."))
 
 ;; (defmethod literal ((node bdd-constant-node))
@@ -525,3 +499,40 @@ only if their pointers are the same."
                                 :manager (node-manager node))))
     (declare (bdd-node res))
     res))
+
+(declaim (notinline print-node-unreadably))
+(defgeneric print-node-unreadably (node &key)
+  (:method ((node node) &key &allow-other-keys)
+    "Recurse."
+    (print-node-unreadably (node-pointer node) :type (type-of node)))
+
+  (:method ((node bdd-constant-node) &key)
+    "TODO: What does printing the 'index' do?"
+    (let-1 pointer (node-pointer node)
+      (assert* (cudd-node-is-constant pointer))
+      (with-output-to-string (stream)
+        (print-unreadable-object (node stream :type 'bdd-constant-node :identity nil)
+          (format stream "~A" (constant node))
+          ;; (format stream "INDEX ~A " (cudd-node-read-index pointer))
+          (format stream ", LEAF (VALUE ~A)" (cudd-node-value pointer))
+          (format stream ", REF ~d"
+                  (cudd-node-ref-count pointer))
+          (format stream ", MANAGER #~D"
+                  (manager-index (node-manager node)))))))
+
+  (:method (pointer &key (type 'node))
+    (declare (node-pointer pointer))
+    (with-output-to-string (stream)
+      (print-unreadable-object (pointer stream :type type :identity nil)
+        (format stream "INDEX ~A " (cudd-node-read-index pointer))
+        (if (cudd-node-is-constant pointer)
+            (format stream "LEAF (VALUE ~A)" (cudd-node-value pointer))
+            (format stream "INNER 0x~x" (pointer-address pointer)))
+        (format stream " REF ~d"
+                (cudd-node-ref-count pointer))))))
+
+(defmethod print-object ((object node) stream)
+  (cond
+    (*print-readably* (not-implemented-error 'readable-bdd))
+    (t
+     (format stream (print-node-unreadably object :type (type-of object))))))
