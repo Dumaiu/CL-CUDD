@@ -1,8 +1,13 @@
-* TODO [2022-03-30 Wed] See example in the CUDD manual at 'Basic BDD Manipulation':
-Should we be increasing the ref count for constants?
-  - If so, change the (assert) checks in 2-4-hook.lisp.
+* TODO Override (gc) in :cudd.
+* TODO Try calling `Cudd_Ref()` for *every* BDD node.
+* TODO Save a printable description of a node in its finalizer closure for debugging.
 
-* TODO: Binary BDD operations should compare their operands' managers with (eq).
+* DONE Should we be increasing the ref count for constants? <a id="ref-count-constants"><a/>
+   - The example in the CUDD manual at 'Basic BDD Manipulation' makes it look as though, yes, these should be reference-counted.
+- DONE [2022-04-11 Mon]: If so, change the (assert) checks in 2-4-hook.lisp.
+
+* DONE `(node-function)` operations should compare their operands' managers with `(eq)`.
+    * TODO: Unit-test.
 
 * TODO: Make 2-1-zdd-set-operations.lisp, 2-2-zdd-bdd-bridge.lisp thread-safe
 * DONE: Replace `%mp%` appearances with '(manager node)' calls.
