@@ -1,4 +1,4 @@
-* TODO Override (gc) in :cudd.
+* DONE Override (gc) in :cudd.
 * TODO Try calling `Cudd_Ref()` for *every* BDD node.
 * TODO Save a printable description of a node in its finalizer closure for debugging.
 

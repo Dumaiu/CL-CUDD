@@ -9,7 +9,9 @@
   :license "BSD Style (see LICENSE)"
   :depends-on (:cl-cudd :fiveam :iterate :trivia :arrow-macros)
   :serial t
-  :components ((:file "test/package"))
+  :pathname "test/"
+  :components ((:file "package")
+               (:file "main"))
   :description "A two-layered binding to the CUDD binary decision diagram library.
 
 See README.md for more details."
