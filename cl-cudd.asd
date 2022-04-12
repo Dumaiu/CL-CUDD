@@ -10,6 +10,7 @@
                :alexandria
                :trivial-garbage
                :let-plus
+               :introspect-environment ; (typexpand)
                :bordeaux-threads
                ;; TODO :cl-cudd.build
                :trivia.cffi
