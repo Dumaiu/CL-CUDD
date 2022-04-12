@@ -1,5 +1,10 @@
 (in-package :cudd)
 
+(export '(*bdd-zero*
+          *bdd-one*
+          *bdd-false*
+          *bdd-true*))
+
 ;; high-level APIs that require CLOS-based dispatching for bdds and adds
 ;; This file contains only the simple operators
 
@@ -158,20 +163,22 @@ ADD: the arithmetic zero node (0.0d0).
 ZDD: the arithmetic zero node (0.0d0). (Same as ADD)"
   (declare (node-type type)
            (manager manager))
-  (let ((mp (manager-pointer manager)))
+  (let* ((mp (manager-pointer manager))
+         (pointer (ecase type
+                    ((bdd-node bdd-constant-node) (cudd-read-logic-zero mp))
+                    ((add-node add-constant-node) (cudd-read-zero mp))
+                    ((zdd-node zdd-constant-node) (cudd-read-zero mp))))
+         (subtype
+           (ecase type
+             ((bdd-node bdd-constant-node) 'bdd-constant-node)
+             ((add-node add-constant-node) 'add-constant-node)
+             ((zdd-node zdd-constant-node) 'zdd-constant-node))))
     (declare (manager-pointer mp))
-    (wrap-and-finalize
-     (ecase type
-       (bdd-node (cudd-read-logic-zero mp))
-       (add-node (cudd-read-zero mp))
-       (zdd-node (cudd-read-zero mp)))
-     ;; TODO:
-     (ecase type
-       ((bdd-node bdd-constant-node) 'bdd-constant-node)
-       ((add-node add-constant-node) 'add-constant-node)
-       ((zdd-node zdd-constant-node) 'zdd-constant-node))
-     :ref t ; NOTE: Changed [2022-04-07 Thu]
-     :manager manager)))
+    (declare (node-pointer pointer))
+    (wrap-and-finalize pointer subtype
+                       :ref t ; NOTE: Changed [2022-04-07 Thu]
+                       :manager manager
+                       :constant nil)))
 
 (defun one-node (type &key (manager *manager*))
   "return the constant one node."
@@ -180,10 +187,18 @@ ZDD: the arithmetic zero node (0.0d0). (Same as ADD)"
   (let ((mp (manager-pointer manager)))
     (declare (manager-pointer mp))
     (wrap-and-finalize (cudd-read-one mp)
-                       ;; TODO:
+                       ;; TODO: ugly:
                        (ecase type
                          ((bdd-node bdd-constant-node) 'bdd-constant-node)
                          ((add-node add-constant-node) 'add-constant-node)
                          ((zdd-node zdd-constant-node) 'zdd-constant-node))
                        :ref t ; NOTE: Changed [2022-04-07 Thu]
-                       :manager manager)))
+                       :manager manager
+                       :constant t)))
+
+;;; Synsugar:
+(define-symbol-macro *bdd-zero* (zero-node 'bdd-constant-node))
+(define-symbol-macro *bdd-one* (zero-node 'bdd-constant-node))
+
+(define-symbol-macro *bdd-false* *bdd-zero*)
+(define-symbol-macro *bdd-true* *bdd-one*)
