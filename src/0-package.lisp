@@ -10,6 +10,7 @@
 
 (define-package cl-cudd.internal-utils
     (:mix
+     :introspect-environment
      :log4cl
      #+thread-support :bordeaux-threads
      :trivia
@@ -20,6 +21,7 @@
                     #:with-lock-held
                     #:make-lock)
   (:reexport
+   :introspect-environment
    :trivia
    :log4cl
    :alexandria)
