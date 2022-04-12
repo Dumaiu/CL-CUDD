@@ -3,6 +3,10 @@
 
 ;;; Utilities for def-cudd-call
 
+(export '(cudd-manager-mismatch-error))
+
+(define-condition cudd-manager-mismatch-error (cudd-error #|TODO: CL type|#) ())
+
 (defun generic-cudd-function (generic-name arguments generic-docu)
   (flet ((clean-arguments (arguments)
            (mapcar (lambda (arg)
@@ -17,30 +21,60 @@
 (defun node-function (generic-name arguments native-function node-type
                       dont-wrap-result)
   "TODO: Add `manager' param"
-  (labels ((convert-arguments (arguments)
-             (mapcar (lambda-match
-                       ((list var :node)
-                        (list var node-type))
-                       (arg arg))
-                     arguments))
-           (clean-arguments (arguments)
-             (mapcar (lambda-match
-                       ((list var :node)
-                        `(node-pointer ,var))
-                       (arg arg))
-                     arguments))
-           (make-funcall (native arguments)
-             `(,native %mp%
-                       ,@(clean-arguments arguments))))
-    (with-gensyms (pointer)
-      `(defmethod ,generic-name ,(convert-arguments arguments)
-         (with-cudd-critical-section
-           ,(let-1 funcall-form (make-funcall native-function arguments)
-              (if dont-wrap-result
-                  funcall-form
-                  `(let* ((,pointer ,funcall-form))
-                     (declare (node-pointer ,pointer))
-                     (wrap-and-finalize ,pointer ',node-type)))))))))
+  (declare (optimize debug))
+  (with-gensyms (mp)
+   (labels ((convert-arguments (arguments)
+              (mapcar (lambda-match
+                        ((list var :node)
+                         (list var node-type))
+                        (arg arg))
+                      arguments))
+            (clean-arguments (arguments)
+              "For nodes retrieve (node-pointer)."
+              (mapcar (lambda-match
+                        ((list var :node)
+                         `(node-pointer ,var))
+                        (arg arg))
+                      arguments))
+            (node-names (arguments)
+              (iter
+                (for arg in arguments)
+                (match arg
+                  ((list var :node)
+                   (collecting var into nodes)))
+                (finally (return nodes))))
+            (make-funcall (native arguments)
+              `(,native ,mp ; anaphoric
+                        ,@(clean-arguments arguments))))
+     (with-gensyms (pointer
+                    managers
+                    manager)
+       ;; (assert* (>= (length arguments) 2)) ; TODO: See if it works for unaries.
+       (let ((converted-arguments (convert-arguments arguments))
+             (node-names (node-names arguments)))
+         (declare (optimize debug))
+         ;; (break "converted-arguments: ~A" converted-arguments)
+         ;; (break "~A" node-names)
+         `(defmethod ,generic-name ,converted-arguments
+            ;; TODO: (mapcar #'node-manager)?
+            (let ((,managers (mapcar #'manager (list ,@node-names))))
+              (unless (reduce #'eq ,managers)
+                (assert* (>= (length ,managers) 2))
+                (error 'cudd-manager-mismatch-error "Nodes ~A didn't have the same manager.  Managers found: ~A"
+                       ',node-names
+                       ,managers))
+              (let* ((,manager (first ,managers))
+                     (,mp (manager-pointer ,manager)))
+                (declare (manager ,manager)
+                         (manager-pointer ,mp))
+                (with-cudd-critical-section (:manager ,manager)
+                  ,(let-1 funcall-form (make-funcall native-function arguments)
+                     (if dont-wrap-result
+                         funcall-form
+                         `(let* ((,pointer ,funcall-form))
+                            (declare (node-pointer ,pointer))
+                            (wrap-and-finalize ,pointer ',node-type
+                                               :manager ,manager)))))))))))))
 
 (defun add-function (generic-name arguments add-function dont-wrap)
   (node-function generic-name arguments add-function 'add-node dont-wrap))
