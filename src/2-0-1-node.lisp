@@ -108,7 +108,10 @@
       ;; (member :check-keys config/debug-consistency-checks :test #'eq)
       (eq :debug config/debug-consistency-checks)))
 
-(defun helper/destruct-node (node-pointer node-type manager ref)
+(defun helper/destruct-node (node-pointer node-type
+                             &key
+                               manager
+                               ((:ref ref) t ref-provided?))
   "NB: We *do* want to maintain a reference to the MANAGER from within a node's finalizer.
   MANAGER: Maintain a reference from the node's finalizer to its manager so there is no chance of dangling-pointer errors.  See M. Asai's note in (wrap-and-finalize).
   REF: When T, decrement CUDD ref.  Passed along from (wrap-and-finalize): if we didn't increment during construction, we don't decrement here.
@@ -117,6 +120,9 @@
   (declare (node-pointer node-pointer)
            (manager manager)
            (boolean ref))
+  (unless (null ref-provided?)
+    ;; (log-warn :logger cudd-node-logger )
+    (warn "Don't pass :ref."))
 
   (macrolet ((with-mem-fault-protection (&body body)
                "Establish a block to handle a memory fault.  Optionally resume execution, depending on `config/signal-memory-errors'.
@@ -134,7 +140,7 @@
                                                         (let+ (((&accessors-r/o ;manager-pointer
                                                                  manager-index)
                                                                 manager)
-                                                               (node-string (print-node-unreadably node-pointer :type node-type))
+                                                               (node-string (print-node-to-string node-pointer :type node-type))
                                                                ) ;((manager-string (princ-to-string manager)))
                                                           (declare (string node-string))
 
@@ -309,7 +315,10 @@ in manager ~A~%"
                node
                (lambda () ;; id=finalizer
                  "Closure for finalizing a cudd-node."
-                 (helper/destruct-node pointer type manager ref)))))
+                 (helper/destruct-node pointer
+                                       type
+                                       :manager manager
+                                       :ref ref)))))
 
           ;; After constructing the finalizer:
           (when config/debug-consistency-checks
@@ -500,14 +509,72 @@ only if their pointers are the same."
     (declare (bdd-node res))
     res))
 
-(declaim (notinline print-node-unreadably))
-(defgeneric print-node-unreadably (node &key)
+(declaim (maybe-inline print-pointer-as-string/helper)
+         (notinline print-pointer-as-string/helper))
+(defgeneric print-pointer-as-string/helper (pointer type &key)
+  (:documentation "NOTE: Error if *PRINT-READABLY* is set.")
+
+  (:argument-precedence-order type pointer)
+
+  (:method :before (node type &key &allow-other-keys)
+    (when *print-readably* (not-implemented-error 'readable-cudd-node-representation)))
+
+  (:method :around (pointer type &rest keys
+                    &key (manager *manager*)
+                    &allow-other-keys)
+    "TODO: What does printing the 'index' do?"
+    (declare (type node-type type)
+             (manager manager))
+    (with-output-to-string (stream)
+      (print-unreadable-object (pointer stream :type type :identity t)
+        ;; (format stream "INDEX ~A " (cudd-node-read-index pointer))
+        (princ (apply #'call-next-method pointer type :nested t
+                      keys)
+               stream)
+        (format stream ", LEAF (VALUE ~A)" (cudd-node-value pointer))
+        (format stream ", REF ~d" (cudd-node-ref-count pointer))
+        (format stream ", MANAGER #~D" (manager-index manager)))))
+
+  (:method (pointer (type (eql 'bdd-variable-node))
+            &key nested ; security
+              index
+            &allow-other-keys)
+    (declare (node-pointer pointer)
+             (boolean nested)
+             (type integer index))
+    (assert* nested)
+    (with-output-to-string (stream)
+      (format stream ", #~A" index)))
+
+  (:method (pointer (type (eql 'bdd-constant-node))
+            &key nested
+              constant
+            &allow-other-keys)
+    (declare (node-pointer pointer)
+             (boolean nested)
+             (boolean constant))
+    (assert* nested)
+    ;; (assert* constant)
+    (assert* (cudd-node-is-constant pointer))
+    (with-output-to-string (stream)
+      (format stream "~A" constant)))
+
+  (:method (pointer type &key nested &allow-other-keys)
+    "Base case.  May not be called."
+    (declare (node-type type))
+    (assert* (eq t nested)))
+  ); (print-pointer-as-string/helper)
+
+
+(declaim (maybe-inline print-node-to-string))
+(defgeneric print-node-to-string (node &key)
   (:method ((node node) &key &allow-other-keys)
     "Recurse."
-    (print-node-unreadably (node-pointer node) :type (type-of node)))
+    (print-node-to-string (the node-pointer (node-pointer node))
+                          :type (type-of node)
+                          :manager (node-manager node)))
 
   (:method ((node bdd-constant-node) &key)
-    "TODO: What does printing the 'index' do?"
     (let-1 pointer (node-pointer node)
       (assert* (cudd-node-is-constant pointer))
       (with-output-to-string (stream)
@@ -520,8 +587,19 @@ only if their pointers are the same."
           (format stream ", MANAGER #~D"
                   (manager-index (node-manager node)))))))
 
-  (:method (pointer &key (type 'node))
-    (declare (node-pointer pointer))
+  ;; (:method ((node bdd-variable-node) &key)
+  ;;   (let-1 pointer (node-pointer node)
+  ;;     (declare (node-pointer pointer))
+  ;;     (print-unreadable-object (node nil :type 'bdd-variable-node
+  ;;                                        :identity t))
+  ;;     XXX))
+
+  (:method ((pointer #.(typexpand 'node-pointer))
+            &key
+              (type 'node)
+              (manager *manager*))
+    (declare (node-pointer pointer)
+             (manager manager))
     (with-output-to-string (stream)
       (print-unreadable-object (pointer stream :type type :identity nil)
         (format stream "INDEX ~A " (cudd-node-read-index pointer))
@@ -529,10 +607,10 @@ only if their pointers are the same."
             (format stream "LEAF (VALUE ~A)" (cudd-node-value pointer))
             (format stream "INNER 0x~x" (pointer-address pointer)))
         (format stream " REF ~d"
-                (cudd-node-ref-count pointer))))))
+                (cudd-node-ref-count pointer))
+        (format stream ", MANAGER #~D"
+                (manager-index (node-manager node)))))))
+(declaim (notinline print-node-to-string))
 
 (defmethod print-object ((object node) stream)
-  (cond
-    (*print-readably* (not-implemented-error 'readable-bdd))
-    (t
-     (format stream (print-node-unreadably object :type (type-of object))))))
+  (format stream (print-node-to-string object :type (type-of object))))
