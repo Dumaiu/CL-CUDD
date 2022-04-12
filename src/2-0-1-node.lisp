@@ -140,7 +140,10 @@
                                                         (let+ (((&accessors-r/o ;manager-pointer
                                                                  manager-index)
                                                                 manager)
-                                                               (node-string (print-node-to-string node-pointer :type node-type))
+                                                               (node-string (print-node-to-string node-pointer
+                                                                                                  :type node-type
+                                                                                                  :manager manager
+                                                                                                  ))
                                                                ) ;((manager-string (princ-to-string manager)))
                                                           (declare (string node-string))
 
@@ -430,7 +433,7 @@ only if their pointers are the same."
   ((constant :type boolean :initform (required ':constant)
              :reader constant
              :initarg :constant))
-  (:documentation "A 0 or 1 literal."))
+  (:documentation "A T or NIL literal."))
 
 ;; (defmethod literal ((node bdd-constant-node))
 ;;   (let+ ((&slots-r/o pointer) )))
@@ -509,108 +512,3 @@ only if their pointers are the same."
     (declare (bdd-node res))
     res))
 
-(declaim (maybe-inline print-pointer-as-string/helper)
-         (notinline print-pointer-as-string/helper))
-(defgeneric print-pointer-as-string/helper (pointer type &key)
-  (:documentation "NOTE: Error if *PRINT-READABLY* is set.")
-
-  (:argument-precedence-order type pointer)
-
-  (:method :before (node type &key &allow-other-keys)
-    (when *print-readably* (not-implemented-error 'readable-cudd-node-representation)))
-
-  (:method :around (pointer type &rest keys
-                    &key (manager *manager*)
-                    &allow-other-keys)
-    "TODO: What does printing the 'index' do?"
-    (declare (type node-type type)
-             (manager manager))
-    (with-output-to-string (stream)
-      (print-unreadable-object (pointer stream :type type :identity t)
-        ;; (format stream "INDEX ~A " (cudd-node-read-index pointer))
-        (princ (apply #'call-next-method pointer type :nested t
-                      keys)
-               stream)
-        (format stream ", LEAF (VALUE ~A)" (cudd-node-value pointer))
-        (format stream ", REF ~d" (cudd-node-ref-count pointer))
-        (format stream ", MANAGER #~D" (manager-index manager)))))
-
-  (:method (pointer (type (eql 'bdd-variable-node))
-            &key nested ; security
-              index
-            &allow-other-keys)
-    (declare (node-pointer pointer)
-             (boolean nested)
-             (type integer index))
-    (assert* nested)
-    (with-output-to-string (stream)
-      (format stream ", #~A" index)))
-
-  (:method (pointer (type (eql 'bdd-constant-node))
-            &key nested
-              constant
-            &allow-other-keys)
-    (declare (node-pointer pointer)
-             (boolean nested)
-             (boolean constant))
-    (assert* nested)
-    ;; (assert* constant)
-    (assert* (cudd-node-is-constant pointer))
-    (with-output-to-string (stream)
-      (format stream "~A" constant)))
-
-  (:method (pointer type &key nested &allow-other-keys)
-    "Base case.  May not be called."
-    (declare (node-type type))
-    (assert* (eq t nested)))
-  ); (print-pointer-as-string/helper)
-
-
-(declaim (maybe-inline print-node-to-string))
-(defgeneric print-node-to-string (node &key)
-  (:method ((node node) &key &allow-other-keys)
-    "Recurse."
-    (print-node-to-string (the node-pointer (node-pointer node))
-                          :type (type-of node)
-                          :manager (node-manager node)))
-
-  (:method ((node bdd-constant-node) &key)
-    (let-1 pointer (node-pointer node)
-      (assert* (cudd-node-is-constant pointer))
-      (with-output-to-string (stream)
-        (print-unreadable-object (node stream :type 'bdd-constant-node :identity nil)
-          (format stream "~A" (constant node))
-          ;; (format stream "INDEX ~A " (cudd-node-read-index pointer))
-          (format stream ", LEAF (VALUE ~A)" (cudd-node-value pointer))
-          (format stream ", REF ~d"
-                  (cudd-node-ref-count pointer))
-          (format stream ", MANAGER #~D"
-                  (manager-index (node-manager node)))))))
-
-  ;; (:method ((node bdd-variable-node) &key)
-  ;;   (let-1 pointer (node-pointer node)
-  ;;     (declare (node-pointer pointer))
-  ;;     (print-unreadable-object (node nil :type 'bdd-variable-node
-  ;;                                        :identity t))
-  ;;     XXX))
-
-  (:method ((pointer #.(typexpand 'node-pointer))
-            &key
-              (type 'node)
-              (manager *manager*))
-    (declare (node-pointer pointer)
-             (manager manager))
-    (with-output-to-string (stream)
-      (print-unreadable-object (pointer stream :type type :identity nil)
-        (format stream "INDEX ~A " (cudd-node-read-index pointer))
-        (if (cudd-node-is-constant pointer)
-            (format stream "LEAF (VALUE ~A)" (cudd-node-value pointer))
-            (format stream "INNER 0x~x" (pointer-address pointer)))
-        (format stream " REF ~d"
-                (cudd-node-ref-count pointer))
-        (format stream ", MANAGER #~D"
-                (manager-index (node-manager node)))))))
-(declaim (notinline print-node-to-string))
-
-(defmethod print-object ((object node) stream)
-  (format stream (print-node-to-string object :type (type-of object))))

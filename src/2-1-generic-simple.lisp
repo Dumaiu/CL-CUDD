@@ -198,7 +198,7 @@ ZDD: the arithmetic zero node (0.0d0). (Same as ADD)"
 
 ;;; Synsugar:
 (define-symbol-macro *bdd-zero* (zero-node 'bdd-constant-node))
-(define-symbol-macro *bdd-one* (zero-node 'bdd-constant-node))
+(define-symbol-macro *bdd-one* (one-node 'bdd-constant-node))
 
 (define-symbol-macro *bdd-false* *bdd-zero*)
 (define-symbol-macro *bdd-true* *bdd-one*)
