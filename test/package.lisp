@@ -7,7 +7,11 @@
      :fiveam :iterate :trivia :arrow-macros
      :asdf :uiop
      :cl)
-  (:shadow :next :<>))
+  (:shadow :next :<>)
+  (:export
+   #:parse-bdd
+   #:bdd
+   ))
 
 (in-package cl-cudd.test)
 
