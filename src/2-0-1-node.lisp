@@ -13,6 +13,7 @@
           node-type
           generalized-bit
           variable-node
+          variable-id
           bdd-constant-node
           bdd-variable-node
           index
@@ -460,9 +461,9 @@ only if their pointers are the same."
 (defclass bdd-variable-node (bdd-node variable-node)
   ((index :type non-negative-fixnum
           :initform (required 'index)
-          :initarg :index
-          :reader index
-          #| TODO :reader (bdd-variable-index :inline t) |#
+          :initarg :index :initarg :variable-id :initarg :var-id
+          :reader index :reader variable-id
+          #| TODO :reader (bdd-variable-id :inline t) |#
           ))
   (:documentation "A BDD variable literal."))
 
