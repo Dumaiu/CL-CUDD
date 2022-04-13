@@ -117,27 +117,63 @@
                                  (let ((res-ptr (cudd-bdd-vector-compose manager-ptr f-ptr ptr-array)))
                                    (declare (node-pointer res-ptr))
                                    res-ptr)))
-                             'bdd-node)))
+                             'bdd-node
+                             :manager manager)))
     (declare (bdd-node res))
     res))
 
+(defun garbage-collect-all-managers (gc-keys
+                                     &aux (managers *managers*))
+  "Recurse over all '#cudd/*managers*'.  Warning: Slow!
+  - NOTE: Recursing over keys--I hope to prevent creating extra references to the managers themselves.
+"
+  (declare (list gc-keys))
 
+  (iter
+    (for k in-sequence (hash-table-keys managers))
+    (for m = (gethash k managers))
+    (assert* m)
+    (apply #'garbage-collect :manager m gc-keys)))
 
-(defun garbage-collect (&key ((:cache clear-cache?) t) (manager *manager*))
+(defun garbage-collect (&rest keys
+                        &key
+                          ((:cache clear-cache?) t)
+                          (manager :all)
+                        ;; &allow-other-keys
+                          )
   "Runs the CUDD garbage collector.  According to the docs, ':cache nil' \"should only be specified if the cache has been cleared right before.\"
+
+  - ':manager :all': Recurse through all elements of `*managers*'.
+
   - http://web.mit.edu/sage/export/tmp/y/usr/share/doc/polybori/cudd/cuddAllDet.html#cuddGarbageCollect
 "
   (declare (boolean clear-cache?)
-           (manager manager))
-  (with-cudd-critical-section
-    (let ((manager-ptr (manager-pointer manager))
-          (clear-cache?/int (if clear-cache? 1 0)))
-      (declare (manager-pointer manager-ptr)
-               (fixnum clear-cache?/int))
-      (let ((res (cudd-garbage-collect manager-ptr clear-cache?/int)))
-        (declare (fixnum res))
-        res))))
+           (type (or manager (eql :all)) manager))
+  (case manager
+    (:all
+     (garbage-collect-all-managers keys))
+    (t
+     (assert* (typep manager 'manager))
+     (with-cudd-critical-section (:manager manager)
+       (let ((manager-ptr (manager-pointer manager))
+             (clear-cache?/int (if clear-cache? 1 0)))
+         (declare (manager-pointer manager-ptr)
+                  (fixnum clear-cache?/int))
+         (let ((res (cudd-garbage-collect manager-ptr clear-cache?/int)))
+           (declare (fixnum res))
+           res))))))
 
+(defun gc (&rest keys! &key
+                        (full nil full?)
+                        (verbose nil verbose?)
+           &allow-other-keys)
+  "See docs for cudd:garbage-collect."
+  (apply #'trivial-garbage:gc (append
+                               (when full? `(:full ,full))
+                               (when verbose? `(:verbose ,verbose))))
+
+  (delete-from-plistf keys! :full :verbose)
+  (apply #'garbage-collect keys!))
 
 (defmacro with-C-file-pointer ((ptr pathname &key direction) &body body)
   "Utility for C file I/O.  Adapted from def. of 'dump-dot'.
