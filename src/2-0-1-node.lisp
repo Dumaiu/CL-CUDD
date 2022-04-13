@@ -109,9 +109,11 @@
       (eq :debug config/debug-consistency-checks)))
 
 (defun helper/destruct-node (node-pointer node-type
+                             &rest other-initargs
                              &key
                                manager
-                               ((:ref ref) t ref-provided?))
+                               ((:ref ref) t ref-provided?)
+                             &allow-other-keys)
   "NB: We *do* want to maintain a reference to the MANAGER from within a node's finalizer.
   MANAGER: Maintain a reference from the node's finalizer to its manager so there is no chance of dangling-pointer errors.  See M. Asai's note in (wrap-and-finalize).
   REF: When T, decrement CUDD ref.  Passed along from (wrap-and-finalize): if we didn't increment during construction, we don't decrement here.
@@ -128,6 +130,7 @@
                "Establish a block to handle a memory fault.  Optionally resume execution, depending on `config/signal-memory-errors'.
   * TODO: Rewrite with (handler-case)?
   * TODO [2022-03-25 Fri] Rewrite (handler-bind-case) to do the (throw)
+  * TODO Forward-declare (print-node-to-string)
 "
                `(catch 'mem-fault-suppress
                   (handler-bind-case ; for sb-sys:memory-fault-error
@@ -140,10 +143,10 @@
                                                         (let+ (((&accessors-r/o ;manager-pointer
                                                                  manager-index)
                                                                 manager)
-                                                               (node-string (print-node-to-string node-pointer
-                                                                                                  :type node-type
-                                                                                                  :manager manager
-                                                                                                  ))
+                                                               (node-string (apply #'print-node-to-string node-pointer
+                                                                                   :type node-type
+                                                                                   :manager manager
+                                                                                   other-initargs))
                                                                ) ;((manager-string (princ-to-string manager)))
                                                           (declare (string node-string))
 
@@ -263,11 +266,14 @@ in manager ~A~%"
         ;; If ref=T, increment the CUDD ref count
         (cond
           (ref
-           (log-msg :trace :logger cudd-node-logger
-                    "Constructing wrapper node for ~A ~A.  Before incrementing, REFs = ~D."
-                    type
-                    pointer
-                    (cudd-node-ref-count pointer))
+           (let-1 str (apply #'print-node-pointer-to-string pointer type :manager manager
+                             other-initargs)
+             (log-msg :trace :logger cudd-node-logger "Constructing wrapper node for ~A" str))
+           ;; (log-msg :trace :logger cudd-node-logger
+           ;;          "Constructing wrapper node for ~A ~A.  Before incrementing, REFs = ~D."
+           ;;          type
+           ;;          pointer
+           ;;          (cudd-node-ref-count pointer))
 
            ;; *Side-effect*:
            (cudd-ref pointer)
@@ -511,4 +517,3 @@ only if their pointers are the same."
                                 :manager (node-manager node))))
     (declare (bdd-node res))
     res))
-
