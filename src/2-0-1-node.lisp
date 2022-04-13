@@ -256,6 +256,9 @@ in manager ~A~%"
            (manager manager)
            (list other-initargs))
 
+  ;; *Side-effect*:
+  (declare (optimize debug))
+
   (let ((keys-check? (keys-check?))
         (debug-check? (debug-check?)))
     (declare (boolean keys-check? debug-check?))
