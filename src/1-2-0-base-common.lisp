@@ -8,6 +8,12 @@
 
 (declaim (ftype (function (foreign-pointer) foreign-pointer) cudd-regular))
 (defun cudd-regular (node)
+  "The Lisp analogue of C's `Cudd_Regular()`, whose definition is, as of [2022-04-13 Wed]::
+
+    #define Cudd_Regular(node) ((DdNode *)((uintptr_t)(node) & ~(uintptr_t) 01))
+
+  * TODO: Inline?
+"
   (let ((addr (pointer-address node)))
     (setf (ldb (byte 1 0) addr) 0)
     (make-pointer addr)))
