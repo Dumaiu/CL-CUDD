@@ -7,6 +7,9 @@
 (assert (boundp '*stderr*))
 
 (export '(
+          add-node-type
+          bdd-node-type
+          zdd-node-type
           node-type
           generalized-bit
           bdd-constant-node
@@ -32,12 +35,20 @@
 (deftype generalized-bit ()
   '(or boolean (member 0 1)))
 
+(deftype add-node-type ()
+  '(member add-node add-constant-node add-variable-node))
+
+(deftype bdd-node-type ()
+  '(member bdd-node bdd-constant-node bdd-variable-node))
+
+(deftype zdd-node-type ()
+  '(member zdd-node zdd-constant-node zdd-variable-node))
+
 (deftype node-type ()
   "One of the three node types or their subclasses."
-  `(member bdd-node bdd-constant-node bdd-variable-node
-           add-node add-constant-node add-variable-node
-           zdd-node zdd-constant-node zdd-variable-node
-           ))
+  '(or add-node-type
+    bdd-node-type
+    zdd-node-type))
 
 
 (defun required ()
@@ -182,10 +193,10 @@ in manager ~A~%"
                  (when (zerop (cudd-node-ref-count node-pointer))
                    (error "Tried to decrease reference count of node that already has refcount zero"))
 
-                 (ecase node-type
-                   (bdd-node (cudd-recursive-deref mp node-pointer))
-                   (add-node (cudd-recursive-deref mp node-pointer))
-                   (zdd-node (cudd-recursive-deref-zdd mp node-pointer)))
+                 (etypecase node-type
+                   (bdd-node-type (cudd-recursive-deref mp node-pointer))
+                   (add-node-type (cudd-recursive-deref mp node-pointer))
+                   (zdd-node-type (cudd-recursive-deref-zdd mp node-pointer)))
 
                  (log-msg :debu7 :logger cudd-node-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
                           node-pointer
