@@ -64,8 +64,8 @@
     (assert* (eq t nested))
     (with-output-to-string (stream)
       (format stream ", INDEX ~A" (cudd-node-read-index pointer))
-     (format stream ", LEAF (VALUE ~A)" (cudd-node-value pointer))
-     (format stream ", INNER 0x~x" (pointer-address pointer))))
+      (format stream ", LEAF (VALUE ~A)" (cudd-node-value pointer))
+      (format stream ", INNER 0x~x" (pointer-address pointer))))
   ); (print-node-pointer-to-string)
 
 
@@ -82,8 +82,8 @@
           (constant (constant node)))
       (assert* (cudd-node-is-constant pointer))
       (print-node-pointer-to-string pointer 'bdd-constant-node
-                                      :constant constant
-                                      :manager (node-manager node))
+                                    :constant constant
+                                    :manager (node-manager node))
       ;; (with-output-to-string (stream)
       ;;   (print-unreadable-object (node stream :type 'bdd-constant-node :identity nil)
       ;;     (format stream "~A" )
@@ -99,8 +99,8 @@
     (let ((pointer (node-pointer node))
           (index (index node)))
       (print-node-pointer-to-string pointer 'bdd-variable-node
-                                      :index index
-                                      :manager (node-manager node))))
+                                    :index index
+                                    :manager (node-manager node))))
 
   ;; (:method ((node bdd-variable-node) &key)
   ;;   (let-1 pointer (node-pointer node)
