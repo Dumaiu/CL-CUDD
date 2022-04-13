@@ -667,7 +667,9 @@
            ;; TODO: Rename these two?:
            #:cudd-T
            #:cudd-E
-           #:print-info)
+           #:print-info
+           #:gc
+           )
   ;; (:intern
   ;;  #:with-C-file-pointer ; helper
   ;;  )
@@ -852,8 +854,9 @@
            #:cudd-condition
            #:cudd-error
            #:cudd-reordering-error
-		   #:cudd-logger
-		   #:cudd-node-logger
+           #:cudd-logger
+           #:cudd-node-logger
+           #:gc
            )
   ); cl-cudd
 
@@ -867,3 +870,4 @@
   (defvar cudd-logger (make-logger)
 	":log4cl logger created at the root of ':cl-cudd'."))
 
+;; (assert* (fboundp 'gc))
