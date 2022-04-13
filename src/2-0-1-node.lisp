@@ -259,6 +259,9 @@ in manager ~A~%"
   ;; *Side-effect*:
   (declare (optimize debug))
 
+  ;; TODO: XXX
+  (setq ref t)
+
   (let ((keys-check? (keys-check?))
         (debug-check? (debug-check?)))
     (declare (boolean keys-check? debug-check?))
@@ -286,6 +289,7 @@ in manager ~A~%"
                     (cudd-node-ref-count pointer)))
 
           ('otherwise  ; ref=nil
+           (not-implemented-error :ref=nil)
            (log-msg :trace :logger cudd-node-logger "NON-INCREMENTING wrapper for ~A ~A being constructed (REFs = ~D).
  This should happen only for literals."
                     type
