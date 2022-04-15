@@ -50,7 +50,9 @@
         (initial-num-vars-z 0)
         (initial-num-slots 256)
         (cache-size 262144)
-        (max-memory 0))
+        (max-memory 0)
+
+        (reorder :cudd-reorder-same reordering-specified?))
     :documentation "Used by (manager-init), (with-manager)."
     :test #'equal))
 
@@ -319,18 +321,23 @@ TODO: What about #-thread-support ?
                                  &allow-other-keys)
   "Construct and return a new `manager' instance, loading CUDD backend to go with it.
 
+  ':reorder t' => Same as ':reorder :cudd-reorder-same'
+
   * TODO [optimize] (call-next-method).
   * TODO Thread-safety for *manager-counter* & *manager-index*
+
 "
-  (let* ((p (cudd-init initial-num-vars
+  (declare (type (or null (eql t) bdd-reordering-method) reorder)
+           (boolean reordering-specified?))
+  (let* ((mp (cudd-init initial-num-vars
                        initial-num-vars-z
                        initial-num-slots
                        cache-size
                        max-memory))
-         (m (apply #'call-next-method m slot-names :pointer p  *keys)))
+         (m (apply #'call-next-method m slot-names :pointer mp  *keys)))
     (declare (manager m))
 
-    (assert* (not (null-pointer-p p)))
+    (assert* (not (null-pointer-p mp)))
 
     ;; (break "~A" m)
     (let ((manager-index (manager-index m)))
@@ -339,7 +346,7 @@ TODO: What about #-thread-support ?
       (incf *manager-counter*)
       ;; TODO: Decrement if the stack gets unwound during construction
 
-      #.(let ((fmt '("~&Constructing CUDD manager #~D ~%" manager-index ;; p
+      #.(let ((fmt '("~&Constructing CUDD manager #~D ~%" manager-index ;; mp
                      )))
           `(progn
              (format *stderr* ,@fmt)
@@ -347,18 +354,33 @@ TODO: What about #-thread-support ?
 
       (with-cudd-critical-section (:manager m)
         ;; see 2-4-hook.lisp
-        (cudd-add-hook p (callback before-gc-hook) :cudd-pre-gc-hook)
-        (cudd-add-hook p (callback after-gc-hook) :cudd-post-gc-hook)
-        (cudd-add-hook p (callback before-gc-hook) :cudd-pre-reordering-hook)
-        (cudd-add-hook p (callback after-gc-hook) :cudd-post-reordering-hook)
+        (cudd-add-hook mp (callback before-gc-hook) :cudd-pre-gc-hook)
+        (cudd-add-hook mp (callback after-gc-hook) :cudd-post-gc-hook)
+        (cudd-add-hook mp (callback before-gc-hook) :cudd-pre-reordering-hook)
+        (cudd-add-hook mp (callback after-gc-hook) :cudd-post-reordering-hook)
 
         (finalize m (lambda ()
                       "Manager finalizer thunk."
-                      (finalize-manager p :index manager-index)))
+                      (finalize-manager mp :index manager-index)))
 
         ;; *Side-effect*:
         (assert* (null (gethash manager-index *managers*)))
-        (setf (gethash manager-index *managers*) m))
+        (setf (gethash manager-index *managers*) m)
+
+        ;; *Another side-effect*:
+        (when reordering-specified?
+          (log-debu1 :logger cudd-logger "Setting new manager's autoreordering: ~S" reorder)
+          (case reorder
+            ((t)
+             ;; (enable-reordering :cudd-reorder-same m)
+             (cudd-autodyn-enable mp :cudd-reorder-same)
+             )
+            ((nil)
+             ;; (disable-reordering m)
+             (cudd-autodyn-disable mp))
+            (t
+             ;; (enable-reordering reorder m)
+             (cudd-autodyn-enable mp reorder)))))
 
       ;; TODO:
       ;; (let ((manager-string (princ-to-string m)))
@@ -424,14 +446,19 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
   values for the maximum size of the cache and for the limit for fast
   unique table growth based on the available memory.
 
-* TODO [2022-02-09 Wed]: ':copy' keyword.  Copy the initvals from an existing manager.  Also, perhaps, the autoreorder configuration.
+  - ':reorder': See (manager-init).
+
+  * TODO: ':copy' keyword.  Copy the initvals from an existing manager.  Also, perhaps, the autoreorder configuration.
+
+  * TODO: (shared-initialize) should protect the manager counter with a mutex.
 "
 
   (declare (ignorable initial-num-vars
                       initial-num-vars-z
                       initial-num-slots
                       cache-size
-                      max-memory))
+                      max-memory
+                      reorder reordering-specified?))
   `(let ((*manager* (manager-init ,@keys)))
      ,@body))
 
