@@ -1,3 +1,5 @@
+* DONE: Unit-test with autosifting enabled.
+    * FIXME: Is having reordering turned on what's causing the bug?
 * TODO: Rename 'index' in `bdd-variable-node` to `variable-id`
 * TODO Q: Why is `(cudd-regular)` defined in Lisp, instead of calling C|-`Cudd_Regular()`?
 * TODO: If this all **still** doesn't work, use (without-gcing) inside the critsec.
