@@ -1,6 +1,6 @@
 (in-package :cudd)
 
-(defmacro define-simple-managed-function (name interface &body (&whole body &optional doc))
+(defmacro define-simple-managed-function (name interface &body (&whole doc-maybe &optional doc))
   " NOTE: INTERFACE should be a unary function from `:cl-cudd.baseapi', taking only a `manager-pointer'.
   - [2021-11-04 Thu]: The generated function will have an &optional 'manager' parameter.
   * TODO: Accept &key *or* &optional arg. "
@@ -8,7 +8,7 @@
            (type (or null string) doc)
            (ignorable doc))
   `(defun ,name (&optional (manager *manager*))
-     ,@body
+     ,@doc-maybe
      (declare (type manager manager))
      (,interface
       (manager-pointer manager))))
