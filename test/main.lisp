@@ -216,3 +216,21 @@
         ;; (break "Back in original")
         ))))
 
+
+(defun test-with-autoreorder-enabled ()
+  ;; (logger-log-level cudd-logger)
+  ;; (log-level-to-string)
+
+  (unless (>= (effective-log-level cudd-logger)
+              +log-level-debu1+)
+    (log:config cudd-logger :trace)
+    +log-level-trace+)
+
+  ;; TODO: I want this to inherit from CUDD-LOGGER:
+  (effective-log-level cudd-node-logger)
+
+  (when (null *default-reordering-method*)
+    (setf *default-reordering-method* :cudd-reorder-same))
+
+  (run-all-tests)
+  (gc :full t :verbose t))

@@ -14,6 +14,6 @@
    #:bdd
 
    #:run!
-   ))
+   #:test-with-autoreorder-enabled))
 
 (in-package cl-cudd.test)
