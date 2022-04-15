@@ -365,7 +365,9 @@ TODO: What about #-thread-support ?
 
 
 (defmacro manager-initf (&optional (manager-form '*manager*)
-                         &key force)
+                         &rest other-initargs!
+                         &key force
+                         &allow-other-keys)
   "Like (manager-init), but expects a SETFable form.
   - MANAGER-FORM must be evaluable.
   - A truthy MANAGER-FORM is an error, unless FORCE=T as well, in which case the old manager will be killed.
@@ -373,6 +375,7 @@ TODO: What about #-thread-support ?
   * TODO: (define-modify-macro)?
 "
   ;; (break "~A" manager-form)
+  (delete-from-plistf other-initargs! :force)
   (once-only (force
               (manager manager-form))
     `(progn
@@ -383,7 +386,7 @@ TODO: What about #-thread-support ?
               ,force)
           (unless (null ,manager)
             (manager-quit ,manager))
-          (setf ,manager-form (manager-init)))
+          (setf ,manager-form (manager-init ,@other-initargs!)))
          (t (error "'~A' already denotes a live ~S.  ~&Use '~S' to override."
                    ',manager-form
                    'manager
@@ -400,10 +403,8 @@ Bound to a global manager by default.")
 
 
 
-(defmacro with-manager (#.`(&rest
-                              keys
-                            &key
-                              ,@+manager-initarg-defaults+)
+(defmacro with-manager (#.`(&rest keys &key
+                                         ,@+manager-initarg-defaults+)
                         &body body)
   "Bind a freshly generated manager to *MANAGER*.
 This macro is not so useful when multiple managers are in place.
