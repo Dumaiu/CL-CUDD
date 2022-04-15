@@ -8,7 +8,9 @@
           manager-initf
           cudd-logger
           manager-index
-          *managers*))
+          *managers*
+          *default-reordering-method*
+          ))
 
 ;; (assert (find-class 'manager-mutex))
 
@@ -45,6 +47,10 @@
   (documentation object 'cl:variable))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
+  (defvar *default-reordering-method* nil
+    "The 'reordering' status for ADDs and BDDs in new managers.  If NIL, ordering is disabled by default.  Otherwise the value will be used as with (enable-reordering).")
+  (declaim (type (or null reordering-method)))
+
   (define-constant +manager-initarg-defaults+
       '((initial-num-vars 0)
         (initial-num-vars-z 0)
@@ -52,7 +58,7 @@
         (cache-size 262144)
         (max-memory 0)
 
-        (reorder :cudd-reorder-same reordering-specified?))
+        (reorder *default-reordering-method*))
     :documentation "Used by (manager-init), (with-manager)."
     :test #'equal))
 
@@ -327,15 +333,20 @@ TODO: What about #-thread-support ?
   * TODO Thread-safety for *manager-counter* & *manager-index*
 
 "
-  (declare (type (or null (eql t) bdd-reordering-method) reorder)
-           (boolean reordering-specified?))
+  (declare (type (or null (eql t) reordering-method) reorder)
+           ;; (boolean reordering-specified?)
+           )
   (let* ((mp (cudd-init initial-num-vars
                        initial-num-vars-z
                        initial-num-slots
                        cache-size
                        max-memory))
+         (reorder (if (eq t reorder) :cudd-reorder-same reorder))
          (m (apply #'call-next-method m slot-names :pointer mp  *keys)))
-    (declare (manager m))
+    (declare
+     (manager-pointer mp)
+     (type (or null reordering-method) reorder)
+     (manager m))
 
     (assert* (not (null-pointer-p mp)))
 
@@ -368,19 +379,14 @@ TODO: What about #-thread-support ?
         (setf (gethash manager-index *managers*) m)
 
         ;; *Another side-effect*:
-        (when (or reorder reordering-specified?)
-          (log-debu1 :logger cudd-logger "Setting new manager's autoreordering: ~S" reorder)
-          (case reorder
-            ((t)
-             ;; (enable-reordering :cudd-reorder-same m)
-             (cudd-autodyn-enable mp :cudd-reorder-same)
-             )
-            ((nil)
-             ;; (disable-reordering m)
-             (cudd-autodyn-disable mp))
-            (t
-             ;; (enable-reordering reorder m)
-             (cudd-autodyn-enable mp reorder)))))
+        (case reorder
+          ((nil)
+           ;; (disable-reordering m)
+           (cudd-autodyn-disable mp))
+          (t
+           (log-debu1 :logger cudd-logger "Setting new manager's autoreordering: ~S" reorder)
+           ;; (enable-reordering reorder m)
+           (cudd-autodyn-enable mp reorder))))
 
       ;; TODO:
       ;; (let ((manager-string (princ-to-string m)))
@@ -457,7 +463,8 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
                            (assert (and (symbolp name)
                                         (not (keywordp name))))
                            (collecting name)))
-           (ignore reordering-specified?))
+           ;; (ignore reordering-specified?)
+           )
   `(let ((*manager* (manager-init ,@keys)))
      ,@body))
 
