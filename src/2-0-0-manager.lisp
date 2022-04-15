@@ -368,7 +368,7 @@ TODO: What about #-thread-support ?
         (setf (gethash manager-index *managers*) m)
 
         ;; *Another side-effect*:
-        (when reordering-specified?
+        (when (or reorder reordering-specified?)
           (log-debu1 :logger cudd-logger "Setting new manager's autoreordering: ~S" reorder)
           (case reorder
             ((t)
