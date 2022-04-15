@@ -1,6 +1,9 @@
 (in-package :cudd)
 
-(deftype bdd-reordering-method ()
+(export '(reordering-method
+          bdd-reordering-method))
+
+(deftype reordering-method ()
   `(member
     ,@(foreign-enum-keyword-list 'cudd-reordering-type)
     ;; :CUDD-REORDER-SAME
@@ -27,6 +30,10 @@
     ;; :CUDD-REORDER-EXACT
     ))
 
+(deftype bdd-reordering-method ()
+  "Alias."
+  'reordering-method)
+
 (defun enable-reordering (&optional (method :cudd-reorder-same)
                             (manager *manager*))
   "Enables automatic dynamic reordering of BDDs and ADDs.
@@ -37,7 +44,7 @@
   @see Cudd_AutodynDisable Cudd_ReorderingStatus Cudd_AutodynEnableZdd
 
  - [2022-01-19 Wed] TODO: Keyword parameters. "
-  (declare (bdd-reordering-method method)
+  (declare (reordering-method method)
            (manager manager))
   (with-cudd-critical-section
     (let ((mp (manager-pointer manager)))
@@ -87,7 +94,7 @@ Secondary value returns the current reordering method.
   (declare (manager m))
   (with-foreign-object (method-ptr 'cudd-reordering-type)
     (values (= 1 (cudd-reordering-status (manager-pointer m) method-ptr))
-            (the bdd-reordering-method
+            (the reordering-method
                  (mem-ref method-ptr 'cudd-reordering-type)))))
 
 (defun zdd-reordering-status (&key ((:manager m) *manager*))
@@ -120,7 +127,7 @@ Default value is 33000000. In CUDD each node consumes 3 words, so this threshold
   * TODO Switch all args to kargs.
   * TODO Factor out MINSIZE.
 "
-  (declare (bdd-reordering-method method)
+  (declare (reordering-method method)
            (manager manager))
   (with-cudd-critical-section (:manager manager)
     (let ((result (cudd-reduce-heap (manager-pointer manager) method minsize)))
