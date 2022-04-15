@@ -10,8 +10,9 @@
   `(defun ,name (&optional (manager *manager*))
      ,@doc-maybe
      (declare (type manager manager))
-     (,interface
-      (manager-pointer manager))))
+     (with-cudd-critical-section (:manager manager)
+       (,interface
+        (manager-pointer manager)))))
 
 (define-simple-managed-function disable-gc cudd-disable-garbage-collection
   "Disables garbage collection. Garbage
