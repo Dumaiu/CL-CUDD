@@ -1,3 +1,5 @@
+* TODO: It's a problem to have `reordering-method` defined after 2-0-0-manager.lisp loads.
+
 * DONE: Unit-test with autosifting enabled.
     * FIXME: Is having reordering turned on what's causing the bug?
 * TODO: Rename 'index' in `bdd-variable-node` to `variable-id`
