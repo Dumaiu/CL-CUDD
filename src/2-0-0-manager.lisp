@@ -428,8 +428,8 @@ Bound to a global manager by default.")
 
 
 
-(defmacro with-manager (#.`(&rest keys &key
-                                         ,@+manager-initarg-defaults+)
+(defmacro with-manager (#.`(&rest keys
+                            &key ,@ +manager-initarg-defaults+)
                         &body body)
   "Bind a freshly generated manager to *MANAGER*.
 This macro is not so useful when multiple managers are in place.
@@ -452,13 +452,12 @@ Also, all data on the diagram are lost when it exits the scope of WITH-MANAGER.
 
   * TODO: (shared-initialize) should protect the manager counter with a mutex.
 "
-
-  (declare (ignorable initial-num-vars
-                      initial-num-vars-z
-                      initial-num-slots
-                      cache-size
-                      max-memory
-                      reorder reordering-specified?))
+  (declare #.`(ignore ,@ (iter
+                           (for (name init) in +manager-initarg-defaults+)
+                           (assert (and (symbolp name)
+                                        (not (keywordp name))))
+                           (collecting name)))
+           (ignore reordering-specified?))
   `(let ((*manager* (manager-init ,@keys)))
      ,@body))
 
