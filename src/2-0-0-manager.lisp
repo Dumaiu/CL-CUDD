@@ -364,11 +364,12 @@ TODO: What about #-thread-support ?
              (log-msg :debug :logger cudd-logger ,@fmt)))
 
       (with-cudd-critical-section (:manager m)
-        ;; see 2-4-hook.lisp
-        (cudd-add-hook mp (callback before-gc-hook) :cudd-pre-gc-hook)
-        (cudd-add-hook mp (callback after-gc-hook) :cudd-post-gc-hook)
-        (cudd-add-hook mp (callback before-gc-hook) :cudd-pre-reordering-hook)
-        (cudd-add-hook mp (callback after-gc-hook) :cudd-post-reordering-hook)
+        ;; XXX Disabled, [2022-04-15 Fri]
+        ;; ;; see 2-4-hook.lisp
+        ;; (cudd-add-hook mp (callback before-gc-hook) :cudd-pre-gc-hook)
+        ;; (cudd-add-hook mp (callback after-gc-hook) :cudd-post-gc-hook)
+        ;; (cudd-add-hook mp (callback before-gc-hook) :cudd-pre-reordering-hook)
+        ;; (cudd-add-hook mp (callback after-gc-hook) :cudd-post-reordering-hook)
 
         (finalize m (lambda ()
                       "Manager finalizer thunk."
