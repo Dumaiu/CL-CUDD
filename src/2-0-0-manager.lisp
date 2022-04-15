@@ -313,6 +313,52 @@ TODO: What about #-thread-support ?
     #| (setf mp (null-pointer)) ; pointless |#)
   t)
 
+(defun finalize-manager (mp &key ((:index manager-index)))
+  "Manager callback finalizer.
+  NOTE that I don't both using (with-cudd-critical-section) here, since the manager is dead anyway.  No other thread should be interacting with it.
+"
+  (declare (optimize safety))
+  (declare (manager-pointer mp))
+  (assert* (null (gethash manager-index *managers*)))
+
+  (unwind-protect (progn
+                    ;;with-cudd-critical-section (:mutex mutex)
+                    (assert* (not (null-pointer-p mp)))
+
+                    ;; NB: Don't retain a reference to the containing `manager' in this finalizer.  See Masataro Asai's NOTE on the finalizer for `node'.
+                    #.(let ((fmt '("~&Freeing CUDD manager #~D~%" manager-index ;; mp
+                                   )))
+                        `(progn
+                           (format *stderr* ,@fmt)
+                           (log-msg :debug :logger cudd-logger ,@fmt)))
+
+                    (when config/check-zero-ref-when-manager-finalized
+                      (let ((undead-node-count (cudd-check-zero-ref mp)))
+                        (declare (uint undead-node-count))
+                        (unless (zerop undead-node-count)
+                          (ecase  config/check-zero-ref-when-manager-finalized
+                            (:log
+                             (log-error :logger cudd-logger
+                                        "* ERROR: In finalizer, manager #~D ~A was left with ~D unrecovered node~:P (should be 0)."
+                                        manager-index mp undead-node-count))
+                            (:error
+                             (not-implemented-error 'error-arg)
+                             (assert* (zerop undead-node-count) (mp undead-node-count)
+                                      "Assert failed in finalizer of manager #~D ~A, with ~D unrecovered node~:P (should be 0)."
+                                      manager-index mp undead-node-count))))))
+                    (when t ; FIXME config/check-...
+                      (unless (zerop (cudd-check-keys mp))
+                        (log-error :logger cudd-logger "* Error: (cudd-check-keys) failed in finalizer of manager #~D" manager-index))
+
+                      (unless (zerop (cudd-debug-check mp))
+                        (log-error :logger cudd-logger "* Error: (cudd-debug-check) failed in finalizer of manager #~D" manager-index))))
+
+    ;; Cleanup:
+    (cudd-quit mp) ; *Side-effect*
+
+    #| (setf mp (null-pointer)) ; pointless |#)
+  t)
+
 
 (defmethod shared-initialize #.`((m manager) slot-names &rest *keys
                                  &key ,@+manager-initarg-defaults+
