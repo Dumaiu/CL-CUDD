@@ -113,8 +113,8 @@
                              &rest other-initargs
                              &key
                                manager
-                               ((:ref ref) t ref-provided?)
-                             &allow-other-keys)
+                             &allow-other-keys
+                             &aux (ref t))
   "NB: We *do* want to maintain a reference to the MANAGER from within a node's finalizer.
   MANAGER: Maintain a reference from the node's finalizer to its manager so there is no chance of dangling-pointer errors.  See M. Asai's note in (wrap-and-finalize).
   REF: When T, decrement CUDD ref.  Passed along from (wrap-and-finalize): if we didn't increment during construction, we don't decrement here.
@@ -122,10 +122,11 @@
   ;; (declare (optimize safety))
   (declare (node-pointer node-pointer)
            (manager manager)
-           (boolean ref))
-  (unless (null ref-provided?)
+           (boolean #|ref|# ref-provided?))
+
+  #|(unless (null ref-provided?)
     ;; (log-warn :logger cudd-node-logger )
-    (warn "Don't pass :ref."))
+    (warn "Don't pass :ref."))|#
 
   (macrolet ((with-mem-fault-protection (&body body)
                "Establish a block to handle a memory fault.  Optionally resume execution, depending on `config/signal-memory-errors'.
@@ -142,7 +143,8 @@
                                                      (ecase config/signal-memory-errors
                                                        ((:error :log)
                                                         (let+ (((&accessors-r/o ;manager-pointer
-                                                                 manager-index)
+                                                                 ;; manager-index
+                                                                 )
                                                                 manager)
                                                                (node-string (apply #'print-node-to-string node-pointer
                                                                                    :type node-type
@@ -152,18 +154,15 @@
                                                           (declare (string node-string))
 
                                                           (log-error :logger cudd-node-logger
-                                                                     ;; TODO: Give each node an index?
                                                                      "* Error: memory-fault detected in Lisp:
  ~&~T~<~A~>
 
 while destructing
 ~T~A
-in manager #~A.
 
  Re-throwing? ~A~%"
                                                                      xc
                                                                      node-string
-                                                                     manager-index ;manager-string
                                                                      (eq :error config/signal-memory-errors)))
 
                                                         (if (eq :error config/signal-memory-errors)
@@ -228,6 +227,7 @@ in manager ~A~%"
                  (log-msg :debu8 :logger cudd-node-logger
                           "Past the deref segment in finalizer for ~A ~A." node-type node-pointer))
                 (t ; ref=nil
+                 (error "Shouldn't happen.")
                  (log-msg :debu8 :logger cudd-node-logger
                           "Skipping the deref segment in finalizer for ~A ~A." node-type node-pointer))))
 
@@ -259,6 +259,10 @@ in manager ~A~%"
 
   ;; *Side-effect*:
   (declare (optimize debug))
+
+  (unless (null ref)
+    ;; (log-warn :logger cudd-node-logger )
+    (warn "Don't pass ref=T."))
 
   ;; TODO: XXX
   (setq ref t)
@@ -335,7 +339,8 @@ in manager ~A~%"
                  (helper/destruct-node pointer
                                        type
                                        :manager manager
-                                       :ref ref)))))
+                                       ;; :ref ref
+                                       )))))
 
           ;; After constructing the finalizer:
           (when config/debug-consistency-checks
@@ -354,7 +359,7 @@ in manager ~A~%"
           node)))))
 
 (defmacro wrap-and-finalize (pointer type &rest *other-initargs &key
-                                                                  (ref t)
+                                                                  (ref t ref-provided?)
                                                                   (manager '*manager*)
                              &allow-other-keys)
   "Wrap the given pointer in a node of type TYPE.
@@ -371,23 +376,29 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
   ;; (declare (optimize debug))
 
   ;; NOTE: I can't use (alexandria:once-only) here.  It isn't "`declare'-friendly":
+  (declare (ignore ref)
+           (ignorable ref-provided?))
   `(let ((manager ,manager))
      (declare (manager manager))
 
      (with-cudd-critical-section (:manager manager)
        (let* ((pointer ,pointer)
               (type ,type)
-              (ref ,ref)
+              ;; (ref ,ref)
               (address (pointer-address pointer)))
          (declare (node-pointer pointer)
                   (node-type type)
-                  (boolean ref))
+                  ;; (boolean ref)
+                  )
+
+         ;; (unless (null ref-provided?)
+         ;;   (warn "Don't pass :ref."))
 
          (ensure-gethash
           address
           (manager-node-hash manager)
           ;; This form executes iff ADDRESS isn't already present in the hashtable:
-          (helper/construct-node pointer type ref manager (list ,@*other-initargs)))))))
+          (helper/construct-node pointer type #|ref|# nil manager (list ,@*other-initargs)))))))
 
 (defun node (pointer type &key (ref t) (manager *manager*))
   (declare (node-pointer pointer)
