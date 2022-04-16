@@ -163,17 +163,23 @@
            (declare (fixnum res))
            res))))))
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (setf (symbol-function 'lisp-gc) #'trivial-garbage:gc))
+
 (defun gc (&rest keys! &key
                         (full nil full?)
                         (verbose nil verbose?)
            &allow-other-keys)
   "See docs for cudd:garbage-collect."
-  (apply #'trivial-garbage:gc (append
-                               (when full? `(:full ,full))
-                               (when verbose? `(:verbose ,verbose))))
+  (let-1 lisp-gc-keys (append
+                       (when full? `(:full ,full))
+                       (when verbose? `(:verbose ,verbose)))
+    (apply #'lisp-gc lisp-gc-keys)
 
-  (delete-from-plistf keys! :full :verbose)
-  (apply #'garbage-collect keys!))
+    (delete-from-plistf keys! :full :verbose :cudd)
+    (apply #'garbage-collect keys!)
+    ;; Once more:
+    (apply #'lisp-gc lisp-gc-keys)))
 
 (defmacro with-C-file-pointer ((ptr pathname &key direction) &body body)
   "Utility for C file I/O.  Adapted from def. of 'dump-dot'.
