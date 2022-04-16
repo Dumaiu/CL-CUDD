@@ -277,42 +277,21 @@ in manager ~A~%"
 
       (with-cudd-critical-section (:manager manager)
         ;; If ref=T, increment the CUDD ref count
-        (cond
-          (ref
-           (let-1 str (apply #'print-node-pointer-to-string pointer type :manager manager
-                             other-initargs)
-             (log-msg :trace :logger cudd-node-logger "Constructing wrapper node for ~A" str))
-           ;; (log-msg :trace :logger cudd-node-logger
-           ;;          "Constructing wrapper node for ~A ~A.  Before incrementing, REFs = ~D."
-           ;;          type
-           ;;          pointer
-           ;;          (cudd-node-ref-count pointer))
+        (let-1 str (apply #'print-node-pointer-to-string pointer type :manager manager
+                          other-initargs)
+          (log-msg :trace :logger cudd-node-logger "Constructing wrapper node for ~A" str))
+        ;; (log-msg :trace :logger cudd-node-logger
+        ;;          "Constructing wrapper node for ~A ~A.  Before incrementing, REFs = ~D."
+        ;;          type
+        ;;          pointer
+        ;;          (cudd-node-ref-count pointer))
 
-           ;; *Side-effect*:
-           (cudd-ref pointer)
+        ;; *Side-effect*:
+        (cudd-ref pointer)
 
-           (log-msg :debu7 :logger cudd-node-logger "- After (cudd-ref ~A), REFs = ~D."
-                    pointer
-                    (cudd-node-ref-count pointer)))
-
-          ('otherwise  ; ref=nil
-           (not-implemented-error :ref=nil)
-           (log-msg :trace :logger cudd-node-logger "NON-INCREMENTING wrapper for ~A ~A being constructed (REFs = ~D).
- This should happen only for literals."
-                    type
-                    pointer
-                    (cudd-node-ref-count pointer))
-
-           ;; (break "Non-incrementing type: ~A" type)
-           (assert* (subtypep type 'variable-node))
-
-           #|(let ((initial-ref-count (cudd-node-ref-count pointer)))
-           (declare (fixnum initial-ref-count)) ;
-           (assert (>= initial-ref-count 1)) ;
-           (unless (= 1 initial-ref-count) ;
-           (log-msg :warn :logger cudd-node-logger "Ref count of literal node ~A is ~D, which is > 1" ;
-           pointer     ;
-           initial-ref-count)))|#))
+        (log-msg :debu7 :logger cudd-node-logger "- After (cudd-ref ~A), REFs = ~D."
+                 pointer
+                 (cudd-node-ref-count pointer))
 
         (let-1 node (apply #'make-instance type :pointer pointer :manager manager
                            other-initargs)
@@ -341,7 +320,6 @@ in manager ~A~%"
                  (helper/destruct-node pointer
                                        type
                                        :manager manager
-                                       ;; :ref ref
                                        )))))
 
           ;; After constructing the finalizer:
@@ -489,8 +467,8 @@ only if their pointers are the same."
 (defun bdd-node (pointer &key (manager *manager*))
   (declare (node-pointer pointer))
   (wrap-and-finalize pointer 'bdd-node
-                     ;; :ref (not (cudd-node-is-constant pointer))
-                     :manager manager))
+      ;; :ref (not (cudd-node-is-constant pointer))
+      :manager manager))
 
 ;; (defmethod print-object ((node bdd-variable-node) stream)
 ;;   (let-1 (index (node-index node))
@@ -511,7 +489,7 @@ only if their pointers are the same."
 (defun add-node (pointer &key (manager *manager*))
   (declare (node-pointer pointer))
   (wrap-and-finalize pointer 'add-node :ref (not (cudd-node-is-constant pointer))
-                                       :manager manager))
+                     :manager manager))
 
 (defclass zdd-node (node) ()
   (:documentation "Node of an zero-suppressed decision diagram (ZDD)"))
@@ -525,7 +503,7 @@ only if their pointers are the same."
   (declare (bdd-node node))
   ;; (check-type node bdd-node)
   (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-T (node-pointer node)) 'bdd-node
-                                :manager (node-manager node))))
+                 :manager (node-manager node))))
     (declare (bdd-node res))
     res))
 
@@ -536,6 +514,6 @@ only if their pointers are the same."
   (declare (bdd-node node))
   ;; (check-type node bdd-node)
   (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-E (node-pointer node)) 'bdd-node
-                                :manager (node-manager node))))
+                 :manager (node-manager node))))
     (declare (bdd-node res))
     res))
