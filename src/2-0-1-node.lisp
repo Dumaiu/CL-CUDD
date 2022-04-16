@@ -182,10 +182,10 @@ while destructing
           (declare (manager-pointer mp))
 
           (log-msg :trace :logger cudd-node-logger
-                   "~2&~T Finalizer for ~A ~A.  REFs: ~D"
-                   node-type
-                   node-pointer ;;cur-address
-                   (cudd-node-ref-count node-pointer))
+                   "~2&~T Finalizer for ~A." (print-node-to-string node-pointer
+                                                                   :type node-type
+                                                                   ;; :manager manager
+                                                                   ))
 
           (when config/debug-consistency-checks
             (with-mem-fault-protection
@@ -201,11 +201,9 @@ in manager ~A~%"
                 (when debug-check?
                   (unless (zerop (cudd-debug-check mp))
                     (let ((manager-string (princ-to-string manager)))
-                      (log-error :logger cudd-node-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A ~A
-in manager ~A~%"
-                                 node-type
-                                 node-pointer
-                                 manager-string))))))
+                      (log-error :logger cudd-node-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A" (print-node-pointer-to-string node-pointer node-type :manager manager)
+                                 ;; manager-string
+                                 ))))))
 
           (with-mem-fault-protection
               (cond
@@ -226,11 +224,11 @@ in manager ~A~%"
                           (cudd-node-ref-count node-pointer))
 
                  (log-msg :debu8 :logger cudd-node-logger
-                          "Past the deref segment in finalizer for ~A ~A." node-type node-pointer))
+                          "Past the deref segment in finalizer for ~A ~A" node-type node-pointer))
                 (t ; ref=nil
                  (error "Shouldn't happen.")
                  (log-msg :debu8 :logger cudd-node-logger
-                          "Skipping the deref segment in finalizer for ~A ~A." node-type node-pointer))))
+                          "Skipping the deref segment in finalizer for ~A ~A" node-type node-pointer))))
 
           (when config/debug-consistency-checks
             (with-mem-fault-protection
@@ -245,7 +243,10 @@ in manager ~A~%"
             (with-mem-fault-protection
                 (when debug-check?
                   (unless (zerop (cudd-debug-check mp))
-                    (log-error :logger cudd-node-logger "~&Assert 4 failed at end of finalizer: ~A" '(zerop (cudd-debug-check mp))))))))
+                    (log-error :logger cudd-node-logger "~&Assert 4: ~&~T~A ~&failed at end of finalizer for
+~T~A~%"
+                               '(zerop (cudd-debug-check mp))
+                               (print-node-pointer-to-string node-pointer node-type :manager manager)))))))
 
         (log-msg :debu8 :logger cudd-node-logger "Reached the end of finalizer for ~A ~A." node-type node-pointer)
         t))))
@@ -356,7 +357,8 @@ in manager ~A~%"
                 (when debug-check?
                   #.(let ((test-6 '(zerop (cudd-debug-check mp))))
                       `(unless ,test-6
-                         (log-error :logger cudd-node-logger "~&Assert 6 failed: during (helper/construct-node): ~A with MP=~A"  ',test-6  mp)))))))
+                         (log-error :logger cudd-node-logger "~&Assert 6 failed: during (helper/construct-node): ~A for ~A~%"  ',test-6
+                                    (print-node-pointer-to-string pointer type :manager manager))))))))
           node)))))
 
 (defmacro wrap-and-finalize (pointer type &rest *other-initargs &key
