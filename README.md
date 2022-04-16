@@ -1,4 +1,10 @@
-
+* FIXME: All the log strings must be precomputed, to prevent race conditions.
+* FIXME: Even without autoreordering, there's an assertion which always fails in some node finalizer when calling (cudd-unit-test-repeatedly).
+    * TODO: Narrow down which test it is.
+    * TODO: See if it's dependent on the logger levels.
+* FIXME: There's a TYPE-ERROR in another node finalizer.
+* TODO: Make 2-1-zdd-set-operations.lisp, 2-2-zdd-bdd-bridge.lisp thread-safe
+    * TODO: Could that be causing a race condition during (test-system)?
 * TODO: It's a problem to have `reordering-method` defined after 2-0-0-manager.lisp loads.
 
 * DONE: Unit-test with autosifting enabled.
@@ -18,7 +24,6 @@
 * DONE `(node-function)` operations should compare their operands' managers with `(eq)`.
     * TODO: Unit-test.
 
-* TODO: Make 2-1-zdd-set-operations.lisp, 2-2-zdd-bdd-bridge.lisp thread-safe
 * DONE: Replace `%mp%` appearances with '(manager node)' calls.
     * Except for the files named previously.
 
