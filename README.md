@@ -1,7 +1,9 @@
+
 * TODO: It's a problem to have `reordering-method` defined after 2-0-0-manager.lisp loads.
 
 * DONE: Unit-test with autosifting enabled.
-    * FIXME: Is having reordering turned on what's causing the bug?
+    * NOTE: Having reordering turned on is 99% of the time responsible for causing the bug.
+    * FIXME: Should we be getting multiple finalizers for nodes w/ the same index?  Or is that a mistake?
 * TODO: Rename 'index' in `bdd-variable-node` to `variable-id`
 * TODO Q: Why is `(cudd-regular)` defined in Lisp, instead of calling C|-`Cudd_Regular()`?
 * TODO: If this all **still** doesn't work, use (without-gcing) inside the critsec.
