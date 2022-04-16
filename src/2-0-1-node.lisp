@@ -122,7 +122,8 @@
   ;; (declare (optimize safety))
   (declare (node-pointer node-pointer)
            (manager manager)
-           (boolean #|ref|# ref-provided?))
+           ;; (boolean #|ref|# ref-provided?)
+           )
 
   #|(unless (null ref-provided?)
     ;; (log-warn :logger cudd-node-logger )
