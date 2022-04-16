@@ -25,7 +25,7 @@
                       keys)
                stream)
 
-        (format stream ", INDEX ~A" (cudd-node-read-index pointer))
+        (format stream " INDEX ~A" (cudd-node-read-index pointer))
         (cond
           ((cudd-node-is-constant pointer)
            (format stream ", LEAF (VALUE ~A)" (cudd-node-value pointer)))
