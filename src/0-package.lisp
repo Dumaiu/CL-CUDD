@@ -14,6 +14,7 @@
      :log4cl
      #+thread-support :bordeaux-threads
      :trivia
+     :iterate
      :alexandria
      :cl)
   #+thread-support (:reexport :bordeaux-threads)
@@ -24,6 +25,7 @@
    :introspect-environment
    :trivia
    :log4cl
+   :iterate
    :alexandria)
   (:intern #:mutex)
   (:shadow
@@ -104,6 +106,45 @@
   * TODO: To prevent race conditions, the ARGS need to be evaluated in the calling thread before passage to the Log4CL thread.
 "
   (expand-log-with-level env (log-keyword-to-level level) args))
+
+(defmacro log-msg-checked (&optional (level :info)
+                           &rest args
+                           &environment env)
+  " [2022-04-18 Mon] Experimental and unused.
+
+Wrapper for the :log4cl macros.  You can use them if you want, but going through this interface will make it easier to, for instance, compile out all CUDD logging, should that become necessary.  (If :log4cl already has a protocol for this, let me know.)
+
+  - To prevent race conditions, nonatomic ARGS are be evaluated in the calling thread before passage to the Log4CL thread.
+    * TODO: I don't filter symbol-macros.
+
+  * TODO: Default to ':logger cudd-logger'
+"
+  (destructuring-bind (log-args initforms)
+      ;; LOG-ARGS: values to be passed to (log).  These will either be atomic literals, or lexically bound variables.
+      ;; INITFORMS: Initialization forms for any LOG-ARGS which needed to be introduced.
+      (iter
+        (for arg in args)
+        (cond
+          ((and (atom arg)
+                (or (not (symbolp arg)) ; other atomic literals, such as strings
+                    (keywordp arg) ; self-evaluating keywords are OK
+                    ;; TODO: We can also except lexically bound symbols and symbol-macros which don't expand into special variables.
+                    ;; (not (boundp arg))
+                    ))
+           (collect arg into log-args))
+          (t
+           (let* ((var (gensym))
+                  (initform (list var arg)))
+             (collect var into log-args)
+             (collect initform into forms))))
+        (finally
+         (return (list log-args forms))))
+    (declare (list log-args initforms))
+    (assert* (every #'atom log-args))
+    ;; (assert* (= (length vars) (length initforms)))
+    `(let* ,initforms
+       ,(expand-log-with-level env (log-keyword-to-level level) log-args))))
+
 
 (defmacro log-error (&rest args)
   "KLUDGE: Strips out ':logger «logger»' if it's first in ARGS."
@@ -656,9 +697,9 @@
    :alexandria :uiop) ; TODO: Combine with :use
   (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi
    :trivia :iterate :let-plus
-   :cl-cudd.internal-utils
+        :cl-cudd.internal-utils
    :trivial-garbage
-   :asdf :uiop)
+        :asdf :uiop)
   (:nicknames :cudd)
   ;; 2021:
   (:shadow eval
@@ -869,6 +910,6 @@
 
 (with-package-log-hierarchy
   (defvar cudd-logger (make-logger)
-	":log4cl logger created at the root of ':cl-cudd'."))
+    ":log4cl logger created at the root of ':cl-cudd'."))
 
 ;; (assert* (fboundp 'gc))

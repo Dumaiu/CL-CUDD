@@ -1,4 +1,5 @@
-* FIXME: All the log strings must be precomputed, to prevent race conditions.
+* DONE: All the Log4CL strings must be precomputed, to prevent race conditions.
+    * TODO: This will have performance consequences.  See if we can skip it.
 * FIXME: Even without autoreordering, there's an assertion which always fails in some node finalizer when calling (cudd-unit-test-repeatedly).
     * TODO: Narrow down which test it is.
     * TODO: See if it's dependent on the logger levels.
