@@ -101,6 +101,7 @@
                    &environment env)
   "Wrapper for the :log4cl macros.  You can use them if you want, but going through this interface will make it easier to, for instance, compile out all CUDD logging, should that become necessary.  (If :log4cl already has a protocol for this, let me know.)
   * TODO: Default to ':logger cudd-logger'
+  * TODO: To prevent race conditions, the ARGS need to be evaluated in the calling thread before passage to the Log4CL thread.
 "
   (expand-log-with-level env (log-keyword-to-level level) args))
 
