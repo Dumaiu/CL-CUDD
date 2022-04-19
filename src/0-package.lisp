@@ -60,12 +60,6 @@
 ;; FIXME: SBCL:
 (declaim (declaration maybe-inline))
 
-(defmacro assert* (&rest args)
-  "Wrapper for (cl:assert).
-  * TODO: On high optimization, this gets compiled out.
-"
-  `(assert ,@args))
-
 (defmacro handler-bind-case (form &rest *cases)
   "Semantics of (handler-bind), syntax of (handler-case)."
   (flet ((parse-case (case)
@@ -82,6 +76,16 @@
       `(handler-bind
            ,lambdas
          ,form))))
+
+(defmacro assert* (&rest args)
+  "Wrapper for (cl:assert).
+  * TODO: On high optimization, this gets compiled out.
+"
+  (let ((assertion-form `(assert* ,@args)))
+   `(handler-bind-case (assert ,@args)
+                       (simple-error (xc)
+                                     (declare (ignorable xc))
+                                     (format *stderr* "~&** XXX: Assertion failed: ~S~%" ',assertion-form)))))
 
 (defmacro let-1 (name initform &body body)
   "Syntactic sugar for binding one variable."
