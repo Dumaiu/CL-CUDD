@@ -1,9 +1,7 @@
-* DONE: All the Log4CL strings must be precomputed, to prevent race conditions.
-    * TODO: This will have performance consequences.  See if we can skip it.
-* FIXME: Even without autoreordering, there's an assertion which always fails in some node finalizer when calling (cudd-unit-test-repeatedly).
-    * TODO: Narrow down which test it is.
-    * TODO: See if it's dependent on the logger levels.
-* FIXME: There's a TYPE-ERROR in another node finalizer.
+* DONE: Even without autoreordering, there's an assertion which always fails in some node finalizer when calling (cudd-unit-test-repeatedly).
+    * The problem was with some of the kargs to (print-node-pointer-to-string).  For `bdd-variable-node` and `bdd-constant-node`, they weren't all getting there.
+    * DONE: There's a TYPE-ERROR in another node finalizer.
+
 * TODO: Make 2-1-zdd-set-operations.lisp, 2-2-zdd-bdd-bridge.lisp thread-safe
     * TODO: Could that be causing a race condition during (test-system)?
 * TODO: It's a problem to have `reordering-method` defined after 2-0-0-manager.lisp loads.
@@ -18,6 +16,8 @@
 * TODO Try calling `Cudd_Ref()` for *every* BDD node.
 * TODO Save a printable description of a node in its finalizer closure for debugging.
 
+* DONE: All the Log4CL strings must be precomputed, to prevent race conditions.
+    * TODO: This will have performance consequences.  See if we can skip it.
 * DONE Should we be increasing the ref count for constants? <a id="ref-count-constants"><a/>
    - The example in the CUDD manual at 'Basic BDD Manipulation' makes it look as though, yes, these should be reference-counted.
 - DONE [2022-04-11 Mon]: If so, change the (assert) checks in 2-4-hook.lisp.

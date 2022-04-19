@@ -38,26 +38,27 @@
   ;; id=variable
   (:method (pointer (type (eql 'bdd-variable-node))
             &key nested ; security
-              ((:index variable-id)) ; TODO
+              ((:var-id variable-id) 0 variable-id-provided?) ; TODO
             &allow-other-keys)
     (declare (node-pointer pointer)
              (boolean nested)
-             (type integer variable-id))
+             (type integer variable-id)
+             (boolean variable-id-provided?))
     (assert* nested)
+    (assert* variable-id-provided?)
     (with-output-to-string (stream)
       (format stream ": VAR #~A" variable-id)))
 
   ;; id=constant
   (:method (pointer (type (eql 'bdd-constant-node))
             &key nested
-              (constant nil constant?)
+              (constant nil constant-value-provided?)
             &allow-other-keys)
     (declare (node-pointer pointer)
              (boolean nested)
              (boolean constant))
     (assert* nested)
-    (assert* constant?)
-    ;; (assert* constant)
+    (assert* constant-value-provided?)
     (assert* (cudd-node-is-constant pointer))
     (with-output-to-string (stream)
       (format stream ": ~A" constant)
@@ -130,7 +131,7 @@
     (let ((pointer (node-pointer node))
           (id (variable-id node)))
       (print-node-pointer-to-string pointer 'bdd-variable-node
-                                    :index id
+                                    :var-id id
                                     :manager (node-manager node))))
 
   (:method ((pointer #.(typexpand 'node-pointer))

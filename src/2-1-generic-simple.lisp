@@ -120,17 +120,19 @@ When index = 2 and N = 4, the resulting ZDD looks as follows:
                           :manager manager
                           ;; than 0. Therefore, there is no call to Cudd Ref.
                           :ref nil
-                          :index index))
+                          :var-id index))
       ((add-node add-variable-node)
        (wrap-and-finalize (add-var mp :index index :level level) 'add-variable-node
                           :manager manager
                           ;; The ADD projection function are not maintained by the manager. It is
                           ;; therefore necessary to reference and dereference them.
+                          :var-id index
                           :ref t))
       ((zdd-node zdd-variable-node)
        (wrap-and-finalize (zdd-var mp :index index :level level) 'zdd-variable-node
                           :manager manager
                           ;; The projection functions are referenced, because they are not maintained by the manager.
+                          :var-id index
                           :ref t)))))
 
 (defun node-then (type node)
