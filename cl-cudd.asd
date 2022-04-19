@@ -5,7 +5,7 @@
   :maintainer "Masataro Asai <guicho2.7128@gmail.com>"
   :license "BSD Style (see LICENSE)"
   :defsystem-depends-on (:cffi-grovel)
-  :version "3.6.0.1"
+  :version "3.7.0.1"
   :depends-on (:cffi
                :alexandria
                :trivial-garbage
