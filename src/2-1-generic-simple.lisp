@@ -164,6 +164,7 @@ somehow, CUDD-READ-ZERO and CUDD-READ-ONE did not work for ADDs.
 ;; FIXME:
 (setf (find-class 'zdd-constant-node) (find-class 'zdd-node))
 
+(declaim (maybe-inline one-node zero-node))
 (defun zero-node (type &key (manager *manager*))
   "Return the zero node for the correspoinding type.
 BDD: the logical zero node (boolean 0).
