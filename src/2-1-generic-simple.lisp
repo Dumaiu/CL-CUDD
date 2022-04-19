@@ -135,17 +135,23 @@ When index = 2 and N = 4, the resulting ZDD looks as follows:
                           :var-id index
                           :ref t)))))
 
-(defun node-then (type node)
+(defun node-then (type node &aux (manager (manager-pointer node)))
   "Return the then child of an inner node"
-  (declare (node-type type))
-  (assert (not (node-constant-p node)))
-  (wrap-and-finalize (cudd-node-then (node-pointer node)) type))
+  (declare (node-type type)
+           (manager manager))
+  (assert* (not (node-constant-p node)))
+  (wrap-and-finalize (cudd-node-then (node-pointer node))
+                     type
+                     :manager manager))
 
-(defun node-else (type node)
+(defun node-else (type node &aux (manager (manager-pointer node)))
   "Return the else child of an inner node"
-  (declare (node-type type))
-  (assert (not (node-constant-p node)))
-  (wrap-and-finalize (cudd-node-else (node-pointer node)) type))
+  (declare (node-type type)
+           (manager manager))
+  (assert* (not (node-constant-p node)))
+  (wrap-and-finalize (cudd-node-else (node-pointer node))
+                     type
+                     :manager manager))
 
 #|
 
