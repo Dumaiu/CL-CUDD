@@ -272,6 +272,7 @@ TODO: What about #-thread-support ?
         m
       (format stream "#~D:" index)
       (format stream " nodes: ~D" (hash-table-count node-table))
+      (format stream ", autoreorder: ~S" (second (multiple-value-list (reordering-status :manager m))))
       (format stream ", mutex: ~A" mutex))))
 
 
@@ -322,6 +323,7 @@ TODO: What about #-thread-support ?
   t)
 
 
+;;; id=ctor
 (defmethod shared-initialize #.`((m manager) slot-names &rest *keys
                                  &key ,@+manager-initarg-defaults+
                                  &allow-other-keys)
@@ -333,7 +335,7 @@ TODO: What about #-thread-support ?
   * TODO Thread-safety for *manager-counter* & *manager-index*
 
 "
-  (declare (type (or null (eql t) reordering-method) reorder)
+  (declare (type (or boolean reordering-method) reorder)
            ;; (boolean reordering-specified?)
            )
   (let* ((mp (cudd-init initial-num-vars
