@@ -56,7 +56,7 @@ Notice that:
      (with-gensyms (res)
        `((lambda (,res)
            (cudd-deref ,res)
-          ,res)
+           ,res)
          (zdd-ref-let* ,rest ,@body))
        ;; `(let ((,res (zdd-ref-let* ,rest ,@body)))
        ;;    (cudd-deref ,res)
@@ -86,83 +86,145 @@ Notice that:
 
 ;;;; elementary sets
 
-(defun zdd-emptyset ()
+;; TODO:
+#|(declaim (maybe-inline zdd-emptyset
+zdd-set-of-emptyset
+zdd-singleton
+zdd-subset-0
+zdd-subset-1
+))
+|#
+(defun zdd-emptyset (&key (manager *manager*))
   "Returns an empty set {}."
-  (zero-node 'zdd-node))
+  (declare (manager manager))
+  (zero-node 'zdd-node :manager manager))
 
-(defun zdd-set-of-emptyset ()
+(defun zdd-set-of-emptyset (&key (manager *manager*))
   "Returns a set of an empty set {{}}."
-  (one-node 'zdd-node))
+  (declare (manager manager))
+  (one-node 'zdd-node :manager manager))
 
-(defun zdd-singleton (var)
+(defun zdd-singleton (var &key (manager *manager*))
   "Returns {{var}}. This is not equivalent to (make-var 'zdd-node :index var), see make-var documentation."
-  (zdd-change (zdd-set-of-emptyset) var))
+  (declare (manager manager))
+  (zdd-change (zdd-set-of-emptyset) var :manager manager))
 
 ;;;; between a ZDD and a single variable
 
-(defun zdd-subset-0 (zdd var)
+(defun zdd-subset-0 (zdd var &key ((:manager m) (node-manager zdd)))
   "Computes the subset of S that does not contain element VAR (integer)."
-  (wrap-and-finalize
-   (cudd-zdd-subset-0 %mp% (node-pointer zdd) var)
-   'zdd-node))
-(defun zdd-subset-1 (zdd var)
+  (declare (manager m))
+  (wrap-and-finalize (cudd-zdd-subset-0 (manager-pointer m) (node-pointer zdd) var)
+      'zdd-node
+    :manager m))
+(defun zdd-subset-1 (zdd var &key ((:manager m) (node-manager zdd)))
   "Computes the subset of S that contains element VAR (integer), and remove VAR from each combination."
-  (wrap-and-finalize
-   (cudd-zdd-subset-1 %mp% (node-pointer zdd) var)
-   'zdd-node))
-(defun zdd-change (zdd var)
+  (declare (manager m))
+  (wrap-and-finalize (cudd-zdd-subset-1 (manager-pointer m) (node-pointer zdd) var)
+      'zdd-node
+    :manager m))
+
+(defun zdd-change (zdd var &key ((:manager m)  (node-manager zdd)))
   "Flip the membership of variable VAR in ZDD."
+  (declare (manager m))
   (wrap-and-finalize
-   (cudd-zdd-change %mp% (node-pointer zdd) var)
-   'zdd-node))
+      (cudd-zdd-change (manager-pointer m) (node-pointer zdd) var)
+      'zdd-node
+    :manager m))
 
-(defun zdd-set (zdd var)
+(defun zdd-set (zdd var &key ((:manager m) (node-manager zdd)))
   "Add a variable VAR; i.e. force the value of VAR to be true"
-  (wrap-and-finalize
-   (zdd-ref-let* (t
-                  (then (cudd-zdd-subset-1 %mp% (node-pointer zdd) var))
-                  (else (cudd-zdd-subset-0 %mp% (node-pointer zdd) var))
-                  (union (cudd-zdd-union %mp% then else))
-                  (result (cudd-zdd-change %mp% union var) t))
-     result)
-   'zdd-node))
+  (declare (manager m))
+  (let-1 mp (manager-pointer m)
+    (declare (type manager-pointer mp))
+    (wrap-and-finalize
+        (zdd-ref-let* (t
+                       (then (cudd-zdd-subset-1 mp (node-pointer zdd) var))
+                       (else (cudd-zdd-subset-0 mp (node-pointer zdd) var))
+                       (union (cudd-zdd-union mp then else))
+                       (result (cudd-zdd-change mp union var) t))
+          result)
+        'zdd-node
+      :manager m)))
 
-(defun zdd-unset (zdd var)
+(defun zdd-unset (zdd var &key ((:manager m) (node-manager zdd)))
   "Remove a variable VAR; i.e. force the value of VAR to be false"
-  (wrap-and-finalize
-   (zdd-ref-let* (t
-                  (then (cudd-zdd-subset-1 %mp% (node-pointer zdd) var))
-                  (else (cudd-zdd-subset-0 %mp% (node-pointer zdd) var))
-                  (union (cudd-zdd-union %mp% then else) t))
-     union)
-   'zdd-node))
+  (declare (manager m))
+  (let-1 mp (manager-pointer m)
+    (declare (manager-pointer mp))
+    (wrap-and-finalize
+        (zdd-ref-let* (t
+                       (then (cudd-zdd-subset-1 mp (node-pointer zdd) var))
+                       (else (cudd-zdd-subset-0 mp (node-pointer zdd) var))
+                       (union (cudd-zdd-union mp then else) t))
+          union)
+        'zdd-node
+      :manager m)))
 
-(defun zdd-dont-care (zdd var)
+(defun zdd-dont-care (zdd var &key ((:manager m) (node-manager zdd)))
   "Direct the both arcs of the VAR'th node to the next index.
 If it does not exist (i.e. then-arc points to 0 and zero-suppressed) creates a new node."
-  (wrap-and-finalize
-   (zdd-ref-let* (t
-                  (then (cudd-zdd-subset-1 %mp% (node-pointer zdd) var))
-                  (else (cudd-zdd-subset-0 %mp% (node-pointer zdd) var))
-                  (union (cudd-zdd-union %mp% then else))
-                  (flipped (cudd-zdd-change %mp% union var))
-                  (result (cudd-zdd-union %mp% union flipped) t))
-     result)
-   'zdd-node))
+  (declare (manager m))
+  (let-1 mp (manager-pointer m)
+    (declare (manager-pointer mp))
+    (wrap-and-finalize
+        (zdd-ref-let* (t
+                       (then (cudd-zdd-subset-1 mp (node-pointer zdd) var))
+                       (else (cudd-zdd-subset-0 mp (node-pointer zdd) var))
+                       (union (cudd-zdd-union mp then else))
+                       (flipped (cudd-zdd-change mp union var))
+                       (result (cudd-zdd-union mp union flipped) t))
+          result)
+        'zdd-node
+      :manager m)))
 
 ;;;; between 2 ZDDs
 
-(defun zdd-union (f g)
-  "Computes the union of F and G."
-  (wrap-and-finalize
-   (cudd-zdd-union %mp% (node-pointer f) (node-pointer g))
-   'zdd-node))
+(defmacro define-zdd-binary-op (name (f-name g-name &key
+                                                      ((:manager manager-name) 'm)
+                                                      ((:manager-pointer manager-pointer-name) '%mp%))
+                                &body body)
+  "Helper for generating dyadic ZDD functions.
+ (wrap-and-finalize) is automatically included.
+"
+  (declare (type (and symbol (not null) (not keyword))
+                 name f-name g-name manager-name manager-pointer-name))
+  (let (docstring! eval-form!)
+    (ematch body
+      ((list docstring form)
+       (check-type docstring string)
+       (setq docstring! docstring)
+       (setq eval-form! form))
+      ((list form)
+       (setq eval-form! form)))
 
-(defun zdd-intersection (f g)
+    `(progn
+       (declaim (maybe-inline ,name))
+       (defun ,name (,f-name ,g-name &key ((:manager ,manager-name) (node-manager ,f-name)))
+         ,@(when docstring! `(,docstring!))
+         (declare (zdd-node ,f-name ,g-name)
+                  (manager ,manager-name))
+         (unless (and (eq ,manager-name (node-manager ,f-name))
+                      (eq ,manager-name (node-manager ,g-name)))
+           (error 'cudd-manager-mismatch-error "Managers in a binary op need to match"))
+         (let-1 ,manager-pointer-name (manager-pointer ,manager-name)
+           (declare (manager-pointer ,manager-pointer-name))
+           (wrap-and-finalize (the node-pointer ,eval-form!) 'zdd-node
+             :manager ,manager-name))))))
+
+(define-zdd-binary-op zdd-union (f g)
+  "Computes the union of F and G."
+  (cudd-zdd-union %mp% (node-pointer f) (node-pointer g)))
+
+;; (defun zdd-union (f g)
+;;   "Computes the union of F and G."
+;;   (wrap-and-finalize
+;;       (cudd-zdd-union %mp% (node-pointer f) (node-pointer g))
+;;       'zdd-node))
+
+(define-zdd-binary-op zdd-intersection (f g)
   "Computes the intersection of F and G."
-  (wrap-and-finalize
-   (cudd-zdd-intersect %mp% (node-pointer f) (node-pointer g))
-   'zdd-node))
+  (cudd-zdd-intersect %mp% (node-pointer f) (node-pointer g)))
 
 (defun zdd-union* (&rest args)
   "Performs zdd-union on all variables."
@@ -183,11 +245,9 @@ ZDD has no upper limit on the number of variables."
       first))
 
 
-(defun zdd-difference (f g)
+(define-zdd-binary-op zdd-difference (f g)
   "Computes the difference of F and G."
-  (wrap-and-finalize
-   (cudd-zdd-diff %mp% (node-pointer f) (node-pointer g))
-   'zdd-node))
+  (cudd-zdd-diff %mp% (node-pointer f) (node-pointer g)))
 
 ;;;; unate operations
 
@@ -199,27 +259,23 @@ ZDD has no upper limit on the number of variables."
       (documentation 'zdd-offset 'function)
       "selects the subset of the combinations each of which does not include var. (same as zdd-subset-1)")
 
-(defun zdd-divide-unate (f g)
+(define-zdd-binary-op zdd-divide-unate (f g)
   "Computes the weak division of F by G (assumes unate representation).
 cf. Shin-ichi Minato: Zero-Suppressed BDDs and Their Applications"
-  (wrap-and-finalize
-   (cudd-zdd-divide %mp% (node-pointer f) (node-pointer g))
-   'zdd-node))
-(defun zdd-product-unate (f g)
+  (cudd-zdd-divide %mp% (node-pointer f) (node-pointer g)))
+
+(define-zdd-binary-op zdd-product-unate (f g)
   "Computes the product of F by G (assumes unate representation).
 cf. Shin-ichi Minato: Zero-Suppressed BDDs and Their Applications"
-  (wrap-and-finalize
-   (cudd-zdd-unate-product %mp% (node-pointer f) (node-pointer g))
-   'zdd-node))
-(defun zdd-remainder-unate (f g)
+  (cudd-zdd-unate-product %mp% (node-pointer f) (node-pointer g)))
+
+(define-zdd-binary-op zdd-remainder-unate (f g)
   "Computes the remainder of division of F by G (assumes unate representation)."
-  (wrap-and-finalize
-   (zdd-ref-let* (t
-                  (p1 (cudd-zdd-divide %mp% (node-pointer f) (node-pointer g)))
-                  (p2 (cudd-zdd-unate-product %mp% (node-pointer f) p1))
-                  (p3 (cudd-zdd-diff %mp% (node-pointer f) p2) t))
-     p3)
-   'zdd-node))
+  (zdd-ref-let* (t
+                 (p1 (cudd-zdd-divide %mp% (node-pointer f) (node-pointer g)))
+                 (p2 (cudd-zdd-unate-product %mp% (node-pointer f) p1))
+                 (p3 (cudd-zdd-diff %mp% (node-pointer f) p2) t))
+    p3))
 
 ;; aliasing
 (setf (fdefinition 'zdd-product) #'zdd-product-unate)
@@ -228,35 +284,33 @@ cf. Shin-ichi Minato: Zero-Suppressed BDDs and Their Applications"
 
 ;;;; binate operations
 
-(defun zdd-divide-binate (f g)
+(define-zdd-binary-op zdd-divide-binate (f g)
   "Computes the weak division of F by G (assumes binate representation).
 cf. Shin-ichi Minato: Zero-Suppressed BDDs and Their Applications"
-  (wrap-and-finalize
-   (cudd-zdd-weak-div %mp% (node-pointer f) (node-pointer g))
-   'zdd-node))
-(defun zdd-product-binate (f g)
+  (cudd-zdd-weak-div %mp% (node-pointer f) (node-pointer g)))
+
+(define-zdd-binary-op zdd-product-binate (f g)
   "Computes the product of F by G (assumes binate representation).
 cf. Shin-ichi Minato: Zero-Suppressed BDDs and Their Applications"
-  (wrap-and-finalize
-   (cudd-zdd-product %mp% (node-pointer f) (node-pointer g))
-   'zdd-node))
-(defun zdd-remainder-binate (f g)
-  "Computes the remainder of division of F by G (assumes binate representation)."
-  (wrap-and-finalize
-   (zdd-ref-let* (t
-                  (p1 (cudd-zdd-weak-div %mp% (node-pointer f) (node-pointer g)))
-                  (p2 (cudd-zdd-product %mp% (node-pointer f) p1))
-                  (p3 (cudd-zdd-diff %mp% (node-pointer f) p2) t))
-     p3)
-   'zdd-node))
+  (cudd-zdd-product %mp% (node-pointer f) (node-pointer g)))
 
-(defun zdd-count-minterm (f &optional support-size)
+(define-zdd-binary-op zdd-remainder-binate (f g)
+  "Computes the remainder of division of F by G (assumes binate representation)."
+  (zdd-ref-let* (t
+                 (p1 (cudd-zdd-weak-div %mp% (node-pointer f) (node-pointer g)))
+                 (p2 (cudd-zdd-product %mp% (node-pointer f) p1))
+                 (p3 (cudd-zdd-diff %mp% (node-pointer f) p2) t))
+    p3))
+
+(defun zdd-count-minterm (f &optional support-size &key  ((:manager m) (node-manager f)))
   "Computes the number of minterms in f.
 SUPPORT-SIZE specifies the number of variables in the support of f, i.e.,
 the number of the variables that F essentially depends on."
-  (if support-size
-      (cudd-zdd-count-minterm %mp% (node-pointer f) support-size)
-      (cudd-zdd-count-double %mp% (node-pointer f))))
+  (declare (manager m))
+  (with-cudd-critical-section (:manager m)
+    (if support-size
+       (cudd-zdd-count-minterm (manager-pointer m) (node-pointer f) support-size)
+       (cudd-zdd-count-double (manager-pointer m) (node-pointer f)))))
 
 
 ;;;; reimplementing set operations in Extra package
@@ -313,7 +367,7 @@ NOTE: use the native CUDD cache.
         (rec f g)))))
 
 
-(defun zdd-supset (f g)
+(define-zdd-binary-op zdd-supset (f g)
   "Returns the subset of F whose element is a superset of at least one element of G. {p ∈ P | ∃q ∈ Q p ⊇ q}
 
 Coudert, Olivier, Jean Christophe Madre, and Henri Fraisse. \"A new viewpoint on two-level logic minimization.\"
@@ -322,9 +376,7 @@ Design Automation, 1993. 30th Conference on.
 Reference implementation is available in Extra libnrary by Alan Mishchenko.
 https://people.eecs.berkeley.edu/~alanmi/research/extra/
 "
-  (wrap-and-finalize
-   (cudd-zdd-supset %mp% (node-pointer f) (node-pointer g))
-   'zdd-node))
+  (cudd-zdd-supset %mp% (node-pointer f) (node-pointer g)))
 
 ;; (defun zdd-maximal (f)
 ;;   (wrap-and-finalize
@@ -337,6 +389,3 @@ https://people.eecs.berkeley.edu/~alanmi/research/extra/
 ;; (defun zdd-subset (f)
 ;;   (wrap-and-finalize
 ;;    'zdd-node t nil))
-
-
-

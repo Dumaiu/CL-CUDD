@@ -1,8 +1,5 @@
-* DONE: Even without autoreordering, there's an assertion which always fails in some node finalizer when calling (cudd-unit-test-repeatedly).
-    * The problem was with some of the kargs to (print-node-pointer-to-string).  For `bdd-variable-node` and `bdd-constant-node`, they weren't all getting there.
-    * DONE: There's a TYPE-ERROR in another node finalizer.
-
-* TODO: Make 2-1-zdd-set-operations.lisp, 2-2-zdd-bdd-bridge.lisp thread-safe
+* TODO: Make 2-2-zdd-bdd-bridge.lisp thread-safe
+    * DONE 2-1-zdd-set-operations.lisp 
     * TODO: Could that be causing a race condition during (test-system)?
 * TODO: It's a problem to have `reordering-method` defined after 2-0-0-manager.lisp loads.
 
@@ -15,6 +12,10 @@
 * DONE Override (gc) in :cudd.
 * TODO Try calling `Cudd_Ref()` for *every* BDD node.
 * TODO Save a printable description of a node in its finalizer closure for debugging.
+
+* DONE: Even without autoreordering, there's an assertion which always fails in some node finalizer when calling (cudd-unit-test-repeatedly).
+    * The problem was with some of the kargs to (print-node-pointer-to-string).  For `bdd-variable-node` and `bdd-constant-node`, they weren't all getting there.
+    * DONE: There's a TYPE-ERROR in another node finalizer.
 
 * DONE: All the Log4CL strings must be precomputed, to prevent race conditions.
     * TODO: This will have performance consequences.  See if we can skip it.
