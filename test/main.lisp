@@ -74,15 +74,23 @@
             (plot (append-name path "-BDD-as-ZDD-simple") (bdd->zdd-simple f)))))))
 
 ;;; id=BDD
-(test bdd
-  (with-manager ()
-    (let-1 bdd-x0 (make-var 'bdd-node :index 3)
-      (is (typep bdd-x0 'bdd-variable-node))
-      (is (eql (manager bdd-x0) *manager*))
-      (is (= (bdd-variable-index bdd-x0) 3))))
-  (dolist (m (append (models "gates") (models "modest")))
-    (parse-bdd m)
-    (parse-bdd m t)))
+(macrolet ((make-bdd-test (name &body prelim-forms)
+             (declare (symbol name))
+             `(test ,name
+                ,@prelim-forms
+                (with-manager ()
+                  (let-1 bdd-x0 (make-var 'bdd-node :index 3)
+                    (is (typep bdd-x0 'bdd-variable-node))
+                    (is (eql (manager bdd-x0) *manager*))
+                    (is (= (bdd-variable-index bdd-x0) 3))))
+                ;; (break "Finished with-manager")
+                (dolist (m (append (models "gates") (models "modest")))
+                  (parse-bdd m)
+                  (parse-bdd m t)))))
+
+  (make-bdd-test bdd)
+  (make-bdd-test bdd/with-reordering
+                 (setq *default-reordering-method* :cudd-reorder-same)))
 
 (defun parse-add (path)
   (fresh-line)
@@ -179,7 +187,7 @@
 
     (with-manager ()
       (progn ;; let ((old-bdd (parse-bdd/parse-only 1st)))
-       ;;  (declare (bdd-node old-bdd))
+        ;;  (declare (bdd-node old-bdd))
 
         ;; (info)
         ;; (print *manager*)
@@ -206,7 +214,7 @@
                 (let ((new-bdd (bdd-transfer old-bdd
                                              :src new-manager
                                              :dest old-manager)))
-                 (declare (bdd-node new-bdd))
+                  (declare (bdd-node new-bdd))
 
                   ;; (info)
                   ;; (break "After transfer")
