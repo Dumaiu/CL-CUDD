@@ -366,7 +366,7 @@ in manager ~A~%"
                              (log-error :logger cudd-node-logger "~&Assert 6 failed: during (helper/construct-node): ~A for ~A~%"  ',test-6 node-string))))))))
             node))))))
 
-(defmacro wrap-and-finalize (pointer type &rest *other-initargs &key
+(defmacro wrap-and-finalize (pointer type &body *other-initargs &key
                                                                   (ref t ref-provided?)
                                                                   (manager '*manager*)
                              &allow-other-keys)
