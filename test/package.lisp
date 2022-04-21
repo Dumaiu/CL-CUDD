@@ -1,11 +1,16 @@
 (in-package :asdf-user)
 
-(define-package cl-cudd.test
-    (:mix
-     :cl-cudd :cl-cudd.baseapi
+(define-package cl-cudd.test.common
+    (:mix-reexport
+     :cl-cudd
+     :cl-cudd.baseapi
      :cl-cudd.internal-utils
      :fiveam :iterate :trivia :arrow-macros
      :asdf :uiop
+     :cl))
+
+(define-package cl-cudd.test
+    (:mix cl-cudd.test.common
      :cl)
   (:reexport :fiveam)
   (:shadow :next :<>)
