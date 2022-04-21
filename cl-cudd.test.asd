@@ -7,7 +7,8 @@
   :author "Masataro Asai"
   :mailto "guicho2.71828@gmail.com"
   :license "BSD Style (see LICENSE)"
-  :depends-on (:cl-cudd :fiveam :iterate :trivia :arrow-macros)
+  :depends-on (:cl-cudd :fiveam :iterate :trivia :arrow-macros
+                        :parachute)
   :serial t
   :pathname "test/"
   :components ((:file "package")
