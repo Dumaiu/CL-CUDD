@@ -46,9 +46,10 @@
              (make-funcall (native arguments)
                `(,native ,mp ; anaphoric
                          ,@(clean-arguments arguments))))
-      (with-gensyms (pointer
+      (with-gensyms (new-node-pointer
                      managers
-                     manager)
+                     current-manager
+                     nodes)
         ;; (assert* (>= (length arguments) 2)) ; TODO: See if it works for unaries.
         (let ((converted-arguments (convert-arguments arguments))
               (node-names (node-names arguments)))
@@ -57,24 +58,25 @@
           ;; (break "~A" node-names)
           `(defmethod ,generic-name ,converted-arguments
              ;; TODO: (mapcar #'node-manager)?
-             (let ((,managers (mapcar #'manager (list ,@node-names))))
+             (let* ((,nodes (list ,@node-names))
+                    (,managers (mapcar #'manager ,nodes)))
                (unless (reduce #'eq ,managers)
                  (assert* (>= (length ,managers) 2))
                  (error 'cudd-manager-mismatch-error "Nodes ~A didn't have the same manager.  Managers found: ~A"
-                        ',node-names
+                        ,nodes
                         ,managers))
-               (let* ((,manager (first ,managers))
-                      (,mp (manager-pointer ,manager)))
-                 (declare (manager ,manager)
+               (let* ((,current-manager (first ,managers))
+                      (,mp (manager-pointer ,current-manager)))
+                 (declare (manager ,current-manager)
                           (manager-pointer ,mp))
-                 (with-cudd-critical-section (:manager ,manager)
+                 (with-cudd-critical-section (:manager ,current-manager)
                    ,(let-1 funcall-form (make-funcall native-function arguments)
                       (if dont-wrap-result
                           funcall-form
-                          `(let* ((,pointer ,funcall-form))
-                             (declare (node-pointer ,pointer))
-                             (wrap-and-finalize ,pointer ',node-type
-                               :manager ,manager)))))))))))))
+                          `(let-1 ,new-node-pointer ,funcall-form
+                             (declare (node-pointer ,new-node-pointer))
+                             (wrap-and-finalize ,new-node-pointer ',node-type
+                               :manager ,current-manager)))))))))))))
 
 (defun add-function (generic-name arguments add-function dont-wrap)
   (node-function generic-name arguments add-function 'add-node dont-wrap))
