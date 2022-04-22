@@ -116,24 +116,24 @@ When index = 2 and N = 4, the resulting ZDD looks as follows:
       ((bdd-node bdd-variable-node)
        ;; (break "~&Constant? ~A" (cudd-node-is-constant (bdd-var mp :index index :level level)))
        (wrap-and-finalize (bdd-var mp :index index :level level) 'bdd-variable-node
-         ;; var is a projection function, and its reference count is always greater
          :manager manager
+         ;; var is a projection function, and its reference count is always greater
          ;; than 0. Therefore, there is no call to Cudd Ref.
-         :ref nil
+         :ref nil ; HACK: Ignored; we treat it as ':ref t'
          :var-id index))
       ((add-node add-variable-node)
        (wrap-and-finalize (add-var mp :index index :level level) 'add-variable-node
          :manager manager
          ;; The ADD projection function are not maintained by the manager. It is
          ;; therefore necessary to reference and dereference them.
-         :var-id index
-         :ref t))
+         :ref t
+         :var-id index))
       ((zdd-node zdd-variable-node)
        (wrap-and-finalize (zdd-var mp :index index :level level) 'zdd-variable-node
          :manager manager
          ;; The projection functions are referenced, because they are not maintained by the manager.
-         :var-id index
-         :ref t)))))
+         :ref t
+         :var-id index)))))
 
 (defun node-then (type node &aux (manager (manager-pointer node)))
   "Return the then child of an inner node"
