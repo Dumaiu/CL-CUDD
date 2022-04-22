@@ -1,3 +1,4 @@
+* FIXME: The node initialization functions are inherently not thread-safe, because they're doing "something with a pointer" before entering a critical section and calling (cudd-ref).  As a consequence, they should be reclassified as internals.
 * TODO: Print both a node's index, which is constant and isomorphic to a BDD variable, and its place in the variable ordering.
 
 * TODO: Make 2-2-zdd-bdd-bridge.lisp thread-safe
