@@ -30,7 +30,7 @@
           ((cudd-node-is-constant pointer)
            (format stream ", LEAF (VALUE ~A)" (cudd-node-value pointer)))
           ('otherwise
-           (format stream ", INNER 0x~x" (pointer-address pointer))))
+           (format stream ", POINTER 0x~x" (pointer-address pointer))))
         (format stream ", REF ~d" (cudd-node-ref-count pointer))
         (format stream ", MANAGER #~D" (manager-index manager))
         (format stream ";"))))
