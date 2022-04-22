@@ -1,4 +1,4 @@
-* TODO: I'm wondering if I don't have a manager-leaky BDD func.
+* TODO: Print both a node's index, which is constant and isomorphic to a BDD variable, and its place in the variable ordering.
 
 * TODO: Make 2-2-zdd-bdd-bridge.lisp thread-safe
     * DONE 2-1-zdd-set-operations.lisp 
