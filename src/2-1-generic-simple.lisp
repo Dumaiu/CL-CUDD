@@ -57,12 +57,12 @@ in the list of nodes: ADD-NODE or BDD-NODE
   (let-1 mp (manager-pointer m)
     (declare (manager-pointer mp))
     (wrap-and-finalize
-     (let-1 vars (map 'list #'node-pointer nodes)
-       (ecase type
-         (bdd-node (cudd-bdd-cube mp vars))
-         (add-node (cudd-add-cube mp vars))))
-     (or type (type-of (first-elt nodes)))
-     :manager m)))
+        (let-1 vars (map 'list #'node-pointer nodes)
+          (ecase type
+            (bdd-node (cudd-bdd-cube mp vars))
+            (add-node (cudd-add-cube mp vars))))
+        (or type (type-of (first-elt nodes)))
+      :manager m)))
 
 (defun make-var (type &key level index (manager *manager*))
   "Creates a new DD variable (projection function). At most one of index and level may be given.
@@ -116,24 +116,24 @@ When index = 2 and N = 4, the resulting ZDD looks as follows:
       ((bdd-node bdd-variable-node)
        ;; (break "~&Constant? ~A" (cudd-node-is-constant (bdd-var mp :index index :level level)))
        (wrap-and-finalize (bdd-var mp :index index :level level) 'bdd-variable-node
-                          ;; var is a projection function, and its reference count is always greater
-                          :manager manager
-                          ;; than 0. Therefore, there is no call to Cudd Ref.
-                          :ref nil
-                          :var-id index))
+         ;; var is a projection function, and its reference count is always greater
+         :manager manager
+         ;; than 0. Therefore, there is no call to Cudd Ref.
+         :ref nil
+         :var-id index))
       ((add-node add-variable-node)
        (wrap-and-finalize (add-var mp :index index :level level) 'add-variable-node
-                          :manager manager
-                          ;; The ADD projection function are not maintained by the manager. It is
-                          ;; therefore necessary to reference and dereference them.
-                          :var-id index
-                          :ref t))
+         :manager manager
+         ;; The ADD projection function are not maintained by the manager. It is
+         ;; therefore necessary to reference and dereference them.
+         :var-id index
+         :ref t))
       ((zdd-node zdd-variable-node)
        (wrap-and-finalize (zdd-var mp :index index :level level) 'zdd-variable-node
-                          :manager manager
-                          ;; The projection functions are referenced, because they are not maintained by the manager.
-                          :var-id index
-                          :ref t)))))
+         :manager manager
+         ;; The projection functions are referenced, because they are not maintained by the manager.
+         :var-id index
+         :ref t)))))
 
 (defun node-then (type node &aux (manager (manager-pointer node)))
   "Return the then child of an inner node"
@@ -141,8 +141,8 @@ When index = 2 and N = 4, the resulting ZDD looks as follows:
            (manager manager))
   (assert* (not (node-constant-p node)))
   (wrap-and-finalize (cudd-node-then (node-pointer node))
-                     type
-                     :manager manager))
+      type
+    :manager manager))
 
 (defun node-else (type node &aux (manager (manager-pointer node)))
   "Return the else child of an inner node"
@@ -150,8 +150,8 @@ When index = 2 and N = 4, the resulting ZDD looks as follows:
            (manager manager))
   (assert* (not (node-constant-p node)))
   (wrap-and-finalize (cudd-node-else (node-pointer node))
-                     type
-                     :manager manager))
+      type
+    :manager manager))
 
 #|
 
@@ -185,9 +185,9 @@ ZDD: the arithmetic zero node (0.0d0). (Same as ADD)"
     (declare (manager-pointer mp))
     (declare (node-pointer pointer))
     (wrap-and-finalize pointer subtype
-                       :ref t ; NOTE: Changed [2022-04-07 Thu]
-                       :manager manager
-                       :constant nil)))
+      :ref t ; NOTE: Changed [2022-04-07 Thu]
+      :manager manager
+      :constant nil)))
 
 (defun one-node (type &key (manager *manager*))
   "return the constant one node."
@@ -196,14 +196,14 @@ ZDD: the arithmetic zero node (0.0d0). (Same as ADD)"
   (let ((mp (manager-pointer manager)))
     (declare (manager-pointer mp))
     (wrap-and-finalize (cudd-read-one mp)
-                       ;; TODO: ugly:
-                       (ecase type
-                         ((bdd-node bdd-constant-node) 'bdd-constant-node)
-                         ((add-node add-constant-node) 'add-constant-node)
-                         ((zdd-node zdd-constant-node) 'zdd-constant-node))
-                       :ref t ; NOTE: Changed [2022-04-07 Thu]
-                       :manager manager
-                       :constant t)))
+        ;; TODO: ugly:
+        (ecase type
+          ((bdd-node bdd-constant-node) 'bdd-constant-node)
+          ((add-node add-constant-node) 'add-constant-node)
+          ((zdd-node zdd-constant-node) 'zdd-constant-node))
+      :ref t ; NOTE: Changed [2022-04-07 Thu]
+      :manager manager
+      :constant t)))
 
 ;;; Synsugar:
 (define-symbol-macro *bdd-zero* (zero-node 'bdd-constant-node))
