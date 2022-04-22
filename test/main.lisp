@@ -82,7 +82,7 @@
                   (let-1 bdd-x0 (make-var 'bdd-node :index 3)
                     (is (typep bdd-x0 'bdd-variable-node))
                     (is (eql (manager bdd-x0) *manager*))
-                    (is (= (bdd-variable-index bdd-x0) 3))))
+                    (is (= (node-variable-index bdd-x0) 3))))
                 ;; (break "Finished with-manager")
                 (dolist (m (append (models "gates") (models "modest")))
                   (parse-bdd m)

@@ -11,6 +11,7 @@
           bdd-node-type
           zdd-node-type
           node-type
+          node-variable-index  node-index
           generalized-bit
           variable-node
           variable-id
@@ -416,14 +417,20 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
   ;; TODO: Adjust value of REF based on TYPE ?
   (wrap-and-finalize pointer type :ref ref :manager manager))
 
-(declaim (inline node-index
+(declaim (inline node-variable-index
                  node-equal
                  node-constant-p
                  node-value))
 
-(defun node-index (node)
+(defun node-variable-index (node)
+  "Return the index of the variable associated with the node."
   (declare (node node))
-  (cudd-node-read-index (node-pointer node)))
+  (let-1 index (cudd-node-read-index (node-pointer node))
+    (declare (non-negative-fixnum index))
+    index))
+
+;; Alias:
+(setf (fdefinition 'node-index) (fdefinition 'node-variable-index))
 
 (defun node-equal (a b)
   "Return true iff A and B are the same graph.
@@ -484,16 +491,17 @@ only if their pointers are the same."
 (defclass bdd-variable-node (bdd-node variable-node)
   ((variable-id :type non-negative-fixnum
                 :initform (required 'variable-id)
-                :initarg :initarg :variable-id :initarg :var-id
+                :initarg :variable-id :initarg :var-id
                 :reader variable-id
                 #| TODO :reader (bdd-variable-id :inline t) |#
+                :documentation "FIXME [2022-04-22 Fri]: This should be a symbol, or string, isomorphic to the variable-index. "
                 ))
   (:documentation "A BDD variable literal."))
 
-(declaim (inline bdd-variable-index))
-(defun bdd-variable-index (bdd-variable-node)
-  (declare (bdd-variable-node bdd-variable-node))
-  (the non-negative-fixnum (slot-value bdd-variable-node 'index)))
+;; (declaim (inline bdd-variable-index))
+;; (defun bdd-variable-index (bdd-variable-node)
+;;   (declare (bdd-variable-node bdd-variable-node))
+;;   (the non-negative-fixnum (slot-value bdd-variable-node 'index)))
 
 (defun bdd-node (pointer &key (manager *manager*))
   (declare (node-pointer pointer))
