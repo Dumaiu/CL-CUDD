@@ -136,134 +136,134 @@
              (declare (string str))
              str)))
     (declare (ftype (function () string) print-node-pointer-to-string))
-   (macrolet ((with-error-suppression (&body body)
-                "Establish a block to handle a memory fault.  Optionally resume execution, depending on `config/signal-memory-errors'.
+    (macrolet ((with-error-suppression (&body body)
+                 "Establish a block to handle a memory fault.  Optionally resume execution, depending on `config/signal-memory-errors'.
   * TODO: Rewrite with (handler-case)?
   * TODO [2022-03-25 Fri] Rewrite (handler-bind-case) to do the (throw)
   * TODO Forward-declare (print-node-to-string)
 "
-                `(catch 'suppress-error-and-continue
-                   (handler-bind-case ; for sb-sys:memory-fault-error
-                    (progn ,@body)
+                 `(catch 'suppress-error-and-continue
+                    (handler-bind-case ; for sb-sys:memory-fault-error
+                     (progn ,@body)
 
-                    (error (xc)
-                           (let ((node-string (print-node-pointer-to-string))
-                                 (xc-type (type-of xc))
-                                 (xc-string (princ-to-string xc))
-                                 ;; (msg )
-                                 )
-                             (format *stderr* "* WARNING XXX: ~S suppressed:
+                     (error (xc)
+                            (let ((node-string (print-node-pointer-to-string))
+                                  (xc-type (type-of xc))
+                                  (xc-string (princ-to-string xc))
+                                  ;; (msg )
+                                  )
+                              (format *stderr* "* WARNING XXX: ~S suppressed:
  ~T~A
  in destructor for ~A ~A~%"
-                                     xc-type
-                                     xc-string
-                                     node-type
-                                     node-string)
-                             ;; Continue:
-                             (throw 'suppress-error-and-continue nil)))
-                    ;; TODO: Remove reliance on '#+sbcl':
-                    #+sbcl (sb-sys:memory-fault-error (xc)
-                                                      (ecase config/signal-memory-errors
-                                                        ((:error :log)
-                                                         (let+ ((node-string (print-node-pointer-to-string)))
-                                                           (declare (string node-string))
+                                      xc-type
+                                      xc-string
+                                      node-type
+                                      node-string)
+                              ;; Continue:
+                              (throw 'suppress-error-and-continue nil)))
+                     ;; TODO: Remove reliance on '#+sbcl':
+                     #+sbcl (sb-sys:memory-fault-error (xc)
+                                                       (ecase config/signal-memory-errors
+                                                         ((:error :log)
+                                                          (let+ ((node-string (print-node-pointer-to-string)))
+                                                            (declare (string node-string))
 
-                                                           (let-1 xc-string (princ-to-string xc)
-                                                             (log-error :logger cudd-node-logger
-                                                                        "* Error: memory-fault detected in Lisp:
+                                                            (let-1 xc-string (princ-to-string xc)
+                                                              (log-error :logger cudd-node-logger
+                                                                         "* Error: memory-fault detected in Lisp:
  ~&~T~<~A~>
 
 while destructing
 ~T~A
 
  Re-throwing? ~A~%"
-                                                                        xc-string
-                                                                        node-string
-                                                                        (eq :error config/signal-memory-errors))))
+                                                                         xc-string
+                                                                         node-string
+                                                                         (eq :error config/signal-memory-errors))))
 
-                                                         (if (eq :error config/signal-memory-errors)
-                                                             (cerror "Ignore and hope for the best" xc)
-                                                             (assert* (eq :log config/signal-memory-errors))))
+                                                          (if (eq :error config/signal-memory-errors)
+                                                              (cerror "Ignore and hope for the best" xc)
+                                                              (assert* (eq :log config/signal-memory-errors))))
 
-                                                        ((nil) #| Silence |#))
-                                                      ;; Continue:
-                                                      (throw 'suppress-error-and-continue nil))))))
-     (let ((keys-check? (keys-check?))
-           (debug-check? (debug-check?)))
-       (declare (boolean keys-check? debug-check?))
+                                                         ((nil) #| Silence |#))
+                                                       ;; Continue:
+                                                       (throw 'suppress-error-and-continue nil))))))
+      (let ((keys-check? (keys-check?))
+            (debug-check? (debug-check?)))
+        (declare (boolean keys-check? debug-check?))
 
-       (with-cudd-critical-section (:manager manager)
-         (let ((mp (manager-pointer manager)))
-           (declare (manager-pointer mp))
+        (with-cudd-critical-section (:manager manager)
+          (let ((mp (manager-pointer manager)))
+            (declare (manager-pointer mp))
 
-           (with-error-suppression
-               (let-1 node-string (print-node-pointer-to-string)
-                 (log-msg :trace :logger cudd-node-logger
-                          "~2&~T Finalizer for ~A." node-string)))
+            (with-error-suppression
+                (let-1 node-string (print-node-pointer-to-string)
+                  (log-msg :trace :logger cudd-node-logger
+                           "~2&~T Finalizer for ~A." node-string)))
 
-           (when config/debug-consistency-checks
-             (with-error-suppression
-                 (when keys-check?
-                   (unless (zerop (cudd-check-keys mp))
-                     (let ((manager-string (princ-to-string manager)))
-                       (log-error :logger cudd-node-logger "~&Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
+            (when config/debug-consistency-checks
+              (with-error-suppression
+                  (when keys-check?
+                    (unless (zerop (cudd-check-keys mp))
+                      (let ((manager-string (princ-to-string manager)))
+                        (log-error :logger cudd-node-logger "~&Assert 1 failed: (zerop (cudd-check-keys mp)) at start of finalizer of ~A ~A
 in manager ~A~%"
-                                  node-type
-                                  node-pointer
-                                  manager-string)))))
-             (with-error-suppression
-                 (when debug-check?
-                   (unless (zerop (cudd-debug-check mp))
-                     (let ((node-string (print-node-pointer-to-string)))
-                       (log-error :logger cudd-node-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A" node-string))))))
+                                   node-type
+                                   node-pointer
+                                   manager-string)))))
+              (with-error-suppression
+                  (when debug-check?
+                    (unless (zerop (cudd-debug-check mp))
+                      (let ((node-string (print-node-pointer-to-string)))
+                        (log-error :logger cudd-node-logger "~&Assert 2 failed: (zerop (cudd-debug-check mp)) at start of finalizer of ~A" node-string))))))
 
-           (with-error-suppression
-               (cond
-                 (ref
-                  (let-1 node-string (print-node-pointer-to-string)
-                    (log-msg :debu8 :logger cudd-node-logger
-                             "Reached the deref segment in finalizer for ~A"
-                             node-string))
+            (with-error-suppression
+                (cond
+                  (ref
+                   (let-1 node-string (print-node-pointer-to-string)
+                     (log-msg :debu8 :logger cudd-node-logger
+                              "Reached the deref segment in finalizer for ~A"
+                              node-string))
 
-                  (when (zerop (cudd-node-ref-count node-pointer))
-                    (error "Tried to decrease reference count of node that already has refcount zero"))
+                   (when (zerop (cudd-node-ref-count node-pointer))
+                     (error "Tried to decrease reference count of node that already has refcount zero"))
 
-                  (etypecase node-type
-                    (bdd-node-type (cudd-recursive-deref mp node-pointer))
-                    (add-node-type (cudd-recursive-deref mp node-pointer))
-                    (zdd-node-type (cudd-recursive-deref-zdd mp node-pointer)))
+                   (etypecase node-type
+                     (bdd-node-type (cudd-recursive-deref mp node-pointer))
+                     (add-node-type (cudd-recursive-deref mp node-pointer))
+                     (zdd-node-type (cudd-recursive-deref-zdd mp node-pointer)))
 
-                  (log-msg :debu7 :logger cudd-node-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
-                           node-pointer
-                           (cudd-node-ref-count node-pointer))
+                   (log-msg :debu7 :logger cudd-node-logger "- After (cudd-recursive-deref ~A), REFs = ~D."
+                            node-pointer
+                            (cudd-node-ref-count node-pointer))
 
-                  (log-msg :debu8 :logger cudd-node-logger
-                           "Past the deref segment in finalizer for ~A ~A" node-type node-pointer))
-                 (t ; ref=nil
-                  (error "Shouldn't happen.")
-                  (log-msg :debu8 :logger cudd-node-logger
-                           "Skipping the deref segment in finalizer for ~A ~A" node-type node-pointer))))
+                   (log-msg :debu8 :logger cudd-node-logger
+                            "Past the deref segment in finalizer for ~A ~A" node-type node-pointer))
+                  (t ; ref=nil
+                   (error "Shouldn't happen.")
+                   (log-msg :debu8 :logger cudd-node-logger
+                            "Skipping the deref segment in finalizer for ~A ~A" node-type node-pointer))))
 
-           (when config/debug-consistency-checks
-             (with-error-suppression
-                 (when keys-check?
-                   (unless (zerop (cudd-check-keys mp))
-                     (let-1 node-string (print-node-pointer-to-string)
-                       (log-error :logger cudd-node-logger "~&Assert 3: ~&~T~A ~&failed at end of finalizer for
+            (when config/debug-consistency-checks
+              (with-error-suppression
+                  (when keys-check?
+                    (unless (zerop (cudd-check-keys mp))
+                      (let-1 node-string (print-node-pointer-to-string)
+                        (log-error :logger cudd-node-logger "~&Assert 3: ~&~T~A ~&failed at end of finalizer for
  ~T~A "
-                                  '(zerop (cudd-check-keys mp))
-                                  node-string)))))
-             (with-error-suppression
-                 (when debug-check?
-                   (unless (zerop (cudd-debug-check mp))
-                     (let-1 node-string (print-node-pointer-to-string)
-                       (log-error :logger cudd-node-logger "~&Assert 4: ~&~T~A ~&failed at end of finalizer for
+                                   '(zerop (cudd-check-keys mp))
+                                   node-string)))))
+              (with-error-suppression
+                  (when debug-check?
+                    (unless (zerop (cudd-debug-check mp))
+                      (let-1 node-string (print-node-pointer-to-string)
+                        (log-error :logger cudd-node-logger "~&Assert 4: ~&~T~A ~&failed at end of finalizer for
 ~T~A~%"
-                                  '(zerop (cudd-debug-check mp))
-                                  node-string)))))))
+                                   '(zerop (cudd-debug-check mp))
+                                   node-string)))))))
 
-         (log-msg :debu8 :logger cudd-node-logger "Reached the end of finalizer for ~A ~A." node-type node-pointer)
-         t)))))
+          (log-msg :debu8 :logger cudd-node-logger "Reached the end of finalizer for ~A ~A." node-type node-pointer)
+          t)))))
 
 (defun helper/construct-node (node-pointer node-type ref manager other-initargs)
   "Used by (wrap-and-finalize)."
@@ -482,12 +482,12 @@ only if their pointers are the same."
 ;;   'non-negative-fixnum)
 
 (defclass bdd-variable-node (bdd-node variable-node)
-  ((index :type non-negative-fixnum
-          :initform (required 'index)
-          :initarg :index :initarg :variable-id :initarg :var-id
-          :reader index :reader variable-id
-          #| TODO :reader (bdd-variable-id :inline t) |#
-          ))
+  ((variable-id :type non-negative-fixnum
+                :initform (required 'variable-id)
+                :initarg :initarg :variable-id :initarg :var-id
+                :reader variable-id
+                #| TODO :reader (bdd-variable-id :inline t) |#
+                ))
   (:documentation "A BDD variable literal."))
 
 (declaim (inline bdd-variable-index))
@@ -498,8 +498,8 @@ only if their pointers are the same."
 (defun bdd-node (pointer &key (manager *manager*))
   (declare (node-pointer pointer))
   (wrap-and-finalize pointer 'bdd-node
-                     ;; :ref (not (cudd-node-is-constant pointer))
-                     :manager manager))
+    ;; :ref (not (cudd-node-is-constant pointer))
+    :manager manager))
 
 ;; (defmethod print-object ((node bdd-variable-node) stream)
 ;;   (let-1 (index (node-index node))
@@ -520,7 +520,7 @@ only if their pointers are the same."
 (defun add-node (pointer &key (manager *manager*))
   (declare (node-pointer pointer))
   (wrap-and-finalize pointer 'add-node :ref (not (cudd-node-is-constant pointer))
-                                       :manager manager))
+    :manager manager))
 
 (defclass zdd-node (node) ()
   (:documentation "Node of an zero-suppressed decision diagram (ZDD)"))
@@ -534,7 +534,7 @@ only if their pointers are the same."
   (declare (bdd-node node))
   ;; (check-type node bdd-node)
   (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-T (node-pointer node)) 'bdd-node
-                                :manager (node-manager node))))
+               :manager (node-manager node))))
     (declare (bdd-node res))
     res))
 
@@ -545,6 +545,6 @@ only if their pointers are the same."
   (declare (bdd-node node))
   ;; (check-type node bdd-node)
   (let ((res (wrap-and-finalize (cl-cudd.baseapi:cudd-E (node-pointer node)) 'bdd-node
-                                :manager (node-manager node))))
+               :manager (node-manager node))))
     (declare (bdd-node res))
     res))
