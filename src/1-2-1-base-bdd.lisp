@@ -38,7 +38,10 @@ Returns a pointer to the new variable if successful;
 invokes a signal otherwise.
 
 The returned node is an internal node with both outgoing arcs
-pointing to the constant 1. The else arc is complemented."
+pointing to the constant 1. The else arc is complemented.
+
+- NOTE: Not thread-safe.
+"
   (declare (foreign-pointer manager-pointer))
   ;; (declare (type manager-pointer manager-pointer))
   (when (and index level)
