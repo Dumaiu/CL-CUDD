@@ -422,6 +422,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                  node-value))
 
 (defun node-index (node)
+  (declare (node node))
   (cudd-node-read-index (node-pointer node)))
 
 (defun node-equal (a b)
@@ -429,12 +430,15 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
 
 Because CUDD caches all diagrams, this is true if and
 only if their pointers are the same."
+  (declare (node a b))
+  ;; NOTE: SBCL removes these when (optimize safety) is high:
   (check-type a node)
   (check-type b node)
-  (cffi:pointer-eq (node-pointer a) (node-pointer b)))
+  (pointer-eq (node-pointer a) (node-pointer b)))
 
 (defun node-constant-p (node)
   "return t if the node is constant, nil otherwise"
+  (declare (node node))
   (cudd-node-is-constant (node-pointer node)))
 
 (defun node-value (node)
