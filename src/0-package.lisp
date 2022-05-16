@@ -697,6 +697,26 @@ Wrapper for the :log4cl macros.  You can use them if you want, but going through
   ;; other exports done by swig
   ); cl-cudd.baseapi
 
+(define-package cl-cudd.thread-unsafe
+    (:use :cl)
+  (:use-reexport :cl-cudd.baseapi))
+
+(define-package cl-cudd.thread-safe
+    (:use :cl)
+  (:export
+   #:node-permute)
+  (:export
+   univ-abstract
+   or-abstract
+   sum-abstract)
+  (:export
+   node-or
+   node-and
+   node-xor
+   node-complement
+   if-then-else)
+  )
+
 (define-package cl-cudd
     (:documentation "High-level interface")
   (:mix
