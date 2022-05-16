@@ -20,7 +20,9 @@
 
 (defun node-function (generic-name arguments native-function node-type
                       dont-wrap-result)
-  "TODO: Add `manager' param"
+  "TODO: Add `manager' param
+  * TODO: Don't output (assert*) calls on high optimization
+"
   (declare (optimize debug))
   (with-gensyms (mp)
     (labels ((convert-arguments (arguments)
@@ -65,18 +67,20 @@
                  (error 'cudd-manager-mismatch-error "Nodes ~A didn't have the same manager.  Managers found: ~A"
                         ,nodes
                         ,managers))
-               (let* ((,current-manager (first ,managers))
-                      (,mp (manager-pointer ,current-manager)))
-                 (declare (manager ,current-manager)
-                          (manager-pointer ,mp))
+               (let ((,current-manager (first ,managers)))
+                 (declare (manager ,current-manager))
                  (with-cudd-critical-section (:manager ,current-manager)
-                   ,(let-1 funcall-form (make-funcall native-function arguments)
-                      (if dont-wrap-result
-                          funcall-form
-                          `(let-1 ,new-node-pointer ,funcall-form
-                             (declare (node-pointer ,new-node-pointer))
-                             (wrap-and-finalize ,new-node-pointer ',node-type
-                               :manager ,current-manager)))))))))))))
+                   (let ((,mp (manager-pointer ,current-manager)))
+                     (declare (manager-pointer ,mp))
+                     (assert* (not (null-pointer-p ,mp)))
+
+                     ,(let-1 funcall-form (make-funcall native-function arguments)
+                        (if dont-wrap-result
+                            funcall-form
+                            `(let-1 ,new-node-pointer ,funcall-form
+                               (declare (node-pointer ,new-node-pointer))
+                               (wrap-and-finalize ,new-node-pointer ',node-type
+                                 :manager ,current-manager))))))))))))))
 
 (defun add-function (generic-name arguments add-function dont-wrap)
   (node-function generic-name arguments add-function 'add-node dont-wrap))
