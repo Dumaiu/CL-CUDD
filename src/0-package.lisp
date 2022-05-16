@@ -82,10 +82,10 @@
   * TODO: On high optimization, this gets compiled out.
 "
   (let ((assertion-form `(assert* ,@args)))
-   `(handler-bind-case (assert ,@args)
-                       (simple-error (xc)
-                                     (declare (ignorable xc))
-                                     (format *stderr* "~&** XXX: Assertion failed: ~S~%" ',assertion-form)))))
+    `(handler-bind-case (assert ,@args)
+                        (simple-error (xc)
+                                      (declare (ignorable xc))
+                                      (format *stderr* "~&** XXX: Assertion failed: ~S~%" ',assertion-form)))))
 
 (defmacro let-1 (name initform &body body)
   "Syntactic sugar for binding one variable."
@@ -173,477 +173,479 @@ Wrapper for the :log4cl macros.  You can use them if you want, but going through
    :trivial-garbage)
   (:shadow #:pi)
   ;; constants/variables/enums
-  (:export :+CUDD-MAXINDEX+
+  (:export
+   :+CUDD-MAXINDEX+
    :+SIZEOF-INT+
-           :+SIZEOF-LONG+
+   :+SIZEOF-LONG+
    :+SIZEOF-VOID-P+
-           :+CUDD_TRUE+
+   :+CUDD_TRUE+
    :+CUDD_FALSE+
-           :+CUDD-CACHE-SLOTS+
+   :+CUDD-CACHE-SLOTS+
    :+CUDD-OUT-OF-MEM+
-           :+CUDD-RESIDUE-DEFAULT+
+   :+CUDD-RESIDUE-DEFAULT+
    :+CUDD-RESIDUE-MSB+
-           :+CUDD-RESIDUE-TC+
+   :+CUDD-RESIDUE-TC+
    :+CUDD-UNIQUE-SLOTS+
-           :+CUDD-VERSION+
+   :+CUDD-VERSION+
    :+DD-APA-BASE+
-           :+DD-APA-BITS+
+   :+DD-APA-BITS+
    :+DD-APA-HEXPRINT+
-           :+DD-APA-MASK+)
-  (:export :ADD-VAR
+   :+DD-APA-MASK+)
+  (:export
+   :ADD-VAR
    :BDD-VAR
-           :CUDD-ADD-AGREEMENT
+   :CUDD-ADD-AGREEMENT
    :CUDD-ADD-APPLY
-           :CUDD-ADD-BDD-INTERVAL
+   :CUDD-ADD-BDD-INTERVAL
    :CUDD-ADD-BDD-ITH-BIT
-           :CUDD-ADD-BDD-PATTERN
+   :CUDD-ADD-BDD-PATTERN
    :CUDD-ADD-BDD-STRICT-THRESHOLD
-           :CUDD-ADD-BDD-THRESHOLD
+   :CUDD-ADD-BDD-THRESHOLD
    :CUDD-ADD-CMPL
-           :CUDD-ADD-COMPOSE
+   :CUDD-ADD-COMPOSE
    :CUDD-ADD-COMPUTE-CUBE
-           :CUDD-ADD-CONST
+   :CUDD-ADD-CONST
    :CUDD-ADD-CONSTRAIN
-           :CUDD-ADD-CUBE
+   :CUDD-ADD-CUBE
    :CUDD-ADD-DIFF
-           :CUDD-ADD-DIVIDE
+   :CUDD-ADD-DIVIDE
    :CUDD-ADD-EVAL-CONST
-           :CUDD-ADD-EXIST-ABSTRACT
+   :CUDD-ADD-EXIST-ABSTRACT
    :CUDD-ADD-FIND-MAX
-           :CUDD-ADD-FIND-MIN
+   :CUDD-ADD-FIND-MIN
    :CUDD-ADD-GENERAL-VECTOR-COMPOSE
-           :CUDD-ADD-HAMMING
+   :CUDD-ADD-HAMMING
    :CUDD-ADD-HARWELL
-           :CUDD-ADD-HOOK
+   :CUDD-ADD-HOOK
    :CUDD-ADD-ITE
-           :CUDD-ADD-ITE-CONSTANT
+   :CUDD-ADD-ITE-CONSTANT
    :CUDD-ADD-ITH-BIT
-           :CUDD-ADD-ITH-VAR
+   :CUDD-ADD-ITH-VAR
    :CUDD-ADD-LEQ
-           :CUDD-ADD-LOG
+   :CUDD-ADD-LOG
    :CUDD-ADD-MATRIX-MULTIPLY
-           :CUDD-ADD-MAXIMUM
+   :CUDD-ADD-MAXIMUM
    :CUDD-ADD-MINIMUM
-           :CUDD-ADD-MINUS
+   :CUDD-ADD-MINUS
    :CUDD-ADD-MONADIC-APPLY
-           :CUDD-ADD-NAND
+   :CUDD-ADD-NAND
    :CUDD-ADD-NEGATE
-           :CUDD-ADD-NEW-VAR
+   :CUDD-ADD-NEW-VAR
    :CUDD-ADD-NEW-VAR-AT-LEVEL
-           :CUDD-ADD-NON-SIM-COMPOSE
+   :CUDD-ADD-NON-SIM-COMPOSE
    :CUDD-ADD-NOR
-           :CUDD-ADD-ONE-ZERO-MAXIMUM
+   :CUDD-ADD-ONE-ZERO-MAXIMUM
    :CUDD-ADD-OR
-           :CUDD-ADD-OR-ABSTRACT
+   :CUDD-ADD-OR-ABSTRACT
    :CUDD-ADD-OUTER-SUM
-           :CUDD-ADD-PERMUTE
+   :CUDD-ADD-PERMUTE
    :CUDD-ADD-PLUS
-           :CUDD-ADD-READ
+   :CUDD-ADD-READ
    :CUDD-ADD-RESIDUE
-           :CUDD-ADD-RESTRICT
+   :CUDD-ADD-RESTRICT
    :CUDD-ADD-ROUND-OFF
-           :CUDD-ADD-SCALAR-INVERSE
+   :CUDD-ADD-SCALAR-INVERSE
    :CUDD-ADD-SET-NZ
-           :CUDD-ADD-SWAP-VARIABLES
+   :CUDD-ADD-SWAP-VARIABLES
    :CUDD-ADD-THRESHOLD
-           :CUDD-ADD-TIMES
+   :CUDD-ADD-TIMES
    :CUDD-ADD-TIMES-PLUS
-           :CUDD-ADD-TRIANGLE
+   :CUDD-ADD-TRIANGLE
    :CUDD-ADD-UNIV-ABSTRACT
-           :CUDD-ADD-VECTOR-COMPOSE
+   :CUDD-ADD-VECTOR-COMPOSE
    :CUDD-ADD-WALSH
-           :CUDD-ADD-XEQY
+   :CUDD-ADD-XEQY
    :CUDD-ADD-XNOR
-           :CUDD-ADD-XOR
+   :CUDD-ADD-XOR
    :CUDD-AGGREGATION-TYPE
-           :CUDD-APA-ADD
+   :CUDD-APA-ADD
    :CUDD-APA-COMPARE
-           :CUDD-APA-COMPARE-RATIOS
+   :CUDD-APA-COMPARE-RATIOS
    :CUDD-APA-COPY
-           :CUDD-APA-COUNT-MINTERM
+   :CUDD-APA-COUNT-MINTERM
    :CUDD-APA-INT-DIVISION
-           :CUDD-APA-NUMBER-OF-DIGITS
+   :CUDD-APA-NUMBER-OF-DIGITS
    :CUDD-APA-POWER-OF-TWO
-           :CUDD-APA-PRINT-DECIMAL
+   :CUDD-APA-PRINT-DECIMAL
    :CUDD-APA-PRINT-DENSITY
-           :CUDD-APA-PRINT-EXPONENTIAL
+   :CUDD-APA-PRINT-EXPONENTIAL
    :CUDD-APA-PRINT-HEX
-           :CUDD-APA-PRINT-MINTERM
+   :CUDD-APA-PRINT-MINTERM
    :CUDD-APA-PRINT-MINTERM-EXP
-           :CUDD-APA-SET-TO-LITERAL
+   :CUDD-APA-SET-TO-LITERAL
    :CUDD-APA-SHIFT-RIGHT
-           :CUDD-APA-SHORT-DIVISION
+   :CUDD-APA-SHORT-DIVISION
    :CUDD-APA-SUBTRACT
-           :CUDD-AUTODYN-DISABLE
+   :CUDD-AUTODYN-DISABLE
    :CUDD-AUTODYN-DISABLE-ZDD
-           :CUDD-AUTODYN-ENABLE
+   :CUDD-AUTODYN-ENABLE
    :CUDD-AUTODYN-ENABLE-ZDD
-           :CUDD-AVERAGE-DISTANCE
+   :CUDD-AVERAGE-DISTANCE
    :CUDD-BDD-ADJ-PERMUTE-X
-           :CUDD-BDD-AND
+   :CUDD-BDD-AND
    :CUDD-BDD-AND-ABSTRACT
-           :CUDD-BDD-AND-ABSTRACT-LIMIT
+   :CUDD-BDD-AND-ABSTRACT-LIMIT
    :CUDD-BDD-AND-LIMIT
-           :CUDD-BDD-APPROX-CONJ-DECOMP
+   :CUDD-BDD-APPROX-CONJ-DECOMP
    :CUDD-BDD-APPROX-DISJ-DECOMP
-           :CUDD-BDD-BIND-VAR
+   :CUDD-BDD-BIND-VAR
    :CUDD-BDD-BOOLEAN-DIFF
-           :CUDD-BDD-CHAR-TO-VECT
+   :CUDD-BDD-CHAR-TO-VECT
    :CUDD-BDD-CLIPPING-AND
-           :CUDD-BDD-CLIPPING-AND-ABSTRACT
+   :CUDD-BDD-CLIPPING-AND-ABSTRACT
    :CUDD-BDD-CLOSEST-CUBE
-           :CUDD-BDD-COMPOSE
+   :CUDD-BDD-COMPOSE
    :CUDD-BDD-COMPUTE-CUBE
-           :CUDD-BDD-CONSTRAIN
+   :CUDD-BDD-CONSTRAIN
    :CUDD-BDD-CONSTRAIN-DECOMP
-           :CUDD-BDD-CORRELATION
+   :CUDD-BDD-CORRELATION
    :CUDD-BDD-CORRELATION-WEIGHTS
-           :CUDD-BDD-CUBE
+   :CUDD-BDD-CUBE
    :CUDD-BDD-EXIST-ABSTRACT
-           :CUDD-BDD-GEN-CONJ-DECOMP
+   :CUDD-BDD-GEN-CONJ-DECOMP
    :CUDD-BDD-GEN-DISJ-DECOMP
-           :CUDD-BDD-INTERSECT
+   :CUDD-BDD-INTERSECT
    :CUDD-BDD-IS-NS-VAR
-           :CUDD-BDD-IS-PI-VAR
+   :CUDD-BDD-IS-PI-VAR
    :CUDD-BDD-IS-PS-VAR
-           :CUDD-BDD-IS-VAR-ESSENTIAL
+   :CUDD-BDD-IS-VAR-ESSENTIAL
    :CUDD-BDD-IS-VAR-HARD-GROUP
-           :CUDD-BDD-IS-VAR-TO-BE-GROUPED
+   :CUDD-BDD-IS-VAR-TO-BE-GROUPED
    :CUDD-BDD-IS-VAR-TO-BE-UNGROUPED
-           :CUDD-BDD-ISOP
+   :CUDD-BDD-ISOP
    :CUDD-BDD-ITE
-           :CUDD-BDD-ITE-CONSTANT
+   :CUDD-BDD-ITE-CONSTANT
    :CUDD-BDD-ITER-CONJ-DECOMP
-           :CUDD-BDD-ITER-DISJ-DECOMP
+   :CUDD-BDD-ITER-DISJ-DECOMP
    :CUDD-BDD-ITH-VAR
-           :CUDD-BDD-LEQ
+   :CUDD-BDD-LEQ
    :CUDD-BDD-LEQ-UNLESS
-           :CUDD-BDD-LICOMPACTION
+   :CUDD-BDD-LICOMPACTION
    :CUDD-BDD-LITERAL-SET-INTERSECTION
-           :CUDD-BDD-MAKE-PRIME
+   :CUDD-BDD-MAKE-PRIME
    :CUDD-BDD-MINIMIZE
-           :CUDD-BDD-NAND
+   :CUDD-BDD-NAND
    :CUDD-BDD-NEW-VAR
-           :CUDD-BDD-NEW-VAR-AT-LEVEL
+   :CUDD-BDD-NEW-VAR-AT-LEVEL
    :CUDD-BDD-NOR
-           :CUDD-BDD-NOT
+   :CUDD-BDD-NOT
    :CUDD-BDD-NPAND
-           :CUDD-BDD-OR
+   :CUDD-BDD-OR
    :CUDD-BDD-PERMUTE
-           :CUDD-BDD-PICK-ARBITRARY-MINTERMS
+   :CUDD-BDD-PICK-ARBITRARY-MINTERMS
    :CUDD-BDD-PICK-ONE-CUBE
-           :CUDD-BDD-PICK-ONE-MINTERM
+   :CUDD-BDD-PICK-ONE-MINTERM
    :CUDD-BDD-PRINT-COVER
-           :CUDD-BDD-READ
+   :CUDD-BDD-READ
    :CUDD-BDD-READ-PAIR-INDEX
-           :CUDD-BDD-REALIGN-DISABLE
+   :CUDD-BDD-REALIGN-DISABLE
    :CUDD-BDD-REALIGN-ENABLE
-           :CUDD-BDD-REALIGNMENT-ENABLED
+   :CUDD-BDD-REALIGNMENT-ENABLED
    :CUDD-BDD-RESET-VAR-TO-BE-GROUPED
-           :CUDD-BDD-RESTRICT
+   :CUDD-BDD-RESTRICT
    :CUDD-BDD-SET-NS-VAR
-           :CUDD-BDD-SET-PAIR-INDEX
+   :CUDD-BDD-SET-PAIR-INDEX
    :CUDD-BDD-SET-PI-VAR
-           :CUDD-BDD-SET-PS-VAR
+   :CUDD-BDD-SET-PS-VAR
    :CUDD-BDD-SET-VAR-HARD-GROUP
-           :CUDD-BDD-SET-VAR-TO-BE-GROUPED
+   :CUDD-BDD-SET-VAR-TO-BE-GROUPED
    :CUDD-BDD-SET-VAR-TO-BE-UNGROUPED
-           :CUDD-BDD-SQUEEZE
+   :CUDD-BDD-SQUEEZE
    :CUDD-BDD-SWAP-VARIABLES
-           :CUDD-BDD-TO-ADD
+   :CUDD-BDD-TO-ADD
    :CUDD-BDD-TO-CUBE-ARRAY
-           :CUDD-BDD-TRANSFER
+   :CUDD-BDD-TRANSFER
    :CUDD-BDD-UNBIND-VAR
-           :CUDD-BDD-UNIV-ABSTRACT
+   :CUDD-BDD-UNIV-ABSTRACT
    :CUDD-BDD-VAR-CONJ-DECOMP
-           :CUDD-BDD-VAR-DISJ-DECOMP
+   :CUDD-BDD-VAR-DISJ-DECOMP
    :CUDD-BDD-VAR-IS-BOUND
-           :CUDD-BDD-VAR-IS-DEPENDENT
+   :CUDD-BDD-VAR-IS-DEPENDENT
    :CUDD-BDD-VAR-MAP
-           :CUDD-BDD-VECTOR-COMPOSE
+   :CUDD-BDD-VECTOR-COMPOSE
    :CUDD-BDD-XNOR
-           :CUDD-BDD-XOR
+   :CUDD-BDD-XOR
    :CUDD-BDD-XOR-EXIST-ABSTRACT
-           :CUDD-BIASED-OVER-APPROX
+   :CUDD-BIASED-OVER-APPROX
    :CUDD-BIASED-UNDER-APPROX
-           :CUDD-CHECK-KEYS
+   :CUDD-CHECK-KEYS
    :CUDD-CHECK-ZERO-REF
-           :CUDD-CLASSIFY-SUPPORT
+   :CUDD-CLASSIFY-SUPPORT
    :CUDD-CLEAR-ERROR-CODE
-           :CUDD-COF-MINTERM
+   :CUDD-COF-MINTERM
    :CUDD-COFACTOR
-           :CUDD-COUNT-LEAVES
+   :CUDD-COUNT-LEAVES
    :CUDD-COUNT-MINTERM
-           :CUDD-COUNT-PATH
+   :CUDD-COUNT-PATH
    :CUDD-COUNT-PATHS-TO-NON-ZERO
-           :CUDD-CPROJECTION
+   :CUDD-CPROJECTION
    :CUDD-CUBE-ARRAY-TO-BDD
-           :CUDD-DAG-SIZE
+   :CUDD-DAG-SIZE
    :CUDD-DEAD-ARE-COUNTED
-           :CUDD-DEBUG-CHECK
+   :CUDD-DEBUG-CHECK
    :CUDD-DECREASING
-           :CUDD-DELAYED-DEREF-BDD
+   :CUDD-DELAYED-DEREF-BDD
    :CUDD-DENSITY
-           :CUDD-DEREF
+   :CUDD-DEREF
    :CUDD-DISABLE-GARBAGE-COLLECTION
-           :CUDD-DISABLE-REORDERING-REPORTING
+   :CUDD-DISABLE-REORDERING-REPORTING
    :CUDD-DUMP-BLIF
-           :CUDD-DUMP-BLIF-BODY
+   :CUDD-DUMP-BLIF-BODY
    :CUDD-DUMP-DA-VINCI
-           :CUDD-DUMP-DDCAL
+   :CUDD-DUMP-DDCAL
    :CUDD-DUMP-DOT
-           :CUDD-DUMP-FACTORED-FORM
+   :CUDD-DUMP-FACTORED-FORM
    :CUDD-DXYGTDXZ
-           :CUDD-DXYGTDYZ
+   :CUDD-DXYGTDYZ
    :CUDD-ENABLE-GARBAGE-COLLECTION
-           :CUDD-ENABLE-REORDERING-REPORTING
+   :CUDD-ENABLE-REORDERING-REPORTING
    :CUDD-EPD-COUNT-MINTERM
-           :CUDD-EQUAL-SUP-NORM
+   :CUDD-EQUAL-SUP-NORM
    :CUDD-EQUIV-DC
-           :CUDD-ERROR-TYPE
+   :CUDD-ERROR-TYPE
    :CUDD-ESTIMATE-COFACTOR
-           :CUDD-ESTIMATE-COFACTOR-SIMPLE
+   :CUDD-ESTIMATE-COFACTOR-SIMPLE
    :CUDD-EVAL
-           :CUDD-EXPECTED-USED-SLOTS
+   :CUDD-EXPECTED-USED-SLOTS
    :CUDD-FIND-ESSENTIAL
-           :CUDD-FIND-TWO-LITERAL-CLAUSES
+   :CUDD-FIND-TWO-LITERAL-CLAUSES
    :CUDD-FIRST-CUBE
-           :CUDD-FIRST-NODE
+   :CUDD-FIRST-NODE
    :CUDD-FIRST-PRIME
-           :CUDD-FREE-TREE
+   :CUDD-FREE-TREE
    :CUDD-FREE-ZDD-TREE
-           ;; :CUDD-GARBAGE-COLLECT
-           :CUDD-GARBAGE-COLLECTION-ENABLED
+   ;; :CUDD-GARBAGE-COLLECT
+   :CUDD-GARBAGE-COLLECTION-ENABLED
    :CUDD-GEN-FREE
-           :CUDD-HOOK-TYPE
+   :CUDD-HOOK-TYPE
    :CUDD-INCREASING
-           :CUDD-INDICES-TO-CUBE
+   :CUDD-INDICES-TO-CUBE
    :CUDD-INIT
-           :CUDD-IS-GEN-EMPTY
+   :CUDD-IS-GEN-EMPTY
    :CUDD-IS-IN-HOOK
-           :CUDD-IS-NON-CONSTANT
+   :CUDD-IS-NON-CONSTANT
    :CUDD-ITER-DEREF-BDD
-           :CUDD-LARGEST-CUBE
+   :CUDD-LARGEST-CUBE
    :CUDD-LAZY-GROUP-TYPE
-           :CUDD-MAKE-BDD-FROM-ZDD-COVER
+   :CUDD-MAKE-BDD-FROM-ZDD-COVER
    :CUDD-MAKE-TREE-NODE
-           :CUDD-MAKE-ZDD-TREE-NODE
+   :CUDD-MAKE-ZDD-TREE-NODE
    :CUDD-MANAGER
-           :CUDD-MIN-HAMMING-DIST
+   :CUDD-MIN-HAMMING-DIST
    :CUDD-NEW-APA-NUMBER
-           :CUDD-NEXT-CUBE
+   :CUDD-NEXT-CUBE
    :CUDD-NEXT-NODE
-           :CUDD-NEXT-PRIME
+   :CUDD-NEXT-PRIME
    :CUDD-NODE
-           :CUDD-NODE-ELSE
+   :CUDD-NODE-ELSE
    :CUDD-NODE-REF-COUNT
-           :CUDD-NODE-THEN
+   :CUDD-NODE-THEN
    :CUDD-NODE-VALUE
-           :CUDD-NODE-IS-CONSTANT
+   :CUDD-NODE-IS-CONSTANT
    :CUDD-NODE-READ-INDEX
-           :CUDD-OVER-APPROX
+   :CUDD-OVER-APPROX
    :CUDD-PRIME
-           :CUDD-PRINT-DEBUG
+   :CUDD-PRINT-DEBUG
    :CUDD-PRINT-INFO
-           :CUDD-PRINT-LINEAR
+   :CUDD-PRINT-LINEAR
    :CUDD-PRINT-MINTERM
-           :CUDD-PRINT-TWO-LITERAL-CLAUSES
+   :CUDD-PRINT-TWO-LITERAL-CLAUSES
    :CUDD-PRINT-VERSION
-           :CUDD-PRIORITY-SELECT
+   :CUDD-PRIORITY-SELECT
    :CUDD-QUIT
-           :CUDD-RANDOM
+   :CUDD-RANDOM
    :CUDD-READ-ARCVIOLATION
-           :CUDD-READ-BACKGROUND
+   :CUDD-READ-BACKGROUND
    :CUDD-READ-CACHE-HITS
-           :CUDD-READ-CACHE-LOOK-UPS
+   :CUDD-READ-CACHE-LOOK-UPS
    :CUDD-READ-CACHE-SLOTS
-           :CUDD-READ-CACHE-USED-SLOTS
+   :CUDD-READ-CACHE-USED-SLOTS
    :CUDD-READ-DEAD
-           :CUDD-READ-EPSILON
+   :CUDD-READ-EPSILON
    :CUDD-READ-ERROR-CODE
-           :CUDD-READ-GARBAGE-COLLECTION-TIME
+   :CUDD-READ-GARBAGE-COLLECTION-TIME
    :CUDD-READ-GARBAGE-COLLECTIONS
-           :CUDD-READ-GROUPCHECK
+   :CUDD-READ-GROUPCHECK
    :CUDD-READ-INV-PERM
-           :CUDD-READ-INV-PERM-ZDD
+   :CUDD-READ-INV-PERM-ZDD
    :CUDD-READ-ITH-CLAUSE
-           :CUDD-READ-KEYS
+   :CUDD-READ-KEYS
    :CUDD-READ-LINEAR
-           :CUDD-READ-LOGIC-ZERO
+   :CUDD-READ-LOGIC-ZERO
    :CUDD-READ-LOOSE-UP-TO
-           :CUDD-READ-MAX-CACHE
+   :CUDD-READ-MAX-CACHE
    :CUDD-READ-MAX-CACHE-HARD
-           :CUDD-READ-MAX-GROWTH
+   :CUDD-READ-MAX-GROWTH
    :CUDD-READ-MAX-GROWTH-ALTERNATE
-           :CUDD-READ-MAX-LIVE
+   :CUDD-READ-MAX-LIVE
    :CUDD-READ-MAX-MEMORY
-           :CUDD-READ-MEMORY-IN-USE
+   :CUDD-READ-MEMORY-IN-USE
    :CUDD-READ-MIN-DEAD
-           :CUDD-READ-MIN-HIT
+   :CUDD-READ-MIN-HIT
    :CUDD-READ-MINUS-INFINITY
-           :CUDD-READ-NEXT-REORDERING
+   :CUDD-READ-NEXT-REORDERING
    :CUDD-READ-NODE-COUNT
-           :CUDD-READ-NODES-DROPPED
+   :CUDD-READ-NODES-DROPPED
    :CUDD-READ-NODES-FREED
-           :CUDD-READ-NUMBER-XOVERS
+   :CUDD-READ-NUMBER-XOVERS
    :CUDD-READ-ONE
-           :CUDD-READ-PEAK-LIVE-NODE-COUNT
+   :CUDD-READ-PEAK-LIVE-NODE-COUNT
    :CUDD-READ-PEAK-NODE-COUNT
-           :CUDD-READ-PERM
+   :CUDD-READ-PERM
    :CUDD-READ-PERM-ZDD
-           :CUDD-READ-PLUS-INFINITY
+   :CUDD-READ-PLUS-INFINITY
    :CUDD-READ-POPULATION-SIZE
-           :CUDD-READ-RECOMB
+   :CUDD-READ-RECOMB
    :CUDD-READ-RECURSIVE-CALLS
-           :CUDD-READ-REORDERING-CYCLE
+   :CUDD-READ-REORDERING-CYCLE
    :CUDD-READ-REORDERING-TIME
-           :CUDD-READ-REORDERINGS
+   :CUDD-READ-REORDERINGS
    :CUDD-READ-SIFT-MAX-SWAP
-           :CUDD-READ-SIFT-MAX-VAR
+   :CUDD-READ-SIFT-MAX-VAR
    :CUDD-READ-SIZE
-           :CUDD-READ-SLOTS
+   :CUDD-READ-SLOTS
    :CUDD-READ-STDERR
-           :CUDD-READ-STDOUT
+   :CUDD-READ-STDOUT
    :CUDD-READ-SWAP-STEPS
-           :CUDD-READ-SYMMVIOLATION
+   :CUDD-READ-SYMMVIOLATION
    :CUDD-READ-TREE
-           :CUDD-READ-UNIQUE-LINKS
+   :CUDD-READ-UNIQUE-LINKS
    :CUDD-READ-UNIQUE-LOOK-UPS
-           :CUDD-READ-USED-SLOTS
+   :CUDD-READ-USED-SLOTS
    :CUDD-READ-VARS
-           :CUDD-READ-ZDD-ONE
+   :CUDD-READ-ZDD-ONE
    :CUDD-READ-ZDD-SIZE
-           :CUDD-READ-ZDD-TREE
+   :CUDD-READ-ZDD-TREE
    :CUDD-READ-ZERO
-           :CUDD-RECURSIVE-DEREF
+   :CUDD-RECURSIVE-DEREF
    :CUDD-RECURSIVE-DEREF-ZDD
-           :CUDD-REDUCE-HEAP
+   :CUDD-REDUCE-HEAP
    :CUDD-REF
-           :CUDD-REGULAR
+   :CUDD-REGULAR
    :CUDD-REMAP-OVER-APPROX
-           :CUDD-REMAP-UNDER-APPROX
+   :CUDD-REMAP-UNDER-APPROX
    :CUDD-REMOVE-HOOK
-           :CUDD-REORDERING-REPORTING
+   :CUDD-REORDERING-REPORTING
    :CUDD-REORDERING-STATUS
-           :CUDD-REORDERING-STATUS-ZDD
+   :CUDD-REORDERING-STATUS-ZDD
    :CUDD-REORDERING-TYPE
-           :CUDD-SET-ARCVIOLATION
+   :CUDD-SET-ARCVIOLATION
    :CUDD-SET-BACKGROUND
-           :CUDD-SET-EPSILON
+   :CUDD-SET-EPSILON
    :CUDD-SET-GROUPCHECK
-           :CUDD-SET-LOOSE-UP-TO
+   :CUDD-SET-LOOSE-UP-TO
    :CUDD-SET-MAX-CACHE-HARD
-           :CUDD-SET-MAX-GROWTH
+   :CUDD-SET-MAX-GROWTH
    :CUDD-SET-MAX-GROWTH-ALTERNATE
-           :CUDD-SET-MAX-LIVE
+   :CUDD-SET-MAX-LIVE
    :CUDD-SET-MAX-MEMORY
-           :CUDD-SET-MIN-HIT
+   :CUDD-SET-MIN-HIT
    :CUDD-SET-NEXT-REORDERING
-           :CUDD-SET-NUMBER-XOVERS
+   :CUDD-SET-NUMBER-XOVERS
    :CUDD-SET-POPULATION-SIZE
-           :CUDD-SET-RECOMB
+   :CUDD-SET-RECOMB
    :CUDD-SET-REORDERING-CYCLE
-           :CUDD-SET-SIFT-MAX-SWAP
+   :CUDD-SET-SIFT-MAX-SWAP
    :CUDD-SET-SIFT-MAX-VAR
-           :CUDD-SET-STDERR
+   :CUDD-SET-STDERR
    :CUDD-SET-STDOUT
-           :CUDD-SET-SYMMVIOLATION
+   :CUDD-SET-SYMMVIOLATION
    :CUDD-SET-TREE
-           :CUDD-SET-VAR-MAP
+   :CUDD-SET-VAR-MAP
    :CUDD-SET-ZDD-TREE
-           :CUDD-SHARING-SIZE
+   :CUDD-SHARING-SIZE
    :CUDD-SHORTEST-LENGTH
-           :CUDD-SHORTEST-PATH
+   :CUDD-SHORTEST-PATH
    :CUDD-SHUFFLE-HEAP
-           :CUDD-SOLVE-EQN
+   :CUDD-SOLVE-EQN
    :CUDD-SPLIT-SET
-           :CUDD-SRANDOM
+   :CUDD-SRANDOM
    :CUDD-STD-POST-REORD-HOOK
-           :CUDD-STD-PRE-REORD-HOOK
+   :CUDD-STD-PRE-REORD-HOOK
    :CUDD-SUBSET-COMPRESS
-           :CUDD-SUBSET-HEAVY-BRANCH
+   :CUDD-SUBSET-HEAVY-BRANCH
    :CUDD-SUBSET-SHORT-PATHS
-           :CUDD-SUBSET-WITH-MASK-VARS
+   :CUDD-SUBSET-WITH-MASK-VARS
    :CUDD-SUPERSET-COMPRESS
-           :CUDD-SUPERSET-HEAVY-BRANCH
+   :CUDD-SUPERSET-HEAVY-BRANCH
    :CUDD-SUPERSET-SHORT-PATHS
-           :CUDD-SUPPORT
+   :CUDD-SUPPORT
    :CUDD-SUPPORT-SIZE
-           :CUDD-SUPPORT-INDEX
+   :CUDD-SUPPORT-INDEX
    :CUDD-SYMM-PROFILE
-           :CUDD-TLC-INFO-FREE
+   :CUDD-TLC-INFO-FREE
    :CUDD-TURN-OFF-COUNT-DEAD
-           :CUDD-TURN-ON-COUNT-DEAD
+   :CUDD-TURN-ON-COUNT-DEAD
    :CUDD-UNDER-APPROX
-           :CUDD-VARIABLE-TYPE
+   :CUDD-VARIABLE-TYPE
    :CUDD-VECTOR-SUPPORT
-           :CUDD-VECTOR-SUPPORT-INDEX
+   :CUDD-VECTOR-SUPPORT-INDEX
    :CUDD-VECTOR-SUPPORT-SIZE
-           :CUDD-VERIFY-SOL
+   :CUDD-VERIFY-SOL
    :CUDD-XEQY
-           :CUDD-XGTY
+   :CUDD-XGTY
    :CUDD-ZDD-CHANGE
-           :CUDD-ZDD-COMPLEMENT
+   :CUDD-ZDD-COMPLEMENT
    :CUDD-ZDD-COUNT
-           :CUDD-ZDD-COUNT-DOUBLE
+   :CUDD-ZDD-COUNT-DOUBLE
    :CUDD-ZDD-COUNT-MINTERM
-           :CUDD-ZDD-COVER-PATH-TO-STRING
+   :CUDD-ZDD-COVER-PATH-TO-STRING
    :CUDD-ZDD-DAG-SIZE
-           :CUDD-ZDD-DIFF
+   :CUDD-ZDD-DIFF
    :CUDD-ZDD-DIFF-CONST
-           :CUDD-ZDD-DIVIDE
+   :CUDD-ZDD-DIVIDE
    :CUDD-ZDD-DIVIDE-F
-           :CUDD-ZDD-DUMP-DOT
+   :CUDD-ZDD-DUMP-DOT
    :CUDD-ZDD-FIRST-PATH
-           :CUDD-ZDD-INTERSECT
+   :CUDD-ZDD-INTERSECT
    :CUDD-ZDD-ISOP
-           :CUDD-ZDD-ITE
+   :CUDD-ZDD-ITE
    :CUDD-ZDD-ITH-VAR
-           :CUDD-ZDD-NEXT-PATH
+   :CUDD-ZDD-NEXT-PATH
    :CUDD-ZDD-PORT-FROM-BDD
-           :CUDD-ZDD-PORT-TO-BDD
+   :CUDD-ZDD-PORT-TO-BDD
    :CUDD-ZDD-PRINT-COVER
-           :CUDD-ZDD-PRINT-DEBUG
+   :CUDD-ZDD-PRINT-DEBUG
    :CUDD-ZDD-PRINT-MINTERM
-           :CUDD-ZDD-PRINT-SUBTABLE
+   :CUDD-ZDD-PRINT-SUBTABLE
    :CUDD-ZDD-PRODUCT
-           :CUDD-ZDD-READ-NODE-COUNT
+   :CUDD-ZDD-READ-NODE-COUNT
    :CUDD-ZDD-REALIGN-DISABLE
-           :CUDD-ZDD-REALIGN-ENABLE
+   :CUDD-ZDD-REALIGN-ENABLE
    :CUDD-ZDD-REALIGNMENT-ENABLED
-           :CUDD-ZDD-REDUCE-HEAP
+   :CUDD-ZDD-REDUCE-HEAP
    :CUDD-ZDD-SHUFFLE-HEAP
-           :CUDD-ZDD-SUBSET-0
+   :CUDD-ZDD-SUBSET-0
    :CUDD-ZDD-SUBSET-1
-           :CUDD-ZDD-SYMM-PROFILE
+   :CUDD-ZDD-SYMM-PROFILE
    :CUDD-ZDD-UNATE-PRODUCT
-           :CUDD-ZDD-UNION
+   :CUDD-ZDD-UNION
    :CUDD-ZDD-VARS-FROM-BDD-VARS
-           :CUDD-ZDD-WEAK-DIV
+   :CUDD-ZDD-WEAK-DIV
    :CUDD-ZDD-WEAK-DIV-F
-           :DD-CHILDREN
+   :DD-CHILDREN
    :DD-NODE
-           :DD-NODE-TYPE
+   :DD-NODE-TYPE
    :DUMP-DOT
-           :PRINT-INFO
+   :PRINT-INFO
    :zdd-dump-dot
-           :zdd-var
+   :zdd-var
    :cudd-null-pointer-error
-           :cudd-null-manager-error
+   :cudd-null-manager-error
    :mtr-node
-           :mtr-type
+   :mtr-type
    :mtr-flags
-           :dump-mtr-tree
+   :dump-mtr-tree
    :cudd-bdd-variables
-           :cudd-zdd-variables
+   :cudd-zdd-variables
    :cudd-bdd-max-variables
-           :cudd-zdd-max-variables
+   :cudd-zdd-max-variables
    :cudd-zdd-empty-belongs
-           :CUDD-ZDD-GET-NODE
+   :CUDD-ZDD-GET-NODE
    :CUDD-UNIQUE-INTER
-           :CUDD-ZDD-UNIQUE-INTER
+   :CUDD-ZDD-UNIQUE-INTER
    :cudd-node-level
-           :cudd-node-level-zdd
+   :cudd-node-level-zdd
    :cudd-node-index)
   ;; In 2021:
   (:export
@@ -652,41 +654,43 @@ Wrapper for the :log4cl macros.  You can use them if you want, but going through
    #:cudd-T
    #:cudd-E)
   ;; mtr api
-  (:export :mtr-flags
+  (:export
+   :mtr-flags
    :MTR-ALLOC-NODE
-           :MTR-DEALLOC-NODE
+   :MTR-DEALLOC-NODE
    :MTR-INIT-TREE
-           :MTR-FREE-TREE
+   :MTR-FREE-TREE
    :MTR-COPY-TREE
-           :MTR-MAKE-FIRST-CHILD
+   :MTR-MAKE-FIRST-CHILD
    :MTR-MAKE-LAST-CHILD
-           :MTR-CREATE-FIRST-CHILD
+   :MTR-CREATE-FIRST-CHILD
    :MTR-CREATE-LAST-CHILD
-           :MTR-MAKE-NEXT-SIBLING
+   :MTR-MAKE-NEXT-SIBLING
    :MTR-PRINT-TREE
-           :MTR-INIT-GROUP-TREE
+   :MTR-INIT-GROUP-TREE
    :MTR-MAKE-GROUP
-           :MTR-DISSOLVE-GROUP
+   :MTR-DISSOLVE-GROUP
    :MTR-FIND-GROUP
-           :MTR-SWAP-GROUPS
+   :MTR-SWAP-GROUPS
    :MTR-REORDER-GROUPS
-           :MTR-PRINT-GROUPS
+   :MTR-PRINT-GROUPS
    :MTR-PRINT-GROUPED-ORDER
-           :MTR-READ-GROUPS)
+   :MTR-READ-GROUPS)
   ;; cache api
-  (:export :cudd-cache-insert
+  (:export
+   :cudd-cache-insert
    :cudd-cache-insert-1
-           :cudd-cache-insert-2
+   :cudd-cache-insert-2
    :cudd-cache-lookup
-           :cudd-cache-lookup-1
+   :cudd-cache-lookup-1
    :cudd-cache-lookup-2
-           :cudd-cache-lookup-zdd
+   :cudd-cache-lookup-zdd
    :cudd-cache-lookup-1-zdd
-           :cudd-cache-lookup-2-zdd
+   :cudd-cache-lookup-2-zdd
    :cudd-constant-lookup
-           :cudd-cache-resize
+   :cudd-cache-resize
    :cudd-cache-flush
-           :new-cached-operator)
+   :new-cached-operator)
   (:export
    #:cudd-condition
    #:cudd-error)
@@ -874,36 +878,37 @@ Wrapper for the :log4cl macros.  You can use them if you want, but going through
    #:zdd-maximal
    #:zdd-minimal
    #:manager-init)
-  (:export #:manager-quit
-           #:cudd-print
-           #:print-info
-           #:print-debug
-           #:sharing-size
-           #:support-size
-           #:support-index
-           #:node-xor
-           #:compose
-           #:boolean-diff
-           ;; #:restrict
-           #:cudd-T
-           #:cudd-E
-           #:garbage-collect
-           #:read-size
-           #:bdd-vector-compose
-           #:count-dead-bdd-nodes
-           #:count-live-bdd-nodes
-           eval
-           #:bdd-transfer
-           #:*manager*
-           #:*cudd-mutex*
-           #:dump-factored-form
-           #:cudd-condition
-           #:cudd-error
-           #:cudd-reordering-error
-           #:cudd-logger
-           #:cudd-node-logger
-           #:gc
-           )
+  (:export
+   #:manager-quit
+   #:cudd-print
+   #:print-info
+   #:print-debug
+   #:sharing-size
+   #:support-size
+   #:support-index
+   #:node-xor
+   #:compose
+   #:boolean-diff
+   ;; #:restrict
+   #:cudd-T
+   #:cudd-E
+   #:garbage-collect
+   #:read-size
+   #:bdd-vector-compose
+   #:count-dead-bdd-nodes
+   #:count-live-bdd-nodes
+   eval
+   #:bdd-transfer
+   #:*manager*
+   #:*cudd-mutex*
+   #:dump-factored-form
+   #:cudd-condition
+   #:cudd-error
+   #:cudd-reordering-error
+   #:cudd-logger
+   #:cudd-node-logger
+   #:gc
+   )
   ); cl-cudd
 
 (in-package :cudd)
