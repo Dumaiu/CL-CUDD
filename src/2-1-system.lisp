@@ -13,8 +13,10 @@
       ,@doc-maybe
       (declare (type manager manager))
       (with-cudd-critical-section (:manager manager)
-        (,interface
-         (manager-pointer manager))))))
+        (let-1 mp (manager-pointer manager)
+          (declare (manager-pointer mp))
+          (assert* (not (null-pointer-p mp)))
+         (,interface mp))))))
 
 (define-simple-managed-function disable-gc cudd-disable-garbage-collection
   "Disables garbage collection. Garbage
