@@ -738,14 +738,7 @@ Wrapper for the :log4cl macros.  You can use them if you want, but going through
            #:cudd-T
            #:cudd-E
            #:print-info
-           #:gc
-           )
-  ;; (:intern
-  ;;  #:with-C-file-pointer ; helper
-  ;;  )
-  ;; (:import-from :cl-cudd.internal-utils
-  ;;               #:mutex
-  ;;               #:manager-mutex)
+           #:gc)
   (:export
    #:+AGREEMENT+
    #:+AND+
