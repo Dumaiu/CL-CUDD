@@ -117,8 +117,8 @@
                                  (let ((res-ptr (cudd-bdd-vector-compose manager-ptr f-ptr ptr-array)))
                                    (declare (node-pointer res-ptr))
                                    res-ptr)))
-                             'bdd-node
-                             :manager manager)))
+              'bdd-node
+            :manager manager)))
     (declare (bdd-node res))
     res))
 
@@ -139,7 +139,7 @@
                         &key
                           ((:cache clear-cache?) t)
                           (manager :all)
-                        ;; &allow-other-keys
+                          ;; &allow-other-keys
                           )
   "Runs the CUDD garbage collector.  According to the docs, ':cache nil' \"should only be specified if the cache has been cleared right before.\"
 
@@ -167,8 +167,8 @@
   (setf (symbol-function 'lisp-gc) #'trivial-garbage:gc))
 
 (defun gc (&rest keys! &key
-                        (full nil full?)
-                        (verbose nil verbose?)
+                         (full nil full?)
+                         (verbose nil verbose?)
            &allow-other-keys)
   "See docs for cudd:garbage-collect."
   (let-1 lisp-gc-keys (append
@@ -351,13 +351,18 @@
     (if (= 1 errcode) nil
         (error "Cudd_PrintDebug() failed"))))
 
+(declaim (reentrant print-info))
 (defun print-info (&optional (manager *manager*) (pathname "cudd.info"))
   "Delegate to (cudd.baseapi:print-info).
   * TODO: Better default filename...
 "
   (declare (manager manager)
            (type (or string pathname) pathname))
-  (cl-cudd.baseapi:print-info (manager-pointer manager) pathname))
+  (with-cudd-critical-section (:manager manager)
+    (let-1 mp (manager-pointer manager)
+      (declare (manager-pointer mp))
+      (assert* (not (null-pointer-p mp)))
+      (cl-cudd.baseapi:print-info mp pathname))))
 
 #|
 (defgeneric print-info (manager pathname)
@@ -371,6 +376,7 @@
 (cl-cudd.baseapi:print-info manager pathname)))
 |#
 
+(declaim (reentrant info))
 (defun info (&optional (manager *manager*))
   (declare (type manager manager))
   (with-temporary-file (:stream s :pathname path)
@@ -419,25 +425,25 @@ The callback is called with an argument containing a bit vector which stores 1-b
 Returns the node."
   (declare (manager m))
   (with-cudd-critical-section (:manager m)
-   (let-1 mp (manager-pointer m)
-     (declare (manager-pointer mp))
-     (let ((bv (make-array (zdd-max-variables) :element-type 'bit))
-           (one (cudd-read-one mp))
-           (zero (cudd-read-zero mp)))
-       (labels ((rec (p)
-                  (cond
-                    ((pointer-eq p one)
-                     (funcall fn bv))
-                    ((pointer-eq p zero)
-                     ;; do nothing
-                     )
-                    ((cudd-is-non-constant p)
-                     (let ((index (cudd-node-read-index p)))
-                       (setf (aref bv index) 1)
-                       (rec (cudd-node-then p))
-                       (setf (aref bv index) 0)
-                       (rec (cudd-node-else p)))))))
-         (rec (node-pointer node))))))
+    (let-1 mp (manager-pointer m)
+      (declare (manager-pointer mp))
+      (let ((bv (make-array (zdd-max-variables) :element-type 'bit))
+            (one (cudd-read-one mp))
+            (zero (cudd-read-zero mp)))
+        (labels ((rec (p)
+                   (cond
+                     ((pointer-eq p one)
+                      (funcall fn bv))
+                     ((pointer-eq p zero)
+                      ;; do nothing
+                      )
+                     ((cudd-is-non-constant p)
+                      (let ((index (cudd-node-read-index p)))
+                        (setf (aref bv index) 1)
+                        (rec (cudd-node-then p))
+                        (setf (aref bv index) 0)
+                        (rec (cudd-node-else p)))))))
+          (rec (node-pointer node))))))
   node)
 
 (defmacro do-ones ((var dd &rest *args) &body body)

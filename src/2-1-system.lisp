@@ -10,13 +10,13 @@
   `(progn
      (declaim (reentrant ,name))
      (defun ,name (&optional (manager *manager*))
-      ,@doc-maybe
-      (declare (type manager manager))
-      (with-cudd-critical-section (:manager manager)
-        (let-1 mp (manager-pointer manager)
-          (declare (manager-pointer mp))
-          (assert* (not (null-pointer-p mp)))
-         (,interface mp))))))
+       ,@doc-maybe
+       (declare (type manager manager))
+       (with-cudd-critical-section (:manager manager)
+         (let-1 mp (manager-pointer manager)
+           (declare (manager-pointer mp))
+           (assert* (not (null-pointer-p mp)))
+           (,interface mp))))))
 
 (define-simple-managed-function disable-gc cudd-disable-garbage-collection
   "Disables garbage collection. Garbage
@@ -63,7 +63,8 @@ that the DdNode pointer bck is already referenced."
          (reentrant count-leaves))
 (defun count-leaves (node)
   "Counts the number of leaves in a DD."
-  (cudd-count-leaves (node-pointer node)))
+  (with-cudd-critical-section (:manager (node-manager node))
+    (cudd-count-leaves (node-pointer node))))
 
 (declaim (maybe-inline dag-size)
          (reentrant dag-size))
@@ -71,12 +72,15 @@ that the DdNode pointer bck is already referenced."
   "Counts the number of nodes in a DD.
 
   NOTE: Does not require knowledge of NODE's `manager'.  No side effects.
+
+  - [2022-05-17 Tue] Adding a mutex anyway--in case of multithreading, I don't know what'd happen if the graph changed during traversal.
 "
   (declare (type node node))
-  (etypecase node
-    (zdd-node (cudd-zdd-dag-size (node-pointer node)))
-    (add-node (cudd-dag-size (node-pointer node)))
-    (bdd-node (cudd-dag-size (node-pointer node)))))
+  (with-cudd-critical-section (:manager (node-manager node))
+   (etypecase node
+     (zdd-node (cudd-zdd-dag-size (node-pointer node)))
+     (add-node (cudd-dag-size (node-pointer node)))
+     (bdd-node (cudd-dag-size (node-pointer node))))))
 
 (define-simple-managed-function bdd-variables cudd-bdd-variables
   "Return the number of BDD variables.")

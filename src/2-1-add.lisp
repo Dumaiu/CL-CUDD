@@ -2,6 +2,7 @@
 
 (in-package :cudd)
 
+(declaim (reentrant add-negate))
 (defun add-negate (node)
   "Computes the additive inverse of an ADD."
   (let-1 manager (node-manager node)
@@ -12,6 +13,7 @@
      'add-node
      :manager manager)))
 
+(declaim (reentrant add-constant))
 (defun add-constant (value &key (manager *manager*))
   "Retrieves the ADD for constant c if it already exists, or creates a new ADD."
   (declare (manager manager))
@@ -20,6 +22,8 @@
    'add-constant-node
    :manager manager))
 
+(declaim (reentrant plus-infinity)
+         (reentrant minus-infinity))
 (defun plus-infinity (&key (manager *manager*))
   "Returns a node with value infinity."
   (declare (manager manager))
@@ -30,7 +34,6 @@
                      :manager manager
                      :ref nil ; because these nodes are predefined constants.
                      ))
-
 (defun minus-infinity (&key (manager *manager*))
   "Returns a  node with value -infinity."
   (declare (manager manager))
@@ -42,6 +45,7 @@
                      :ref nil ; because these nodes are predefined constants.
                      ))
 
+(declaim (reentrant epsilon))
 (defun epsilon (&key (manager *manager*))
   "Returns a  node with value infinity."
   (declare (manager manager))
@@ -132,6 +136,7 @@ The following operations are supported:
                               (documentation lisp-name 'variable))))
                   *add-operators*))))
 
+(declaim (reentrant add-apply))
 (defun add-apply (op f g)
   #.*add-apply-doc*
   (let-1 manager (node-manager f)

@@ -1,6 +1,7 @@
 
 (in-package :cudd)
 
+(declaim (reentrant plot))
 (defun plot (pathname node)
   "Create '<PATHNAME>.dot' and process it to '<PATHNAME>.pdf'.  Requires that Graphviz be installed.
   * TODO [2021-09-21 Tue]: Raise a specialized exception when `uiop:run-program' fails.

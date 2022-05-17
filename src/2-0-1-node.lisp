@@ -78,7 +78,10 @@
 
             :accessor (manager :inline t)
 
-            |#))
+            |#
+            :documentation "TODO: Ideally (assert* (not (null-pointer-p ...))) on the manager-pointer before returning it.
+
+  NOTE: Marking the (manager) reader as 'reentrant' because the existence of the `node' argument presupposes that the manager will not expire. "))
   (:documentation "Wrapped CUDD node.
   - [2022-03-30 Wed] Added a `manager' reference.
   - TODO: Static generic funcs.  (node-pointer) and (node-manager) are already non-generic inlined readers.
@@ -391,6 +394,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
      (declare (manager manager))
 
      (with-cudd-critical-section (:manager manager)
+       (assert* (not (null-pointer-p (manager-pointer manager))))
        (let* ((pointer ,pointer)
               (type ,type)
               ;; (ref ,ref)
@@ -399,6 +403,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                   (node-type type)
                   ;; (boolean ref)
                   )
+         (assert* (not (null-pointer-p pointer)))
 
          ;; (unless (null ref-provided?)
          ;;   (warn "Don't pass :ref."))
@@ -503,6 +508,7 @@ only if their pointers are the same."
 ;;   (declare (bdd-variable-node bdd-variable-node))
 ;;   (the non-negative-fixnum (slot-value bdd-variable-node 'index)))
 
+(declaim (reentrant bdd-node))
 (defun bdd-node (pointer &key (manager *manager*))
   (declare (node-pointer pointer))
   (wrap-and-finalize pointer 'bdd-node
@@ -525,6 +531,7 @@ only if their pointers are the same."
 (defun make-add-node (&rest args)
   (apply #'make-instance 'add-node args))
 
+(declaim (reentrant add-node))
 (defun add-node (pointer &key (manager *manager*))
   (declare (node-pointer pointer))
   (declare (manager manager))
@@ -538,6 +545,13 @@ only if their pointers are the same."
 (defun make-zdd-node (&rest args)
   (apply #'make-instance 'zdd-node args))
 
+(declaim (reentrant zdd-node))
+(defun zdd-node (pointer &key (manager *manager*))
+  (declare (node-pointer pointer))
+  (declare (manager manager))
+  (wrap-and-finalize pointer 'zdd-node :manager manager))
+
+(declaim (reentrant cudd-T))
 (assert (not (eq 'cudd-T 'cl-cudd.baseapi:cudd-T)))
 (defun cudd-T (node)
   "Evaluate the 'then' branch.  Undefined if NODE is not a branch node!"
@@ -549,6 +563,7 @@ only if their pointers are the same."
     res))
 
 
+(declaim (reentrant cudd-E))
 (assert (not (eq 'cudd-E 'cl-cudd.baseapi:cudd-E)))
 (defun cudd-E (node)
   "Evaluate the 'else' branch.  Undefined if NODE is not a branch node!"
