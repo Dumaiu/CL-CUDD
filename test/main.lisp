@@ -5,6 +5,7 @@
             cudd::print-node-to-string
             trivial-garbage:make-weak-pointer
             #+sbcl sb-ext:search-roots
+            cudd::bdd-node ; TODO: Remove
             )))
 
 (def-suite :cl-cudd)

@@ -85,17 +85,22 @@
 
   @see Cudd_AutodynEnableZdd Cudd_ReorderingStatusZdd Cudd_AutodynDisable ")
 
+(declaim (reentrant reordering-status))
 (defun reordering-status (&key ((:manager m) *manager*))
   "Reports the status of automatic dynamic reordering of BDDs and ADDs.
 Return T if automatic reordering is enabled. NIL otherwise.
 Secondary value returns the current reordering method.
 
-  @see Cudd_AutodynDisableZdd Cudd_ReorderingStatusZdd Cudd_AutodynEnable"
+  @see Cudd_AutodynDisableZdd Cudd_ReorderingStatusZdd Cudd_AutodynEnable
+
+  TODO: Is the critical section needed?
+"
   (declare (manager m))
-  (with-foreign-object (method-ptr 'cudd-reordering-type)
-    (values (= 1 (cudd-reordering-status (manager-pointer m) method-ptr))
-            (the reordering-method
-                 (mem-ref method-ptr 'cudd-reordering-type)))))
+  (with-cudd-critical-section (:manager m)
+   (with-foreign-object (method-ptr 'cudd-reordering-type)
+     (values (= 1 (cudd-reordering-status (manager-pointer m) method-ptr))
+             (the reordering-method
+                  (mem-ref method-ptr 'cudd-reordering-type))))))
 
 (defun zdd-reordering-status (&key ((:manager m) *manager*))
   "Reports the status of automatic dynamic reordering of ZDDs.

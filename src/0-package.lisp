@@ -27,7 +27,8 @@
    :log4cl
    :iterate
    :alexandria)
-  (:intern #:mutex)
+  (:intern #:mutex
+           #:reentrant)
   (:shadow
    #:*cudd-mutex*
    #:manager-mutex
@@ -41,6 +42,7 @@
                 #:+log-level-symbols+
                 #:expand-log-with-level)
   (:export
+   #:reentrant
    #:with-C-file-pointer
    #:*stderr*
    #:log-error
@@ -59,6 +61,9 @@
 
 ;; FIXME: SBCL:
 (declaim (declaration maybe-inline))
+
+;; TODO: Doesn't do anything:
+(declaim (declaration reentrant))
 
 (defmacro handler-bind-case (form &rest *cases)
   "Semantics of (handler-bind), syntax of (handler-case)."
@@ -702,28 +707,58 @@ Wrapper for the :log4cl macros.  You can use them if you want, but going through
   (:use-reexport :cl-cudd.baseapi))
 
 (define-package cl-cudd.thread-safe
-    (:mix
-     :cl-cudd.baseapi
-     :cl)
+    (:documentation "NOTE: Functions which take a `cudd:node' argument should be declarable as reentrant or thread-safe, since the node's extent strictly surrounds the function's stack life.
+
+On the other hand, functions which take a `manager' and a `node-pointer' are not safe.
+")
+  (:mix
+   :cl-cudd.baseapi
+   :cl)
+  (:export
+   bdd-variable-node bdd-constant-node
+   add-variable-node add-constant-node
+   )
   (:export
    #:node-permute)
   (:export
    univ-abstract
    or-abstract
    sum-abstract)
-  (:export
-   node-or
-   node-and
-   node-xor
-   node-complement
-   if-then-else)
+  (:export ; 2-1-generic-simple.lisp
+           node-or
+           node-and
+           node-xor
+           node-complement
+           if-then-else
+           make-var
+           zero-node one-node
+           *bdd-zero* *bdd-one*
+           *bdd-false* *bdd-true*)
   (:export
    #:cudd-condition
    #:cudd-error
    #:cudd-reordering-error
    #:cudd-logger
-   #:cudd-node-logger
+   #:cudd-node-logger)
+  (:export ; 2-1-system.lisp
+           count-leaves
+           dag-size
+           bdd-variables
+           zdd-variables
+           bdd-max-variables
+           zdd-max-variables
+           )
+  (:export
+   *manager*
+   *managers* ; TODO: Need thread-safe access to this
+   #:with-manager)
+  (:export ; 2-5-utils.lisp
+   bdd-transfer
+   transfer
    )
+  (:export ; 2-3-reordering.lisp
+           reordering-status
+           )
   )
 
 

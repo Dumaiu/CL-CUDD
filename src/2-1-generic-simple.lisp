@@ -109,31 +109,32 @@ When index = 2 and N = 4, the resulting ZDD looks as follows:
                     zdd-node zdd-variable-node)
             type)
            (manager manager))
-  (let-1 mp (manager-pointer manager)
-    (declare (manager-pointer mp))
-
-    (ecase type
-      ((bdd-node bdd-variable-node)
-       ;; (break "~&Constant? ~A" (cudd-node-is-constant (bdd-var mp :index index :level level)))
-       (wrap-and-finalize (bdd-var mp :index index :level level) 'bdd-variable-node
-         :manager manager
-         ;; var is a projection function, and its reference count is always greater
-         ;; than 0. Therefore, there is no call to Cudd Ref.
-         :ref nil ; HACK: Ignored; we treat it as ':ref t'
-         :var-id index))
-      ((add-node add-variable-node)
-       (wrap-and-finalize (add-var mp :index index :level level) 'add-variable-node
-         :manager manager
-         ;; The ADD projection function are not maintained by the manager. It is
-         ;; therefore necessary to reference and dereference them.
-         :ref t
-         :var-id index))
-      ((zdd-node zdd-variable-node)
-       (wrap-and-finalize (zdd-var mp :index index :level level) 'zdd-variable-node
-         :manager manager
-         ;; The projection functions are referenced, because they are not maintained by the manager.
-         :ref t
-         :var-id index)))))
+  (with-cudd-critical-section (:manager manager)
+   (let-1 mp (manager-pointer manager)
+     (declare (manager-pointer mp))
+     (assert* (not (null-pointer-p mp)))
+     (ecase type
+       ((bdd-node bdd-variable-node)
+        ;; (break "~&Constant? ~A" (cudd-node-is-constant (bdd-var mp :index index :level level)))
+        (wrap-and-finalize (bdd-var mp :index index :level level) 'bdd-variable-node
+          :manager manager
+          ;; var is a projection function, and its reference count is always greater
+          ;; than 0. Therefore, there is no call to Cudd Ref.
+          :ref nil ; HACK: Ignored; we treat it as ':ref t'
+          :var-id index))
+       ((add-node add-variable-node)
+        (wrap-and-finalize (add-var mp :index index :level level) 'add-variable-node
+          :manager manager
+          ;; The ADD projection function are not maintained by the manager. It is
+          ;; therefore necessary to reference and dereference them.
+          :ref t
+          :var-id index))
+       ((zdd-node zdd-variable-node)
+        (wrap-and-finalize (zdd-var mp :index index :level level) 'zdd-variable-node
+          :manager manager
+          ;; The projection functions are referenced, because they are not maintained by the manager.
+          :ref t
+          :var-id index))))))
 
 (defun node-then (type node &aux (manager (manager-pointer node)))
   "Return the then child of an inner node"
@@ -172,38 +173,42 @@ ADD: the arithmetic zero node (0.0d0).
 ZDD: the arithmetic zero node (0.0d0). (Same as ADD)"
   (declare (node-type type)
            (manager manager))
-  (let* ((mp (manager-pointer manager))
-         (pointer (ecase type
-                    ((bdd-node bdd-constant-node) (cudd-read-logic-zero mp))
-                    ((add-node add-constant-node) (cudd-read-zero mp))
-                    ((zdd-node zdd-constant-node) (cudd-read-zero mp))))
-         (subtype
-           (ecase type
-             ((bdd-node bdd-constant-node) 'bdd-constant-node)
-             ((add-node add-constant-node) 'add-constant-node)
-             ((zdd-node zdd-constant-node) 'zdd-constant-node))))
-    (declare (manager-pointer mp))
-    (declare (node-pointer pointer))
-    (wrap-and-finalize pointer subtype
-      :ref t ; NOTE: Changed [2022-04-07 Thu]
-      :manager manager
-      :constant nil)))
+  (with-cudd-critical-section (:manager manager)
+   (let* ((mp (manager-pointer manager))
+          (pointer (ecase type
+                     ((bdd-node bdd-constant-node) (cudd-read-logic-zero mp))
+                     ((add-node add-constant-node) (cudd-read-zero mp))
+                     ((zdd-node zdd-constant-node) (cudd-read-zero mp))))
+          (subtype
+            (ecase type
+              ((bdd-node bdd-constant-node) 'bdd-constant-node)
+              ((add-node add-constant-node) 'add-constant-node)
+              ((zdd-node zdd-constant-node) 'zdd-constant-node))))
+     (declare (manager-pointer mp))
+     (declare (node-pointer pointer))
+     (assert* (not (null-pointer-p mp)))
+     (wrap-and-finalize pointer subtype
+       :ref t ; NOTE: Changed [2022-04-07 Thu]
+       :manager manager
+       :constant nil))))
 
 (defun one-node (type &key (manager *manager*))
   "return the constant one node."
   (declare (node-type type)
            (manager manager))
-  (let ((mp (manager-pointer manager)))
-    (declare (manager-pointer mp))
-    (wrap-and-finalize (cudd-read-one mp)
-        ;; TODO: ugly:
-        (ecase type
-          ((bdd-node bdd-constant-node) 'bdd-constant-node)
-          ((add-node add-constant-node) 'add-constant-node)
-          ((zdd-node zdd-constant-node) 'zdd-constant-node))
-      :ref t ; NOTE: Changed [2022-04-07 Thu]
-      :manager manager
-      :constant t)))
+  (with-cudd-critical-section (:manager manager)
+   (let ((mp (manager-pointer manager)))
+     (declare (manager-pointer mp))
+     (assert* (not (null-pointer-p mp)))
+     (wrap-and-finalize (cudd-read-one mp)
+         ;; TODO: ugly:
+         (ecase type
+           ((bdd-node bdd-constant-node) 'bdd-constant-node)
+           ((add-node add-constant-node) 'add-constant-node)
+           ((zdd-node zdd-constant-node) 'zdd-constant-node))
+       :ref t ; NOTE: Changed [2022-04-07 Thu]
+       :manager manager
+       :constant t))))
 
 ;;; Synsugar:
 (define-symbol-macro *bdd-zero* (zero-node 'bdd-constant-node))

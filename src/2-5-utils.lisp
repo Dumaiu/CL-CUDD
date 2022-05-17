@@ -533,6 +533,7 @@ Follow the then-branch when 1, else-branch otherwise."
         (assert (>= live 0))
         live))))
 
+(declaim (reentrant bdd-transfer))
 (defun bdd-transfer (bdd &key (src (node-manager bdd)) dest)
   "Note that the argument order isn't the same as C.
   * TODO: What's the right argument for the 'ref' parameter of (wrap-and-finalize)?
@@ -553,7 +554,10 @@ Follow the then-branch when 1, else-branch otherwise."
            (declare (type node-pointer bdd-ptr))
            (the bdd-node (wrap-and-finalize bdd-ptr 'bdd-node :manager dest))))))))
 
+
+(declaim (reentrant transfer))
 (defgeneric transfer (thing &key)
+  (:documentation "TODO: Handle other than BDDs.")
   (:method :around (thing &key (src (manager thing)) (dest *manager*))
     "TODO: Handle case where SRC=DEST."
     (declare (manager src dest))

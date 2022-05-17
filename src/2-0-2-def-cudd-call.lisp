@@ -124,6 +124,7 @@
          (zdd-docu        (or (find-2list :zdd documentation) generic-docu))
          (dont-wrap       (find-2list :dont-wrap-result documentation)))
     `(progn
+       (declaim (reentrant ,generic-name))
        ,(generic-cudd-function generic-name arguments generic-docu)
        ,(when add-function
           (add-function generic-name arguments add-function dont-wrap))
