@@ -748,14 +748,31 @@ On the other hand, functions which take a `manager' and a `node-pointer' are not
            bdd-max-variables
            zdd-max-variables
            )
+  (:export ; 2-1-zdd-set-operations.lisp
+           zdd-subset-0 zdd-subset-1
+
+           zdd-change
+           zdd-set zdd-unset
+           zdd-dont-care
+
+           zdd-union
+           zdd-intersection
+           zdd-difference
+           zdd-divide-unate
+           zdd-product-unate
+           zdd-remainder-unate
+           zdd-divide-binate
+           zdd-product-binate
+           zdd-remainder-binate
+           zdd-supset)
   (:export
    *manager*
    *managers* ; TODO: Need thread-safe access to this
    #:with-manager)
   (:export ; 2-5-utils.lisp
-   bdd-transfer
-   transfer
-   )
+           bdd-transfer
+           transfer
+           )
   (:export ; 2-3-reordering.lisp
            reordering-status
            )

@@ -111,32 +111,49 @@ zdd-subset-1
 
 ;;;; between a ZDD and a single variable
 
+(declaim (reentrant zdd-subset-0
+                    zdd-subset-1))
 (defun zdd-subset-0 (zdd var &key ((:manager m) (node-manager zdd)))
   "Computes the subset of S that does not contain element VAR (integer)."
-  (declare (manager m))
-  (wrap-and-finalize (cudd-zdd-subset-0 (manager-pointer m) (node-pointer zdd) var)
-      'zdd-node
-    :manager m))
+  (declare (zdd-node zdd)
+           (manager m))
+  (let-1 mp (manager-pointer m)
+    (declare (manager-pointer mp))
+    (assert* (not (null-pointer-p mp)))
+    (wrap-and-finalize (cudd-zdd-subset-0 mp (node-pointer zdd) var)
+        'zdd-node
+      :manager m)))
 (defun zdd-subset-1 (zdd var &key ((:manager m) (node-manager zdd)))
   "Computes the subset of S that contains element VAR (integer), and remove VAR from each combination."
-  (declare (manager m))
-  (wrap-and-finalize (cudd-zdd-subset-1 (manager-pointer m) (node-pointer zdd) var)
-      'zdd-node
-    :manager m))
+  (declare (zdd-node zdd)
+           (manager m))
+  (let-1 mp (manager-pointer m)
+    (declare (manager-pointer mp))
+    (assert* (not (null-pointer-p mp)))
+    (wrap-and-finalize (cudd-zdd-subset-1 (manager-pointer m) (node-pointer zdd) var)
+        'zdd-node
+      :manager m)))
 
 (defun zdd-change (zdd var &key ((:manager m)  (node-manager zdd)))
   "Flip the membership of variable VAR in ZDD."
-  (declare (manager m))
-  (wrap-and-finalize
-      (cudd-zdd-change (manager-pointer m) (node-pointer zdd) var)
-      'zdd-node
-    :manager m))
+  (declare (zdd-node zdd)
+           (manager m))
+  (let-1 mp (manager-pointer m)
+    (declare (manager-pointer mp))
+    (assert* (not (null-pointer-p mp)))
+    (wrap-and-finalize
+        (cudd-zdd-change mp (node-pointer zdd) var)
+        'zdd-node
+      :manager m)))
 
+(declaim (reentrant zdd-set))
 (defun zdd-set (zdd var &key ((:manager m) (node-manager zdd)))
   "Add a variable VAR; i.e. force the value of VAR to be true"
-  (declare (manager m))
+  (declare (zdd-node zdd)
+           (manager m))
   (let-1 mp (manager-pointer m)
     (declare (type manager-pointer mp))
+    (assert* (not (null-pointer-p mp)))
     (wrap-and-finalize
         (zdd-ref-let* (t
                        (then (cudd-zdd-subset-1 mp (node-pointer zdd) var))
@@ -147,11 +164,14 @@ zdd-subset-1
         'zdd-node
       :manager m)))
 
+(declaim (reentrant zdd-unset))
 (defun zdd-unset (zdd var &key ((:manager m) (node-manager zdd)))
   "Remove a variable VAR; i.e. force the value of VAR to be false"
-  (declare (manager m))
+  (declare (zdd-node zdd)
+           (manager m))
   (let-1 mp (manager-pointer m)
     (declare (manager-pointer mp))
+    (assert* (not (null-pointer-p mp)))
     (wrap-and-finalize
         (zdd-ref-let* (t
                        (then (cudd-zdd-subset-1 mp (node-pointer zdd) var))
@@ -161,12 +181,15 @@ zdd-subset-1
         'zdd-node
       :manager m)))
 
+(declaim (reentrant zdd-dont-care))
 (defun zdd-dont-care (zdd var &key ((:manager m) (node-manager zdd)))
   "Direct the both arcs of the VAR'th node to the next index.
 If it does not exist (i.e. then-arc points to 0 and zero-suppressed) creates a new node."
-  (declare (manager m))
+  (declare (zdd-node zdd)
+           (manager m))
   (let-1 mp (manager-pointer m)
     (declare (manager-pointer mp))
+    (assert* (not (null-pointer-p mp)))
     (wrap-and-finalize
         (zdd-ref-let* (t
                        (then (cudd-zdd-subset-1 mp (node-pointer zdd) var))
@@ -186,6 +209,8 @@ If it does not exist (i.e. then-arc points to 0 and zero-suppressed) creates a n
                                 &body body)
   "Helper for generating dyadic ZDD functions.
  (wrap-and-finalize) is automatically included.
+
+  MANAGER-POINTER-NAME : Only here for convenience.
 "
   (declare (type (and symbol (not null) (not keyword))
                  name f-name g-name manager-name manager-pointer-name))
@@ -200,6 +225,7 @@ If it does not exist (i.e. then-arc points to 0 and zero-suppressed) creates a n
 
     `(progn
        (declaim (maybe-inline ,name))
+       (declaim (reentrant ,name))
        (defun ,name (,f-name ,g-name &key ((:manager ,manager-name) (node-manager ,f-name)))
          ,@(when docstring! `(,docstring!))
          (declare (zdd-node ,f-name ,g-name)
@@ -209,6 +235,7 @@ If it does not exist (i.e. then-arc points to 0 and zero-suppressed) creates a n
            (error 'cudd-manager-mismatch-error "Managers in a binary op need to match"))
          (let-1 ,manager-pointer-name (manager-pointer ,manager-name)
            (declare (manager-pointer ,manager-pointer-name))
+           (assert* (not (null-pointer-p ,manager-pointer-name)))
            (wrap-and-finalize (the node-pointer ,eval-form!) 'zdd-node
              :manager ,manager-name))))))
 
@@ -309,8 +336,8 @@ the number of the variables that F essentially depends on."
   (declare (manager m))
   (with-cudd-critical-section (:manager m)
     (if support-size
-       (cudd-zdd-count-minterm (manager-pointer m) (node-pointer f) support-size)
-       (cudd-zdd-count-double (manager-pointer m) (node-pointer f)))))
+        (cudd-zdd-count-minterm (manager-pointer m) (node-pointer f) support-size)
+        (cudd-zdd-count-double (manager-pointer m) (node-pointer f)))))
 
 
 ;;;; reimplementing set operations in Extra package
