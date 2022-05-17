@@ -527,7 +527,9 @@ only if their pointers are the same."
 
 (defun add-node (pointer &key (manager *manager*))
   (declare (node-pointer pointer))
-  (wrap-and-finalize pointer 'add-node :ref (not (cudd-node-is-constant pointer))
+  (declare (manager manager))
+  ;; FIXME: What should be the :ref arg?
+  (wrap-and-finalize pointer 'add-node #| XXX :ref (not (cudd-node-is-constant pointer))|#
     :manager manager))
 
 (defclass zdd-node (node) ()
