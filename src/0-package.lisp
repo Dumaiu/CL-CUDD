@@ -733,7 +733,10 @@ On the other hand, functions which take a `manager' and a `node-pointer' are not
            make-var
            zero-node one-node
            *bdd-zero* *bdd-one*
-           *bdd-false* *bdd-true*)
+           *bdd-false* *bdd-true*
+
+           zero-node one-node
+           )
   (:export
    #:cudd-condition
    #:cudd-error
@@ -749,8 +752,9 @@ On the other hand, functions which take a `manager' and a `node-pointer' are not
            zdd-max-variables
            )
   (:export ; 2-1-zdd-set-operations.lisp
-           zdd-subset-0 zdd-subset-1
-
+           zdd-subset-0  zdd-subset-1
+           zdd-emptyset  zdd-set-of-emptyset
+           zdd-singleton
            zdd-change
            zdd-set zdd-unset
            zdd-dont-care

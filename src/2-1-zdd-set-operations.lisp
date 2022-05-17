@@ -1,5 +1,8 @@
 ;;; set operations for zdd
 
+;;; NOTE: On the unary functions: We don't need to enter the crit. sec. early (if at all).  The node argument should have a reference to its own manager; therefore neither should run out of extent before the operation ends.
+;; TODO: For the same reason, (define-zdd-binary-op) doesn't use (with-cudd-critical-section).
+
 (in-package :cudd)
 
 (defmacro zdd-ref-let* (bindings &body body)
@@ -94,16 +97,19 @@ zdd-subset-0
 zdd-subset-1
 ))
 |#
+(declaim (reentrant zdd-emptyset))
 (defun zdd-emptyset (&key (manager *manager*))
   "Returns an empty set {}."
   (declare (manager manager))
   (zero-node 'zdd-node :manager manager))
 
+(declaim (reentrant zdd-set-of-emptyset))
 (defun zdd-set-of-emptyset (&key (manager *manager*))
   "Returns a set of an empty set {{}}."
   (declare (manager manager))
   (one-node 'zdd-node :manager manager))
 
+(declaim (reentrant zdd-singleton))
 (defun zdd-singleton (var &key (manager *manager*))
   "Returns {{var}}. This is not equivalent to (make-var 'zdd-node :index var), see make-var documentation."
   (declare (manager manager))
@@ -134,8 +140,12 @@ zdd-subset-1
         'zdd-node
       :manager m)))
 
+(declaim (reentrant zdd-change))
 (defun zdd-change (zdd var &key ((:manager m)  (node-manager zdd)))
-  "Flip the membership of variable VAR in ZDD."
+  "Flip the membership of variable VAR in ZDD.
+
+  TODO: Remove :manager arg, since it's an error if doesn't match (node-manager ZDD).
+"
   (declare (zdd-node zdd)
            (manager m))
   (let-1 mp (manager-pointer m)
