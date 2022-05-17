@@ -242,4 +242,4 @@
     (setf *default-reordering-method* :cudd-reorder-same))
 
   (run-all-tests)
-  (gc :full t :verbose t))
+  (gc :full t :verbose t :manager :all))
