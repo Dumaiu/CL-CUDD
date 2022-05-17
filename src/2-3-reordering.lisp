@@ -127,7 +127,8 @@ Secondary value returns the current reordering method.
   * TODO: Implement `cudd-error-type'.
   * TODO: Relocate to '1-0-1-conditions.lisp'? "))
 
-(declaim (reentrant reduce-heap))
+(declaim (reentrant reduce-heap
+                    zdd-reduce-heap))
 (defun reduce-heap (&optional (method :cudd-reorder-same) (minsize 33000000)
                     &key (manager *manager*))
   "Initiates variable reordering explicitly (for bdd/add).
@@ -147,16 +148,25 @@ Default value is 33000000. In CUDD each node consumes 3 words, so this threshold
         (or (= 1 result)
             (error 'cudd-reordering-error))))))
 
-(defun zdd-reduce-heap (&optional (method :cudd-reorder-same) (minsize 33000000))
+(defun zdd-reduce-heap (&optional (method :cudd-reorder-same) (minsize 33000000)
+                        &key (manager *manager*))
   "Initiates variable reordering explicitly (for zdd).
 MINSIZE specifies the lower threshold of the number of the (live/referenced) nodes to initiate reordering:
 Number of nodes should be larger than this value.
 Default value is 33000000. In CUDD each node consumes 3 words, so this threshold corresponds to 100MB.
 
-  * [2022-02-01 Tue] TODO: ':manager' kwarg.
+  TODO: Refactor w/ (reduce-heap).
 "
   (declare (zdd-reordering-method method))
-  (assert (= 0 (cudd-zdd-reduce-heap %mp% method minsize))))
+  (declare (reordering-method method)
+           (manager manager))
+  (with-cudd-critical-section (:manager manager)
+    (let-1 mp (manager-pointer manager)
+      (declare (manager-pointer mp))
+      (assert* (not (null-pointer-p mp)))
+      (let ((result (cudd-zdd-reduce-heap mp method minsize)))
+        (or (= 1 result)
+            (error 'cudd-reordering-error))))))
 
 #+nil
 (defun shuffle-heap ()
