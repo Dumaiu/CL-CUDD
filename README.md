@@ -1,7 +1,7 @@
 * FIXME: The node initialization functions are inherently not thread-safe, because they're doing "something with a pointer" before entering a critical section and calling (cudd-ref).  As a consequence, they should be reclassified as internals.
 * TODO: Print both a node's index, which is constant and isomorphic to a BDD variable, and its place in the variable ordering.
 
-* TODO: Make 2-2-zdd-bdd-bridge.lisp thread-safe
+* DONE: Make 2-2-zdd-bdd-bridge.lisp thread-safe
     * DONE 2-1-zdd-set-operations.lisp 
     * TODO: Could that be causing a race condition during (test-system)?
 * TODO: It's a problem to have `reordering-method` defined after 2-0-0-manager.lisp loads.
@@ -10,10 +10,11 @@
     * NOTE: Having reordering turned on is 99% of the time responsible for causing the bug.
     * FIXME: Should we be getting multiple finalizers for nodes w/ the same index?  Or is that a mistake?
 * TODO: Rename 'index' in `bdd-variable-node` to `variable-id`
-* TODO Q: Why is `(cudd-regular)` defined in Lisp, instead of calling C|-`Cudd_Regular()`?
+* TODO Q: Why is `(cudd-regular)` defined entirely Lisp, instead of calling C|-`Cudd_Regular()` through CFFI?
 * TODO: If this all **still** doesn't work, use (without-gcing) inside the critsec.
 * DONE Override (gc) in :cudd.
-* TODO Try calling `Cudd_Ref()` for *every* BDD node.
+* DONE Try calling `Cudd_Ref()` for *every* BDD node.
+    * This is the 'WIP/cudd-ref-everything' branch. 
 * TODO Save a printable description of a node in its finalizer closure for debugging.
 
 * DONE: Even without autoreordering, there's an assertion which always fails in some node finalizer when calling (cudd-unit-test-repeatedly).

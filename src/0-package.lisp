@@ -762,6 +762,14 @@ On the other hand, functions which take a `manager' and a `node-pointer' are not
            bdd-max-variables
            zdd-max-variables
            )
+  (:export ; 2-2-add-bdd-bridge.lisp
+           add->bdd  bdd->add
+           #| TODO: the others|#)
+  (:export ; 2-2-zdd-bdd-bridge.lisp
+           bdd->zdd-simple
+           zdd->bdd-simple
+           bdd->zdd-cover
+           zdd->bdd-cover)
   (:export ; 2-1-zdd-set-operations.lisp
            zdd-subset-0  zdd-subset-1
            zdd-emptyset  zdd-set-of-emptyset
@@ -788,7 +796,7 @@ On the other hand, functions which take a `manager' and a `node-pointer' are not
            bdd-transfer
            transfer
            print-info  info
-           )
+           garbage-collect  gc)
   (:export ; 2-3-reordering.lisp
            reordering-status  zdd-reordering-status
            reduce-heap  zdd-reduce-heap

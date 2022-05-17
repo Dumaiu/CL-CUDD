@@ -1,5 +1,7 @@
 (in-package :cudd)
 
+(declaim (reentrant bdd->add)
+         (reentrant add->bdd))
 (defun bdd->add (bdd &key (manager (node-manager bdd)))
   "Converts a BDD to a 0-1 ADD"
   (declare (bdd-node bdd)

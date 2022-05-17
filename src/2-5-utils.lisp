@@ -159,6 +159,7 @@
              (clear-cache?/int (if clear-cache? 1 0)))
          (declare (manager-pointer manager-ptr)
                   (fixnum clear-cache?/int))
+         (assert* (not (null-pointer-p manager-ptr)))
          (let ((res (cudd-garbage-collect manager-ptr clear-cache?/int)))
            (declare (fixnum res))
            res))))))
