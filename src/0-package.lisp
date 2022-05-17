@@ -779,6 +779,8 @@ On the other hand, functions which take a `manager' and a `node-pointer' are not
            )
   (:export ; 2-3-reordering.lisp
            reordering-status
+           zdd-reordering-status
+           reduce-heap
            )
   )
 

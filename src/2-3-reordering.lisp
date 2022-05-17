@@ -68,7 +68,7 @@
     :CUDD-REORDER-SYMM-SIFT-CONV))
 
 (defun zdd-enable-reordering (&optional (method :cudd-reorder-same)
-                                &key ((:manager m) *manager*))
+                              &key ((:manager m) *manager*))
   "Enables automatic dynamic reordering of ZDDs.
 
   Parameter method is used to determine the method used for
@@ -97,11 +97,12 @@ Secondary value returns the current reordering method.
 "
   (declare (manager m))
   (with-cudd-critical-section (:manager m)
-   (with-foreign-object (method-ptr 'cudd-reordering-type)
-     (values (= 1 (cudd-reordering-status (manager-pointer m) method-ptr))
-             (the reordering-method
-                  (mem-ref method-ptr 'cudd-reordering-type))))))
+    (with-foreign-object (method-ptr 'cudd-reordering-type)
+      (values (= 1 (cudd-reordering-status (manager-pointer m) method-ptr))
+              (the reordering-method
+                   (mem-ref method-ptr 'cudd-reordering-type))))))
 
+(declaim (reentrant zdd-reordering-status))
 (defun zdd-reordering-status (&key ((:manager m) *manager*))
   "Reports the status of automatic dynamic reordering of ZDDs.
 Return T if automatic reordering is enabled. NIL otherwise.
@@ -110,10 +111,13 @@ Secondary value returns the current reordering method.
   @see Cudd_AutodynEnableZdd Cudd_ReorderingStatusZdd Cudd_AutodynDisableZdd"
 
   (declare (manager m))
-  (with-foreign-object (method-ptr 'cudd-reordering-type)
-    (values (= 1 (cudd-reordering-status (manager-pointer m) method-ptr))
-            (the zdd-reordering-method
-                 (mem-ref method-ptr 'cudd-reordering-type)))))
+  (let-1 mp (manager-pointer m)
+    (declare (manager-pointer mp))
+    (assert* (not (null-pointer-p mp)))
+    (with-foreign-object (method-ptr 'cudd-reordering-type)
+      (values (= 1 (cudd-reordering-status mp method-ptr))
+              (the zdd-reordering-method
+                   (mem-ref method-ptr 'cudd-reordering-type))))))
 
 (define-condition cudd-reordering-error (cudd-error) ()
   (:report (lambda (_cond stream)
@@ -123,8 +127,9 @@ Secondary value returns the current reordering method.
   * TODO: Implement `cudd-error-type'.
   * TODO: Relocate to '1-0-1-conditions.lisp'? "))
 
+(declaim (reentrant reduce-heap))
 (defun reduce-heap (&optional (method :cudd-reorder-same) (minsize 33000000)
-                      &key (manager *manager*))
+                    &key (manager *manager*))
   "Initiates variable reordering explicitly (for bdd/add).
 MINSIZE specifies the lower threshold of the number of the (live/referenced) nodes to initiate reordering:
 Number of nodes should be larger than this value.
@@ -135,9 +140,12 @@ Default value is 33000000. In CUDD each node consumes 3 words, so this threshold
   (declare (reordering-method method)
            (manager manager))
   (with-cudd-critical-section (:manager manager)
-    (let ((result (cudd-reduce-heap (manager-pointer manager) method minsize)))
-      (or (= 1 result)
-          (error 'cudd-reordering-error)))))
+    (let-1 mp (manager-pointer manager)
+      (declare (manager-pointer mp))
+      (assert* (not (null-pointer-p mp)))
+      (let ((result (cudd-reduce-heap mp method minsize)))
+        (or (= 1 result)
+            (error 'cudd-reordering-error))))))
 
 (defun zdd-reduce-heap (&optional (method :cudd-reorder-same) (minsize 33000000))
   "Initiates variable reordering explicitly (for zdd).
