@@ -702,7 +702,9 @@ Wrapper for the :log4cl macros.  You can use them if you want, but going through
   (:use-reexport :cl-cudd.baseapi))
 
 (define-package cl-cudd.thread-safe
-    (:use :cl)
+    (:mix
+     :cl-cudd.baseapi
+     :cl)
   (:export
    #:node-permute)
   (:export
@@ -715,30 +717,30 @@ Wrapper for the :log4cl macros.  You can use them if you want, but going through
    node-xor
    node-complement
    if-then-else)
+  (:export
+   #:cudd-condition
+   #:cudd-error
+   #:cudd-reordering-error
+   #:cudd-logger
+   #:cudd-node-logger
+   )
   )
 
-(define-package cl-cudd
-    (:documentation "High-level interface")
-  (:mix
-   :cl-cudd.swig-macros :cl-cudd.baseapi
-   :cl-cudd.internal-utils
-   :alexandria :uiop) ; TODO: Combine with :use
-  (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi
-   :trivia :iterate :let-plus
-        :cl-cudd.internal-utils
-   :trivial-garbage
-        :asdf :uiop)
-  (:nicknames :cudd)
-  ;; 2021:
-  (:shadow eval
-           variable
-           #:garbage-collect
-           #:compose
-           ;; TODO: Rename these two?:
-           #:cudd-T
-           #:cudd-E
-           #:print-info
-           #:gc)
+
+(define-package cl-cudd.maybe-unsafe
+    (:mix
+     :cl-cudd.baseapi
+     :cl)
+  (:shadow
+   #:eval
+   variable
+   #:garbage-collect
+   #:compose
+   ;; TODO: Rename these two?:
+   #:cudd-T
+   #:cudd-E
+   #:print-info
+   #:gc)
   (:export
    #:+AGREEMENT+
    #:+AND+
@@ -910,18 +912,33 @@ Wrapper for the :log4cl macros.  You can use them if you want, but going through
    #:bdd-vector-compose
    #:count-dead-bdd-nodes
    #:count-live-bdd-nodes
-   eval
+   #:eval
+   #:variable
    #:bdd-transfer
    #:*manager*
    #:*cudd-mutex*
    #:dump-factored-form
-   #:cudd-condition
-   #:cudd-error
-   #:cudd-reordering-error
-   #:cudd-logger
-   #:cudd-node-logger
-   #:gc
-   )
+   #:gc))
+
+(define-package cl-cudd
+    (:documentation "High-level interface")
+  (:mix
+   :cl-cudd.maybe-unsafe
+   :cl-cudd.thread-safe
+   :cl-cudd.swig-macros :cl-cudd.baseapi
+   :cl-cudd.internal-utils
+   :trivial-garbage
+   :alexandria :uiop
+   :cl) ; TODO: Combine with :use
+  (:reexport :cl-cudd.thread-safe)
+  (:use :cl :cffi :alexandria :cl-cudd.swig-macros :cl-cudd.baseapi
+   :trivia :iterate :let-plus
+        :cl-cudd.internal-utils
+   :trivial-garbage
+        :asdf :uiop)
+  (:nicknames :cudd)
+  ;; 2021:
+
   ); cl-cudd
 
 (in-package :cudd)
