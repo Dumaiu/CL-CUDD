@@ -17,4 +17,5 @@
 
 See README.md for more details."
   :perform (test-op :after (op c)
-                    (eval (read-from-string "(5am:run! :cl-cudd)"))))
+                    (eval (read-from-string "(5am:run! :cl-cudd)"))
+                    (symbol-call :cl-cudd.test '#:test-with-autoreorder-enabled)))
