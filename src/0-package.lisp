@@ -1025,7 +1025,10 @@ On the other hand, functions which take a `manager' and a `node-pointer' are not
            zdd-node
            cudd-T  cudd-E
            node-constant-p
-           manager)
+           manager
+           node-variable-index  node-index
+           node-equal
+           )
   (:export ; 2-1-add.lisp
            add-negate
            add-constant

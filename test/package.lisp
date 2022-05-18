@@ -2,8 +2,9 @@
 
 (define-package cl-cudd.test.common
     (:mix-reexport
-     :cl-cudd
-     :cl-cudd.baseapi
+     ;; :cl-cudd
+     ;; :cl-cudd.baseapi
+     :cl-cudd.thread-safe
      :cl-cudd.internal-utils
      :fiveam :iterate :trivia :arrow-macros
      :asdf :uiop

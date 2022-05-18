@@ -428,16 +428,23 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
                  node-constant-p
                  node-value))
 
+(declaim (reentrant node-variable-index))
 (defun node-variable-index (node)
-  "Return the index of the variable associated with the node."
+  "Return the index of the variable associated with the node.
+
+  * TODO: Can this be thread-safe without the critsec?
+"
   (declare (node node))
-  (let-1 index (cudd-node-read-index (node-pointer node))
-    (declare (non-negative-fixnum index))
-    index))
+  (with-cudd-critical-section (:manager (node-manager node))
+   (let-1 index (cudd-node-read-index (node-pointer node))
+     (declare (non-negative-fixnum index))
+     index)))
 
 ;; Alias:
 (setf (fdefinition 'node-index) (fdefinition 'node-variable-index))
+(declaim (reentrant node-index))
 
+(declaim (reentrant node-equal))
 (defun node-equal (a b)
   "Return true iff A and B are the same graph.
 
