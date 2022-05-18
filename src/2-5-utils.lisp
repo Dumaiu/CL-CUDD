@@ -194,8 +194,8 @@
   * TODO: ':if-exists', ':if-does-not-exist', as far as C can be relied upon
 "
   (declare (symbol ptr)
-           (type (member :input :output) direction))
-  (check-type direction (member :input :output))
+           (type (member nil #|KLUDGE: get rid of 'nil'|# :input :output) direction))
+  (assert* (member direction '(:input :output)))
 
   (let ((dir (ecase direction
                (:input "r")
