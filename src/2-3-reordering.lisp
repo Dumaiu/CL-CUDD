@@ -34,6 +34,8 @@
   "Alias."
   'reordering-method)
 
+
+(declaim (reentrant enable-reordering))
 (defun enable-reordering (&optional (method :cudd-reorder-same)
                             (manager *manager*))
   "Enables automatic dynamic reordering of BDDs and ADDs.

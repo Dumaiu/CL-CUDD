@@ -414,6 +414,7 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
           ;; This form executes iff ADDRESS isn't already present in the hashtable:
           (helper/construct-node pointer type #|ref|# nil manager (list ,@*other-initargs)))))))
 
+(declaim (reentrant node))
 (defun node (pointer type &key (ref t) (manager *manager*))
   (declare (node-pointer pointer)
            (node-type type)
@@ -448,6 +449,7 @@ only if their pointers are the same."
   (check-type b node)
   (pointer-eq (node-pointer a) (node-pointer b)))
 
+(declaim (reentrant node-constant-p))
 (defun node-constant-p (node)
   "return t if the node is constant, nil otherwise"
   (declare (node node))

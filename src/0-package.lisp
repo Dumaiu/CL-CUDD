@@ -796,18 +796,28 @@ On the other hand, functions which take a `manager' and a `node-pointer' are not
            bdd-transfer
            transfer
            print-info  info
-           garbage-collect  gc)
+           print-debug
+           garbage-collect  gc
+           sharing-size
+           support-index
+           support-size
+           cudd-print
+           count-live-bdd-nodes
+           ); 2-5-utils.lisp
   (:export ; 2-3-reordering.lisp
            reordering-status  zdd-reordering-status
            reduce-heap  zdd-reduce-heap
+           enable-reordering disable-reordering
            )
   (:export ; 2-6-dot.lisp
            plot)
   (:export ; 2-0-1-node.lisp
+           node
            bdd-node
            add-node
            zdd-node
            cudd-T  cudd-E
+           node-constant-p
            manager)
   (:export ; 2-1-add.lisp
            add-negate

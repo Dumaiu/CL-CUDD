@@ -92,7 +92,7 @@
           (setf (mem-aref ptr-array node-pointer-t i) g-ptr)))))
   ptr-array)
 
-(defun bdd-vector-compose (f v &optional (manager *manager*)
+(defun bdd-vector-compose (f v &optional (manager (node-manager f))
                            &aux (node-pointer-t :pointer))
   "If V has more elements than there are variables in MANAGER, the extras are ignored.
 
@@ -287,70 +287,87 @@
                (bdd-node res))
       res)))
 
+
+(declaim (reentrant support-index))
 (defun support-index (node &optional (manager *manager*)
                       &aux (C-array-element :int))
   "Returns a bit-vector whose length is Cudd_ReadSize().  Each element is T iff the variable with that index is in the support of NODE."
   (declare (manager manager))
   (declare (node node))
-  (let* ((manager-ptr (manager-pointer manager))
-         (total-num-vars (cudd-read-size manager-ptr))
-         (int-array-ptr (cudd-support-index manager-ptr (node-pointer node))))
-    (declare (foreign-pointer manager-ptr int-array-ptr)
-             (type (and fixnum (integer 0)) total-num-vars))
-    (iter
-      (with bitv = (make-array total-num-vars :element-type 'boolean :initial-element nil :adjustable nil))
-      (for i below total-num-vars)
-      (declare (fixnum i))
-      (for b_i = (mem-aref int-array-ptr C-array-element i))
-      (declare (fixnum b_i))
-      (assert (member b_i '(0 1) :test #'=))
-      (setf (aref bitv i) (= b_i 1))
-      (finally (return bitv)))))
+  (with-cudd-critical-section (:manager manager)
+    (let* ((manager-ptr (manager-pointer manager))
+           (total-num-vars (cudd-read-size manager-ptr))
+           (int-array-ptr (cudd-support-index manager-ptr (node-pointer node))))
+      (declare (foreign-pointer manager-ptr int-array-ptr)
+               (type (and fixnum (integer 0)) total-num-vars))
+      (iter
+        (with bitv = (make-array total-num-vars :element-type 'boolean :initial-element nil :adjustable nil))
+        (for i below total-num-vars)
+        (declare (fixnum i))
+        (for b_i = (mem-aref int-array-ptr C-array-element i))
+        (declare (fixnum b_i))
+        (assert (member b_i '(0 1) :test #'=))
+        (setf (aref bitv i) (= b_i 1))
+        (finally (return bitv))))))
 
+(declaim (reentrant support-size))
 (defun support-size (node &optional (manager *manager*))
   "See Cudd_SupportSize()."
   (declare (manager manager))
   (declare (node node))
-  (cudd-support-size (manager-pointer manager)
-                     (node-pointer node)))
+  (with-cudd-critical-section (:manager manager)
+    (cudd-support-size (manager-pointer manager)
+                       (node-pointer node))))
 
-(defun sharing-size (nodes)
-  "Wrapper for (cudd-sharing-size).  NODES should be a collection of nodes/BDDs.  Note that a `manager' parameter isn't useful to CUDD for this function!
+
+(declaim (reentrant sharing-size))
+(defun sharing-size (nodes &aux (manager (node-manager (elt nodes 0))))
+  "Wrapper for (cudd-sharing-size).  NODES should be a collection of nodes/BDDs.  Note that a `manager' parameter is useful to CUDD for this function, and can be used only for safety.
 
   * TODO: Get the 'n' count from (read-size)?
   * TODO: [opt] with ':series'?
 "
-  (declare (sequence nodes))
-  (let ((n (length nodes)))
-    (with-foreign-object (node_arr :pointer n)
-      (iter
-        (for (the node node) in-sequence nodes with-index i)
-        (for node_ptr = (node-pointer node))
-        (setf (mem-aref node_arr :pointer i) node_ptr))
-      (let ((result (cudd-sharing-size node_arr n)))
-        (declare (fixnum result))
-        result))))
+  (declare (sequence nodes)
+           (manager manager))
+  (with-cudd-critical-section (:manager manager)
+    (let ((n (length nodes)))
+      (with-foreign-object (node_arr :pointer n)
+        (iter
+          (for (the node node) in-sequence nodes with-index i)
+          (for node-mgr = (node-manager node))
+          (unless (eq node-mgr manager)
+            (error 'cudd-manager-mismatch-error))
+          (for node_ptr = (node-pointer node))
+          (setf (mem-aref node_arr :pointer i) node_ptr))
+        (let ((result (cudd-sharing-size node_arr n)))
+          (declare (fixnum result))
+          result)))))
 
 
+(declaim (reentrant print-debug))
 (defun print-debug (node &key
                            (manager *manager*)
-                           ((:n num-vars) (bdd-variables manager))
+                           ((:n num-vars!) 0 num-vars?)
                            (level 1))
   "* TODO: Raise custom exception on failure.
  * TODO: Print to *standard-output*, not cstdout.
 "
   (declare (node node)
            (manager manager)
-           (fixnum num-vars)
+           (fixnum num-vars!)
            (fixnum level))
-  (check-type num-vars (integer 0))
-  (check-type level (integer 0))
-  (let ((errcode (cudd-print-debug (manager-pointer manager)
-                                   (node-pointer node)
-                                   num-vars level)))
-    (declare (type integer errcode))
-    (if (= 1 errcode) nil
-        (error "Cudd_PrintDebug() failed"))))
+  (with-cudd-critical-section (:manager manager)
+    (unless num-vars?
+      (setq num-vars! (bdd-variables manager)))
+
+    (check-type num-vars! (integer 0))
+    (check-type level (integer 0))
+    (let ((errcode (cudd-print-debug (manager-pointer manager)
+                                     (node-pointer node)
+                                     num-vars! level)))
+      (declare (type integer errcode))
+      (if (= 1 errcode) nil
+          (error "Cudd_PrintDebug() failed")))))
 
 (declaim (reentrant print-info))
 (defun print-info (&optional (manager *manager*) (pathname "cudd.info"))
@@ -509,6 +526,7 @@ Follow the then-branch when 1, else-branch otherwise."
       (zdd-node (wrap-and-finalize p 'zdd-node)))))
 
 
+(declaim (reentrant cudd-print))
 (defun cudd-print (node &optional (manager *manager*))
   "Print a DD to cstdout.  See cuddP().  Returns T on success, 0 on failure.
   * TODO: Print to Lisp *stdout*.
@@ -516,7 +534,8 @@ Follow the then-branch when 1, else-branch otherwise."
 "
   (declare (manager manager)
            (node node))
-  (= 1 (the fixnum (cuddp (manager-pointer manager) (node-pointer node)))))
+  (with-cudd-critical-section (:manager manager)
+    (= 1 (the fixnum (cuddp (manager-pointer manager) (node-pointer node))))))
 
 (defun count-dead-bdd-nodes (&optional (manager *manager*))
   "Return an int: number of currently dead ADD|BDD nodes."
@@ -527,18 +546,21 @@ Follow the then-branch when 1, else-branch otherwise."
     (declare (fixnum dead))
     dead))
 
+(declaim (reentrant count-live-bdd-nodes))
 (defun count-live-bdd-nodes (&optional (manager *manager*))
   "Return an int: the total number of live ADD|BDD nodes."
   (declare (manager manager))
-  (let ((ptr (manager-pointer manager)))
-    (declare (manager-pointer ptr))
-    (let ((total (cudd-read-keys ptr))
-          (dead (cudd-read-dead ptr)))
-      (declare (fixnum total dead))
-      (let ((live (- total dead)))
-        (declare (fixnum live))
-        (assert (>= live 0))
-        live))))
+  (with-cudd-critical-section (:manager manager)
+    (let ((ptr (manager-pointer manager)))
+      (declare (manager-pointer ptr))
+      (assert* (not (null-pointer-p ptr)))
+      (let ((total (cudd-read-keys ptr))
+            (dead (cudd-read-dead ptr)))
+        (declare (fixnum total dead))
+        (let ((live (- total dead)))
+          (declare (fixnum live))
+          (assert* (>= live 0))
+          live)))))
 
 (declaim (reentrant bdd-transfer))
 (defun bdd-transfer (bdd &key (src (node-manager bdd)) dest)
