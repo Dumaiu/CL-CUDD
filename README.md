@@ -1,5 +1,8 @@
+
 * FIXME: The node initialization functions are inherently not thread-safe, because they're doing "something with a pointer" before entering a critical section and calling (cudd-ref).  As a consequence, they should be reclassified as internals.
 * TODO: Print both a node's index, which is constant and isomorphic to a BDD variable, and its place in the variable ordering.
+
+* NOTE [2022-05-17 Tue]: Inspecting `cudd:*managers*` in Emacs prevents these from being garbage-collected.  Use `(hash-table-count)` instead.
 
 * DONE: Make 2-2-zdd-bdd-bridge.lisp thread-safe
     * DONE 2-1-zdd-set-operations.lisp 
