@@ -224,6 +224,7 @@
                                                 (manager *manager*))
     "Primary method.
   * TODO: Other keys.
+  * TODO: Thread-safety.
 "
     (let ((n (length nodes)))
       (declare (fixnum n))
@@ -420,7 +421,7 @@
 (defgeneric eval (dd inputs &optional manager)
   (:documentation "TODO: Other DD types.")
   (:argument-precedence-order inputs dd) ; convert INPUTS first
-  (:method (dd (inputs sequence) &optional (manager *manager*))
+  (:method (dd (inputs sequence) &optional (manager (node-manager dd)))
     "Coerce SEQUENCE, which should consist of generalized-booleans, to a C int array, and recurse."
     (declare (type node dd))
     (let (;; (int-sz (foreign-type-size :int))
@@ -436,8 +437,9 @@
           (declare (bit b*))
           (setf (mem-aref input-arr :int i) b*))
         (eval dd input-arr manager))))
-  (:method ((bdd bdd-node) input-arr &optional (manager *manager*))
-    (declare (foreign-pointer input-arr))
+  (:method ((bdd bdd-node) input-arr &optional (manager (node-manager dd)))
+    (declare (foreign-pointer input-arr)
+             (manager manager))
     (let ((res-ptr (cudd-eval (manager-pointer manager) (node-pointer bdd) input-arr)))
       (declare (foreign-pointer res-ptr))
       ;; TODO (check-result-value res-ptr)
@@ -543,7 +545,7 @@ Follow the then-branch when 1, else-branch otherwise."
 
 
 (declaim (reentrant cudd-print))
-(defun cudd-print (node &optional (manager *manager*))
+(defun cudd-print (node &optional (manager (node-manager node)))
   "Print a DD to cstdout.  See cuddP().  Returns T on success, 0 on failure.
   * TODO: Print to Lisp *stdout*.
   * TODO: Raise exception?
