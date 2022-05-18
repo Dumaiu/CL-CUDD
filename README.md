@@ -1,4 +1,4 @@
-
+* FIXME [2022-05-18 Wed]: Getting 'ZDD node has illegal children' errors still.
 * FIXME: The node initialization functions are inherently not thread-safe, because they're doing "something with a pointer" before entering a critical section and calling (cudd-ref).  As a consequence, they should be reclassified as internals.
 * TODO: Print both a node's index, which is constant and isomorphic to a BDD variable, and its place in the variable ordering.
 
@@ -6,6 +6,7 @@
 
 * DONE: Make 2-2-zdd-bdd-bridge.lisp thread-safe
     * DONE 2-1-zdd-set-operations.lisp 
+    * TODO: simpath/simpath.lisp
     * TODO: Could that be causing a race condition during (test-system)?
 * TODO: It's a problem to have `reordering-method` defined after 2-0-0-manager.lisp loads.
 
