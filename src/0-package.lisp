@@ -778,16 +778,19 @@ On the other hand, functions which take a `manager' and a `node-pointer' are not
            zdd-set zdd-unset
            zdd-dont-care
 
-           zdd-union
-           zdd-intersection
+           zdd-union  zdd-union*
+           zdd-intersection  zdd-intersection*
            zdd-difference
-           zdd-divide-unate
-           zdd-product-unate
-           zdd-remainder-unate
-           zdd-divide-binate
-           zdd-product-binate
-           zdd-remainder-binate
-           zdd-supset)
+           ;; zdd-divide-unate
+           ;; zdd-product-unate
+           ;; zdd-remainder-unate
+           zdd-product
+           zdd-divide
+           zdd-remainder
+           zdd-supset
+           zdd-onset  zdd-offset
+           zdd-count-minterm
+           )
   (:export
    *manager*
    *managers* ; TODO: Need thread-safe access to this

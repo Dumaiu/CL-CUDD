@@ -263,6 +263,7 @@ If it does not exist (i.e. then-arc points to 0 and zero-suppressed) creates a n
   "Computes the intersection of F and G."
   (cudd-zdd-intersect %mp% (node-pointer f) (node-pointer g)))
 
+(declaim (reentrant zdd-union*)) ; bcs. delegates to (zdd-union)
 (defun zdd-union* (&rest args)
   "Performs zdd-union on all variables."
   (cond
@@ -273,6 +274,7 @@ If it does not exist (i.e. then-arc points to 0 and zero-suppressed) creates a n
     ((null args)
      (zdd-emptyset))))
 
+(declaim (reentrant zdd-intersection*))
 (defun zdd-intersection* (first &rest args)
   "Performs zdd-intersection on all variables.
 Null intersection (union of all combinations) is undefined because
@@ -288,6 +290,8 @@ ZDD has no upper limit on the number of variables."
 
 ;;;; unate operations
 
+(declaim (reentrant zdd-onset)
+         (reentrant zdd-offset))
 (setf (fdefinition 'zdd-onset) #'zdd-subset-1
       (documentation 'zdd-onset 'function)
       "Computes the subset of S that contains element VAR (integer), and remove VAR from each combination. (same as zdd-subset-1)")
@@ -318,6 +322,9 @@ cf. Shin-ichi Minato: Zero-Suppressed BDDs and Their Applications"
 (setf (fdefinition 'zdd-product) #'zdd-product-unate)
 (setf (fdefinition 'zdd-divide) #'zdd-divide-unate)
 (setf (fdefinition 'zdd-remainder) #'zdd-remainder-unate)
+(declaim (reentrant zdd-product
+                    zdd-divide
+                    zdd-remainder))
 
 ;;;; binate operations
 
@@ -339,6 +346,7 @@ cf. Shin-ichi Minato: Zero-Suppressed BDDs and Their Applications"
                  (p3 (cudd-zdd-diff %mp% (node-pointer f) p2) t))
     p3))
 
+(declaim (reentrant zdd-count-minterm))
 (defun zdd-count-minterm (f &optional support-size &key  ((:manager m) (node-manager f)))
   "Computes the number of minterms in f.
 SUPPORT-SIZE specifies the number of variables in the support of f, i.e.,

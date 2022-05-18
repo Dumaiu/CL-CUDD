@@ -10,7 +10,6 @@
       (cudd-bdd-to-add (manager-pointer manager) (node-pointer bdd))
       'add-node
     :manager manager))
-
 (defun add->bdd (add &key (manager (node-manager add)))
   "Converts an ADD to a BDD by replacing all discriminants different from 0 with 1."
   (declare (add-node add))
