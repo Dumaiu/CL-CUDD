@@ -703,8 +703,14 @@ Wrapper for the :log4cl macros.  You can use them if you want, but going through
   ); cl-cudd.baseapi
 
 (define-package cl-cudd.thread-unsafe
+    (:documentation "TODO: Ensure the external symbols of this and :cl-cudd.thread-safe are disjoint.")
     (:use :cl)
-  (:use-reexport :cl-cudd.baseapi))
+  (:use-reexport :cl-cudd.baseapi)
+  (:export
+   #:add-var
+   #:bdd-var
+   #:zdd-var
+   ))
 
 (define-package cl-cudd.thread-safe
     (:documentation "NOTE: Functions which take a `cudd:node' argument should be declarable as reentrant or thread-safe, since the node's extent strictly surrounds the function's stack life.

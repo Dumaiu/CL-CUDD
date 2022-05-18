@@ -7,6 +7,7 @@
 * DONE: Make 2-2-zdd-bdd-bridge.lisp thread-safe
     * DONE 2-1-zdd-set-operations.lisp 
     * TODO: simpath/simpath.lisp
+    * TODO: 2-2-add-bdd-bridge.lisp
     * TODO: Could that be causing a race condition during (test-system)?
 * TODO: It's a problem to have `reordering-method` defined after 2-0-0-manager.lisp loads.
 
