@@ -712,135 +712,6 @@ Wrapper for the :log4cl macros.  You can use them if you want, but going through
    #:zdd-var
    ))
 
-(define-package cl-cudd.thread-safe
-    (:documentation "NOTE: Functions which take a `cudd:node' argument should be declarable as reentrant or thread-safe, since the node's extent strictly surrounds the function's stack life.
-
-On the other hand, functions which take a `manager' and a `node-pointer' are not safe.
-")
-  (:mix
-   :cl-cudd.baseapi
-   :cl)
-  (:export
-   bdd-variable-node bdd-constant-node
-   add-variable-node add-constant-node
-   )
-  (:export
-   #:node-permute)
-  (:export
-   univ-abstract
-   or-abstract
-   sum-abstract)
-  (:export ; 2-1-generic-simple.lisp
-           node-or
-           node-and
-           node-xor
-           node-complement
-           if-then-else
-           make-var
-           zero-node one-node
-           *bdd-zero* *bdd-one*
-           *bdd-false* *bdd-true*
-
-           zero-node one-node
-           )
-  (:export
-   #:cudd-condition
-   #:cudd-error
-   #:cudd-reordering-error
-   #:cudd-logger
-   #:cudd-node-logger)
-  (:export ; 2-1-system.lisp
-           count-leaves
-           dag-size
-           bdd-variables
-           zdd-variables
-           bdd-max-variables
-           zdd-max-variables
-
-           disable-gc
-           enable-gc
-           peak-node-count
-           peak-live-node-count
-           node-count
-           zdd-node-count
-           bdd-variables
-           zdd-variables
-           bdd-max-variables
-           zdd-max-variables
-           )
-  (:export ; 2-2-add-bdd-bridge.lisp
-           add->bdd  bdd->add
-           #| TODO: the others|#)
-  (:export ; 2-2-zdd-bdd-bridge.lisp
-           bdd->zdd-simple
-           zdd->bdd-simple
-           bdd->zdd-cover
-           zdd->bdd-cover)
-  (:export ; 2-1-zdd-set-operations.lisp
-           zdd-subset-0  zdd-subset-1
-           zdd-emptyset  zdd-set-of-emptyset
-           zdd-singleton
-           zdd-change
-           zdd-set zdd-unset
-           zdd-dont-care
-
-           zdd-union  zdd-union*
-           zdd-intersection  zdd-intersection*
-           zdd-difference
-           ;; zdd-divide-unate
-           ;; zdd-product-unate
-           ;; zdd-remainder-unate
-           zdd-product
-           zdd-divide
-           zdd-remainder
-           zdd-supset
-           zdd-onset  zdd-offset
-           zdd-count-minterm
-           )
-  (:export
-   *manager*
-   *managers* ; TODO: Need thread-safe access to this
-   #:with-manager)
-  (:export ; 2-5-utils.lisp
-           bdd-transfer
-           transfer
-           print-info  info
-           print-debug
-           garbage-collect  gc
-           sharing-size
-           support-index
-           support-size
-           cudd-print
-           count-live-bdd-nodes
-           bdd-vector-compose
-           read-size
-           boolean-diff
-           compose
-           ); 2-5-utils.lisp
-  (:export ; 2-3-reordering.lisp
-           reordering-status  zdd-reordering-status
-           reduce-heap  zdd-reduce-heap
-           enable-reordering disable-reordering
-           )
-  (:export ; 2-6-dot.lisp
-           plot)
-  (:export ; 2-0-1-node.lisp
-           node
-           bdd-node
-           add-node
-           zdd-node
-           cudd-T  cudd-E
-           node-constant-p
-           manager)
-  (:export ; 2-1-add.lisp
-           add-negate
-           add-constant
-           plus-infinity  minus-infinity
-           epsilon
-           add-apply)
-  )
-
-
 (define-package cl-cudd.maybe-unsafe
     (:mix
      :cl-cudd.baseapi
@@ -1034,11 +905,143 @@ On the other hand, functions which take a `manager' and a `node-pointer' are not
    #:dump-factored-form
    #:gc))
 
+(define-package cl-cudd.thread-safe
+    (:documentation "NOTE: Functions which take a `cudd:node' argument should be declarable as reentrant or thread-safe, since the node's extent strictly surrounds the function's stack life.
+
+On the other hand, functions which take a `manager' and a `node-pointer' are not safe.
+")
+  (:mix
+   :cl-cudd.maybe-unsafe
+   :cl-cudd.baseapi
+   :cl)
+  (:export
+   bdd-variable-node bdd-constant-node
+   add-variable-node add-constant-node
+   )
+  (:export
+   #:node-permute)
+  (:export
+   univ-abstract
+   or-abstract
+   sum-abstract)
+  (:export ; 2-1-generic-simple.lisp
+           node-or
+           node-and
+           node-xor
+           node-complement
+           if-then-else
+           make-var
+           zero-node one-node
+           *bdd-zero* *bdd-one*
+           *bdd-false* *bdd-true*
+
+           zero-node one-node
+           )
+  (:export
+   #:cudd-condition
+   #:cudd-error
+   #:cudd-reordering-error
+   #:cudd-logger
+   #:cudd-node-logger)
+  (:export ; 2-1-system.lisp
+           count-leaves
+           dag-size
+           bdd-variables
+           zdd-variables
+           bdd-max-variables
+           zdd-max-variables
+
+           disable-gc
+           enable-gc
+           peak-node-count
+           peak-live-node-count
+           node-count
+           zdd-node-count
+           bdd-variables
+           zdd-variables
+           bdd-max-variables
+           zdd-max-variables
+           )
+  (:export ; 2-2-add-bdd-bridge.lisp
+           add->bdd  bdd->add
+           #| TODO: the others|#)
+  (:export ; 2-2-zdd-bdd-bridge.lisp
+           bdd->zdd-simple
+           zdd->bdd-simple
+           bdd->zdd-cover
+           zdd->bdd-cover)
+  (:export ; 2-1-zdd-set-operations.lisp
+           zdd-subset-0  zdd-subset-1
+           zdd-emptyset  zdd-set-of-emptyset
+           zdd-singleton
+           zdd-change
+           zdd-set zdd-unset
+           zdd-dont-care
+
+           zdd-union  zdd-union*
+           zdd-intersection  zdd-intersection*
+           zdd-difference
+           ;; zdd-divide-unate
+           ;; zdd-product-unate
+           ;; zdd-remainder-unate
+           zdd-product
+           zdd-divide
+           zdd-remainder
+           zdd-supset
+           zdd-onset  zdd-offset
+           zdd-count-minterm
+           )
+  (:export
+   *manager*
+   *managers* ; TODO: Need thread-safe access to this
+   #:with-manager)
+  (:export ; 2-5-utils.lisp
+           bdd-transfer
+           transfer
+           print-info  info
+           print-debug
+           garbage-collect  gc
+           sharing-size
+           support-index
+           support-size
+           cudd-print
+           count-live-bdd-nodes
+           bdd-vector-compose
+           read-size
+           boolean-diff
+           compose
+           ); 2-5-utils.lisp
+  (:export ; 2-3-reordering.lisp
+           reordering-status  zdd-reordering-status
+           reduce-heap  zdd-reduce-heap
+           enable-reordering disable-reordering
+           )
+  (:export ; 2-6-dot.lisp
+           plot)
+  (:export ; 2-0-1-node.lisp
+           node
+           bdd-node
+           add-node
+           zdd-node
+           cudd-T  cudd-E
+           node-constant-p
+           manager)
+  (:export ; 2-1-add.lisp
+           add-negate
+           add-constant
+           plus-infinity  minus-infinity
+           epsilon
+           add-apply)
+  ); cl-cudd.thread-safe
+
+
+
+
 (define-package cl-cudd
     (:documentation "High-level interface")
   (:mix
-   :cl-cudd.maybe-unsafe
    :cl-cudd.thread-safe
+   :cl-cudd.maybe-unsafe
    :cl-cudd.swig-macros :cl-cudd.baseapi
    :cl-cudd.internal-utils
    :trivial-garbage
