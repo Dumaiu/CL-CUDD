@@ -59,7 +59,8 @@
 
 #+sbcl (declaim (sb-ext:maybe-inline helper/bdd-seq-to-ptr-vector!
                                      bdd-vector-compose))
-(defun helper/bdd-seq-to-ptr-vector! (ptr-array bdds manager-ptr
+(defun helper/bdd-seq-to-ptr-vector! (ptr-array nodes
+                                      manager manager-ptr
                                       &aux (node-pointer-t :pointer))
   "Not really a vector, but a CFFI C array.
   - PTR-ARRAY must refer to preallocated data.  This array is modified.
@@ -67,7 +68,8 @@
 "
   (declare ;(node-pointer f-ptr)
    (foreign-pointer ptr-array)
-   (sequence bdds)
+   (sequence nodes)
+   (manager manager)
    (manager-pointer manager-ptr))
 
   (let ((n (cudd-read-size manager-ptr)))
@@ -79,27 +81,31 @@
       ;; (break "~D" i)
       (for g-ptr = (cudd-bdd-ith-var manager-ptr i))
       (declare ((or null node-pointer) g-ptr))
+      (assert* (not (null-pointer-p g-ptr)))
       (setf (mem-aref ptr-array node-pointer-t i) g-ptr))
 
     ;; Assignment pass:
     (iter
-      (for g in-sequence bdds with-index i)
+      (for g in-sequence nodes with-index i)
       (declare ((or null bdd-node) g))
       ;; (break "~D" i)
       (unless (null g)
+        (unless (eq manager (node-manager g))
+          (error 'cudd-manager-mismatch-error))
         (let ((g-ptr (node-pointer g)))
           (declare (node-pointer g-ptr))
           (setf (mem-aref ptr-array node-pointer-t i) g-ptr)))))
   ptr-array)
 
-(defun bdd-vector-compose (f v &optional (manager (node-manager f))
+(declaim (reentrant bdd-vector-compose))
+(defun bdd-vector-compose (f nodes &optional (manager (node-manager f))
                            &aux (node-pointer-t :pointer))
-  "If V has more elements than there are variables in MANAGER, the extras are ignored.
+  "If NODES has more elements than there are variables in MANAGER, the extras are ignored.
 
-  - V should be a sequence of `bdd-node' objects.
+  - NODES should be a sequence of `bdd-node' objects.
 "
   (declare (bdd-node f))
-  (declare (sequence v))
+  (declare (sequence nodes))
   (declare (manager manager))
 
   (let ((res
@@ -112,7 +118,8 @@
 
                                (with-foreign-object (ptr-array node-pointer-t n)
 
-                                 (helper/bdd-seq-to-ptr-vector! ptr-array v manager-ptr)
+                                 (helper/bdd-seq-to-ptr-vector! ptr-array nodes
+                                                                manager manager-ptr)
 
                                  (let ((res-ptr (cudd-bdd-vector-compose manager-ptr f-ptr ptr-array)))
                                    (declare (node-pointer res-ptr))

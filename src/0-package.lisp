@@ -803,6 +803,7 @@ On the other hand, functions which take a `manager' and a `node-pointer' are not
            support-size
            cudd-print
            count-live-bdd-nodes
+           bdd-vector-compose
            ); 2-5-utils.lisp
   (:export ; 2-3-reordering.lisp
            reordering-status  zdd-reordering-status
