@@ -1,4 +1,28 @@
 (in-package :asdf-user)
+
+(define-package :cl-cudd.config
+    (:documentation "Constants for controlling optimization.
+  * TODO: Try ':configuration.options'?
+  * TODO: Log use of these constants with :log4cl at compile-time.
+")
+  (:mix :asdf :uiop :cl)
+  (:shadow #:+debug-finalizers+
+           #:+debug-node-funtions+)
+  (:export
+   #:+debug-finalizers+
+   #:+debug-node-funtions+))
+
+(in-package :cl-cudd.config)
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (unless (boundp '+debug-finalizers+)
+    (defconstant +debug-finalizers+ nil))
+
+  (unless (boundp '+debug-node-funtions+)
+    (defconstant +debug-node-funtions+ nil)))
+
+(in-package :asdf-user)
+
 (defsystem cl-cudd
   :serial t
   :author "Christian von Essen <christian@mvonessen.de>"
