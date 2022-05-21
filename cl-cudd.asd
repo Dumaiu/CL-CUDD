@@ -1,26 +1,5 @@
 (in-package :asdf-user)
 
-(define-package :cl-cudd.config
-    (:documentation "Constants for controlling optimization.
-  * TODO: Try ':configuration.options'?
-  * TODO: Log use of these constants with :log4cl at compile-time.
-")
-  (:mix :asdf :uiop :cl)
-  (:shadow #:+debug-finalizers+
-           #:+debug-node-funtions+)
-  (:export
-   #:+debug-finalizers+
-   #:+debug-node-funtions+))
-
-(in-package :cl-cudd.config)
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (unless (boundp '+debug-finalizers+)
-    (defconstant +debug-finalizers+ nil))
-
-  (unless (boundp '+debug-node-funtions+)
-    (defconstant +debug-node-funtions+ nil)))
-
 (in-package :asdf-user)
 
 (defsystem cl-cudd
@@ -54,7 +33,11 @@
                (:file "src/1-2-1-base-zdd")
                (:file "src/1-3-dddmp")
                (:file "src/2-config"
-                :description "Added [2021-12-08 Wed] -- JJ-S")
+                :description "Added [2021-12-08 Wed] -- JJ-S
+  * TODO: Put these symbols into their own package.
+  * NOTE: New policy [2022-05-20 Fri], making these constants.  That'll force recompilation.
+    * TODO: (define-constant)
+")
                (:file "src/2-0-0-manager")
                (:file "src/2-0-1-node")
                (:file "src/2-0-1-0-node-print")

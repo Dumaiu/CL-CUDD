@@ -23,7 +23,8 @@
   "TODO: Add `manager' param
   * TODO: Don't output (assert*) calls on high optimization
 "
-  (declare (optimize debug))
+  #.(when config/+debug-node-functions+
+      '(declare (optimize debug)))
   (with-gensyms (mp)
     (labels ((convert-arguments (arguments)
                (mapcar (lambda-match
@@ -55,7 +56,8 @@
         ;; (assert* (>= (length arguments) 2)) ; TODO: See if it works for unaries.
         (let ((converted-arguments (convert-arguments arguments))
               (node-names (node-names arguments)))
-          (declare (optimize debug))
+          #.(when config/+debug-node-functions+
+              '(declare (optimize debug)))
           ;; (break "converted-arguments: ~A" converted-arguments)
           ;; (break "~A" node-names)
           `(defmethod ,generic-name ,converted-arguments

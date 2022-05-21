@@ -280,8 +280,9 @@ TODO: What about #-thread-support ?
   "Manager callback finalizer.
   NOTE that I don't both using (with-cudd-critical-section) here, since the manager is dead anyway.  No other thread should be interacting with it.
 "
-  (declare (optimize safety))
   (declare (manager-pointer mp))
+  #.(when config/+debug-finalizers+
+      '(declare (optimize debug safety)))
   (assert* (null (gethash manager-index *managers*)))
 
   (unwind-protect (progn

@@ -10,7 +10,7 @@
 
 (define-package cl-cudd.internal-utils
     (:mix
-     :cl-cudd.config
+     ;; :cl-cudd.config
      :introspect-environment
      :log4cl
      #+thread-support :bordeaux-threads
@@ -23,7 +23,7 @@
                     #:with-lock-held
                     #:make-lock)
   (:reexport
-   :cl-cudd.config
+   ;; :cl-cudd.config
    :introspect-environment
    :trivia
    :log4cl

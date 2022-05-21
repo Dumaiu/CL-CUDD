@@ -5,7 +5,7 @@
 
 (deftype reordering-method ()
   `(member
-    ,@(foreign-enum-keyword-list 'cudd-reordering-type)
+    ,@ (foreign-enum-keyword-list 'cudd-reordering-type)
     ;; :CUDD-REORDER-SAME
     ;; :CUDD-REORDER-NONE
     ;; :CUDD-REORDER-RANDOM

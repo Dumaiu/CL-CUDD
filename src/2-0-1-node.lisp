@@ -123,11 +123,12 @@
   MANAGER: Maintain a reference from the node's finalizer to its manager so there is no chance of dangling-pointer errors.  See M. Asai's note in (wrap-and-finalize).
   REF: When T, decrement CUDD ref.  Passed along from (wrap-and-finalize): if we didn't increment during construction, we don't decrement here.
 "
-  (declare (optimize safety debug))
   (declare (node-pointer node-pointer)
            (manager manager)
            ;; (boolean #|ref|# ref-provided?)
            )
+  #.(when config/+debug-finalizers+
+      '(declare (optimize safety debug)))
 
   #|(unless (null ref-provided?)
   ;; (log-warn :logger cudd-node-logger )
@@ -276,9 +277,8 @@ in manager ~A~%"
            (boolean ref)
            (manager manager)
            (list other-initargs))
-
-  ;; *Side-effect*:
-  (declare (optimize debug))
+  #.(when config/+debug-finalizers+
+      '(declare (optimize debug)))
 
   (unless (null ref)
     ;; (log-warn :logger cudd-node-logger )
@@ -436,9 +436,9 @@ which calls cudd-recursive-deref on the pointer when the lisp node is garbage co
 "
   (declare (node node))
   (with-cudd-critical-section (:manager (node-manager node))
-   (let-1 index (cudd-node-read-index (node-pointer node))
-     (declare (non-negative-fixnum index))
-     index)))
+    (let-1 index (cudd-node-read-index (node-pointer node))
+      (declare (non-negative-fixnum index))
+      index)))
 
 ;; Alias:
 (setf (fdefinition 'node-index) (fdefinition 'node-variable-index))
