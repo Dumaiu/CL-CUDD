@@ -271,7 +271,8 @@ TODO: What about #-thread-support ?
                  node-table)
         m
       (format stream "#~D:" index)
-      (format stream " nodes: ~D" (hash-table-count node-table))
+      (format stream " roots: ~D" (hash-table-count node-table))
+	  (format stream ", live nodes: ~D" (cudd-read-node-count (manager-pointer m)))
       (format stream ", autoreorder: ~S" (second (multiple-value-list (reordering-status :manager m))))
       (format stream ", mutex: ~A" mutex))))
 
